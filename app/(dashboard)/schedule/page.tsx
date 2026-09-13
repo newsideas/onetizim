@@ -7,7 +7,7 @@ export default async function SchedulePage() {
   const { data: groups } = await supabase
     .from("groups")
     .select(
-      "id, name, subject, room, schedule_days, start_time, end_time, teacher:teachers(full_name)",
+      "id, name, schedule_days, start_time, end_time, teacher:teachers(full_name), room:rooms(name), course:courses(name)",
     )
     .order("start_time", { nullsFirst: false });
 

@@ -1,7 +1,7 @@
 import { formatSom } from "@/lib/utils/currency";
 import { formatDate, formatTime } from "@/lib/utils/date";
 import { EDUCATION_TYPE_LABELS } from "@/lib/validations/group";
-import type { Group } from "@/types/database";
+import type { GroupRow } from "@/components/groups/GroupsTable";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -14,11 +14,9 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function GroupInfoCard({
   group,
-  teacherName,
   studentCount,
 }: {
-  group: Group;
-  teacherName: string | null;
+  group: GroupRow;
   studentCount: number;
 }) {
   const dars =
@@ -40,8 +38,8 @@ export function GroupInfoCard({
           Guruh ma&apos;lumotlari
         </h2>
         <div className="space-y-2.5">
-          <Row label="Fan" value={group.subject || "—"} />
-          <Row label="O'qituvchi" value={teacherName || "—"} />
+          <Row label="Fan" value={group.course?.name || "—"} />
+          <Row label="O'qituvchi" value={group.teacher?.full_name || "—"} />
           <Row
             label="Ta'lim turi"
             value={
@@ -50,7 +48,7 @@ export function GroupInfoCard({
                 : "—"
             }
           />
-          <Row label="Xona" value={group.room || "—"} />
+          <Row label="Xona" value={group.room?.name || "—"} />
           <Row label="O'quvchilar" value={String(studentCount)} />
         </div>
       </div>

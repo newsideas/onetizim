@@ -3,8 +3,8 @@ import { HAFTA_KUNLARI, formatTime } from "@/lib/utils/date";
 export interface ScheduleGroup {
   id: string;
   name: string;
-  subject: string | null;
-  room: string | null;
+  course: { name: string } | null;
+  room: { name: string } | null;
   schedule_days: string[] | null;
   start_time: string | null;
   end_time: string | null;
@@ -76,7 +76,7 @@ export function ScheduleGrid({ groups }: { groups: ScheduleGroup[] }) {
                             </div>
                           )}
                           <div className="text-xs text-white/50">
-                            {[g.teacher?.full_name, g.room]
+                            {[g.teacher?.full_name, g.room?.name]
                               .filter(Boolean)
                               .join(" · ") || "—"}
                           </div>

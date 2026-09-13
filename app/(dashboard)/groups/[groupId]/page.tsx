@@ -4,8 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { GroupInfoCard } from "@/components/groups/GroupInfoCard";
 import { EditGroupButton } from "@/components/groups/EditGroupButton";
+import { GROUP_SELECT, type GroupRow } from "@/components/groups/GroupsTable";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
-import type { Group } from "@/types/database";
 
 export default async function GroupDetailPage({
   params,
@@ -15,24 +15,20 @@ export default async function GroupDetailPage({
   const { groupId } = await params;
   const supabase = await createClient();
 
-  const [{ data: group }, { data: students }] = await Promise.all([
-    supabase
-      .from("groups")
-      .select("*, teacher:teachers(full_name)")
-      .eq("id", groupId)
-      .maybeSingle(),
+  const [{ data: groupData }, { data: students }] = await Promise.all([
+    supabase.from("groups").select(GROUP_SELECT).eq("id", groupId).maybeSingle(),
     supabase
       .from("students")
       .select("*, group:groups(name)")
       .eq("group_id", groupId)
+      .neq("status", "archived")
       .order("full_name"),
   ]);
 
-  if (!group) notFound();
+  if (!groupData) notFound();
 
-  // Supabase inferi to-one join'ni massiv deb hisoblaydi (0007 izohiga qarang).
-  const teacherName =
-    (group as { teacher?: { full_name: string } | null }).teacher?.full_name ?? null;
+  // Supabase inferi to-one join'ni massiv deb hisoblaydi (0008 izohiga qarang).
+  const group = groupData as unknown as GroupRow;
   const studentRows = (students ?? []) as unknown as StudentTableRow[];
 
   return (
@@ -52,14 +48,14 @@ export default async function GroupDetailPage({
           groupId={groupId}
           defaultValues={{
             name: group.name,
-            subject: group.subject ?? undefined,
-            teacherName: teacherName ?? undefined,
-            room: group.room ?? undefined,
+            subject: group.course?.name ?? undefined,
+            teacherName: group.teacher?.full_name ?? undefined,
+            room: group.room?.name ?? undefined,
             scheduleDays: group.schedule_days ?? [],
             startTime: group.start_time ?? undefined,
             endTime: group.end_time ?? undefined,
             monthlyPrice: Number(group.monthly_price),
-            educationType: (group as Group).education_type ?? "offline",
+            educationType: group.education_type ?? "offline",
             startDate: group.start_date ?? undefined,
             endDate: group.end_date ?? undefined,
             lessonDurationMinutes: group.lesson_duration_minutes ?? undefined,
@@ -69,18 +65,17 @@ export default async function GroupDetailPage({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <GroupInfoCard
-            group={group as Group}
-            teacherName={teacherName}
-            studentCount={studentRows.length}
-          />
+          <GroupInfoCard group={group} studentCount={studentRows.length} />
         </div>
 
         <div className="space-y-2 lg:col-span-2">
           <h2 className="text-sm font-semibold text-white/70">
             Guruh o&apos;quvchilari
           </h2>
-          <StudentsTable students={studentRows} />
+          <StudentsTable
+            students={studentRows}
+            emptyText="Bu guruhda hali o'quvchi yo'q."
+          />
         </div>
       </div>
     </div>

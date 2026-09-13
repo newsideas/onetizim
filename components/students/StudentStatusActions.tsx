@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateStudentStatus } from "@/lib/actions/students";
 import { STUDENT_STATUS_LABELS } from "@/lib/validations/student";
@@ -19,23 +19,27 @@ export function StudentStatusActions({
   const router = useRouter();
   const [current, setCurrent] = useState<StudentStatus>(status);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  function handleChange(next: StudentStatus) {
-    if (next === current) return;
+  async function handleChange(next: StudentStatus) {
+    if (next === current || pending) return;
+
     const previous = current;
     setCurrent(next);
     setError(null);
+    setPending(true);
 
-    startTransition(async () => {
-      try {
-        await updateStudentStatus(studentId, next);
-        router.refresh();
-      } catch (e) {
-        setCurrent(previous);
-        setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
-      }
-    });
+    try {
+      await updateStudentStatus(studentId, next);
+      // router.refresh() ataylab transition tashqarisida — transition
+      // ichida chaqirilsa sahifa eski ma'lumot bilan qolib ketadi.
+      router.refresh();
+    } catch (e) {
+      setCurrent(previous);
+      setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -46,7 +50,7 @@ export function StudentStatusActions({
             key={s}
             type="button"
             onClick={() => handleChange(s)}
-            disabled={isPending}
+            disabled={pending}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
               current === s
                 ? "bg-blue-600 text-white"

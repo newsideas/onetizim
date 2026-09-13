@@ -13,6 +13,14 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Next.js so'rovlarni o'z keshiga oladi va natijada ma'lumot
+      // o'zgargandan keyin ham sahifa eski holatni ko'rsatib qolardi
+      // (masalan yangi qo'shilgan xona ro'yxatda chiqmasdi). CRM'da
+      // ma'lumot har doim joriy bo'lishi kerak — shuning uchun keshsiz.
+      global: {
+        fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+          fetch(input, { ...init, cache: "no-store" }),
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();

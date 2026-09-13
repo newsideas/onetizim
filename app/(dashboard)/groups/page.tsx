@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { GroupsTable, type GroupRow } from "@/components/groups/GroupsTable";
+import {
+  GroupsTable,
+  GROUP_SELECT,
+  type GroupRow,
+} from "@/components/groups/GroupsTable";
 import { NewGroupButton } from "@/components/groups/NewGroupButton";
 
 export default async function GroupsPage() {
@@ -7,7 +11,7 @@ export default async function GroupsPage() {
 
   const { data: groups } = await supabase
     .from("groups")
-    .select("*, teacher:teachers(full_name)")
+    .select(GROUP_SELECT)
     .order("created_at", { ascending: false });
 
   return (
@@ -16,7 +20,7 @@ export default async function GroupsPage() {
         <h1 className="text-xl font-semibold text-white">Guruhlar</h1>
         <NewGroupButton />
       </div>
-      <GroupsTable groups={(groups as GroupRow[]) ?? []} />
+      <GroupsTable groups={(groups ?? []) as unknown as GroupRow[]} />
     </div>
   );
 }

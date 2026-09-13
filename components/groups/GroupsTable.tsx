@@ -2,7 +2,16 @@ import Link from "next/link";
 import { formatSom } from "@/lib/utils/currency";
 import type { Group } from "@/types/database";
 
-export type GroupRow = Group & { teacher: { full_name: string } | null };
+/** Guruh + bog'langan yozuvlar (0008'dan keyin xona va kurs alohida jadval). */
+export type GroupRow = Group & {
+  teacher: { full_name: string } | null;
+  room: { name: string } | null;
+  course: { name: string } | null;
+};
+
+/** Barcha guruh so'rovlarida ishlatiladigan bir xil select. */
+export const GROUP_SELECT =
+  "*, teacher:teachers(full_name), room:rooms(name), course:courses(name)";
 
 export function GroupsTable({ groups }: { groups: GroupRow[] }) {
   if (groups.length === 0) {
@@ -37,11 +46,11 @@ export function GroupsTable({ groups }: { groups: GroupRow[] }) {
                   {group.name}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-white/70">{group.subject || "—"}</td>
+              <td className="px-4 py-3 text-white/70">{group.course?.name || "—"}</td>
               <td className="px-4 py-3 text-white/70">
                 {group.teacher?.full_name || "—"}
               </td>
-              <td className="px-4 py-3 text-white/70">{group.room || "—"}</td>
+              <td className="px-4 py-3 text-white/70">{group.room?.name || "—"}</td>
               <td className="px-4 py-3 text-white/70">
                 {group.schedule_days?.map((d) => d.slice(0, 3)).join(", ") || "—"}
               </td>

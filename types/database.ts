@@ -10,6 +10,7 @@ export type SalaryType = "fixed" | "per_lesson" | "percent";
 export type StudentStatus = "active" | "frozen" | "archived";
 export type AttendanceStatus = "present" | "absent" | "late";
 export type PaymentMethod = "naqd" | "karta" | "click" | "payme";
+export type EducationType = "offline" | "online";
 
 export interface Organization {
   id: string;
@@ -29,13 +30,29 @@ export interface Teacher {
   created_at: string;
 }
 
+/** Xona — 0008 migratsiyasigacha groups ichida oddiy matn edi. */
+export interface Room {
+  id: string;
+  org_id: string;
+  name: string;
+  created_at: string;
+}
+
+/** Kurs/Fan — 0008 migratsiyasigacha groups.subject matni edi. */
+export interface Course {
+  id: string;
+  org_id: string;
+  name: string;
+  created_at: string;
+}
+
 export interface Group {
   id: string;
   org_id: string;
   name: string;
-  subject: string | null;
   teacher_id: string | null;
-  room: string | null;
+  room_id: string | null;
+  course_id: string | null;
   schedule_days: string[] | null;
   start_time: string | null;
   end_time: string | null;
@@ -43,7 +60,7 @@ export interface Group {
   start_date: string | null;
   end_date: string | null;
   lesson_duration_minutes: number | null;
-  education_type: "offline" | "online" | null;
+  education_type: EducationType | null;
   created_at: string;
 }
 
@@ -76,6 +93,16 @@ export interface Payment {
   method: PaymentMethod;
   paid_at: string;
   note: string | null;
+  created_at: string;
+}
+
+/** Oylik hisob (qarzdorlik) — 0005 migratsiyasi. */
+export interface Charge {
+  id: string;
+  student_id: string;
+  group_id: string | null;
+  period: string;
+  amount: number;
   created_at: string;
 }
 
