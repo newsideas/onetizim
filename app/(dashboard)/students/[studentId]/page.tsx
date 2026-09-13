@@ -5,5 +5,5 @@ export default async function StudentDetailPage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  return <h1 className="text-xl">O'quvchi: {studentId}</h1>;
+  return <h1 className="text-xl">O&apos;quvchi: {studentId}</h1>;
 }
