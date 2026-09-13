@@ -5,6 +5,7 @@ import {
   type PaymentJournalRow,
 } from "@/components/payments/PaymentsJournal";
 import { NewPaymentButton } from "@/components/payments/NewPaymentButton";
+import { MonthlyChargeButton } from "@/components/payments/MonthlyChargeButton";
 
 export default async function PaymentsPage() {
   const supabase = await createClient();
@@ -27,7 +28,10 @@ export default async function PaymentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-white">To&apos;lovlar</h1>
-        <NewPaymentButton students={students ?? []} />
+        <div className="flex gap-2">
+          <MonthlyChargeButton />
+          <NewPaymentButton students={students ?? []} />
+        </div>
       </div>
 
       <DebtorsList debtors={debtors ?? []} />
