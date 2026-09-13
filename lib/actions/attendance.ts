@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyParent } from "@/lib/telegram/notify";
+import { telegramTemplates } from "@/lib/telegram/templates";
+import { formatDate } from "@/lib/utils/date";
 import type { AttendanceStatus } from "@/types/database";
 
 export interface AttendanceStudent {
@@ -72,8 +75,21 @@ export async function markAttendance(
     throw new Error("Davomatni saqlashda xatolik: " + error.message);
   }
 
-  // TODO: 9-bosqich — status === "absent" bo'lsa, ota-onaga Telegram
-  // orqali avtomatik xabar yuborish (lib/telegram/sendMessage.ts).
+  // Darsga kelmagan bo'lsa — ota-onaga Telegram orqali xabar.
+  if (status === "absent") {
+    const { data: student } = await supabase
+      .from("students")
+      .select("full_name, parent_telegram_chat_id")
+      .eq("id", studentId)
+      .maybeSingle();
+
+    if (student) {
+      await notifyParent(
+        student.parent_telegram_chat_id,
+        telegramTemplates.absent(student.full_name, formatDate(lessonDate)),
+      );
+    }
+  }
 
   revalidatePath("/attendance");
 }

@@ -1,4 +1,64 @@
-// TODO: 9-bosqich — botni ulash sahifasi (QR/link, /start <student_id>).
-export default function TelegramSettingsPage() {
-  return <h1 className="text-xl">Telegram bot</h1>;
+import { createClient } from "@/lib/supabase/server";
+import { TelegramLinkRow } from "@/components/settings/TelegramLinkRow";
+
+export default async function TelegramSettingsPage() {
+  const supabase = await createClient();
+  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+
+  const { data: students } = await supabase
+    .from("students")
+    .select("id, full_name, parent_telegram_chat_id")
+    .eq("status", "active")
+    .order("full_name");
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold text-white">Telegram bot</h1>
+
+      <div className="rounded-xl border border-white/10 p-4 text-sm text-white/60">
+        <p>
+          Har bir o&apos;quvchi uchun alohida havola bor. Havolani ota-onaga
+          yuboring — u bosgach bot ulanadi va farzandi haqidagi xabarlarni
+          (darsga kelmagani, qarzdorlik, to&apos;lov) shu bot orqali oladi.
+        </p>
+        {botUsername ? (
+          <p className="mt-2">
+            Bot: <span className="text-white">@{botUsername}</span>
+          </p>
+        ) : (
+          <p className="mt-2 text-red-400">
+            Bot sozlanmagan: NEXT_PUBLIC_TELEGRAM_BOT_USERNAME kiritilmagan.
+          </p>
+        )}
+      </div>
+
+      {!students || students.length === 0 ? (
+        <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+          Avval o&apos;quvchi qo&apos;shing.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-white/5 text-white/60">
+              <tr>
+                <th className="px-4 py-3 font-medium">O&apos;quvchi</th>
+                <th className="px-4 py-3 font-medium">Holati</th>
+                <th className="px-4 py-3 font-medium">Ulash havolasi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {students.map((student) => (
+                <TelegramLinkRow
+                  key={student.id}
+                  studentName={student.full_name}
+                  link={`https://t.me/${botUsername}?start=${student.id}`}
+                  connected={Boolean(student.parent_telegram_chat_id)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }

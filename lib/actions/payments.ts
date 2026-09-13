@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyParent } from "@/lib/telegram/notify";
+import { telegramTemplates } from "@/lib/telegram/templates";
 import { paymentSchema, type PaymentInput } from "@/lib/validations/payment";
 
 export async function createPayment(input: PaymentInput) {
@@ -28,8 +30,19 @@ export async function createPayment(input: PaymentInput) {
   // students.balance 0004_payment_balance_trigger.sql dagi trigger orqali
   // avtomatik yangilanadi — bu yerda alohida update kerak emas.
 
-  // TODO: 9-bosqich — to'lov qabul qilinganda ota-onaga Telegram orqali
-  // xabar yuborish (lib/telegram/templates.ts -> tolovQabulQilindi).
+  // Ota-onaga "to'lov qabul qilindi" xabari.
+  const { data: student } = await supabase
+    .from("students")
+    .select("full_name, parent_telegram_chat_id")
+    .eq("id", values.studentId)
+    .maybeSingle();
+
+  if (student) {
+    await notifyParent(
+      student.parent_telegram_chat_id,
+      telegramTemplates.tolovQabulQilindi(student.full_name, values.amount),
+    );
+  }
 
   revalidatePath("/payments");
   revalidatePath("/students");
