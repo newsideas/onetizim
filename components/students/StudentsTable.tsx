@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { BalanceBadge } from "@/components/payments/BalanceBadge";
+import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
 import type { Student } from "@/types/database";
 
 export type StudentTableRow = Student & { group: { name: string } | null };
 
-export function StudentsTable({ students }: { students: StudentTableRow[] }) {
+export function StudentsTable({
+  students,
+  showStatus = true,
+  emptyText = "Hali o'quvchilar yo'q.",
+}: {
+  students: StudentTableRow[];
+  showStatus?: boolean;
+  emptyText?: string;
+}) {
   if (students.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
-        Hali o&apos;quvchilar yo&apos;q. &quot;Yangi o&apos;quvchi&quot; tugmasi orqali
-        qo&apos;shing.
+        {emptyText}
       </div>
     );
   }
@@ -23,6 +31,7 @@ export function StudentsTable({ students }: { students: StudentTableRow[] }) {
             <th className="px-4 py-3 font-medium">Guruh</th>
             <th className="px-4 py-3 font-medium">Telefon</th>
             <th className="px-4 py-3 font-medium">Balans</th>
+            {showStatus && <th className="px-4 py-3 font-medium">Holati</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
@@ -41,6 +50,11 @@ export function StudentsTable({ students }: { students: StudentTableRow[] }) {
               <td className="px-4 py-3">
                 <BalanceBadge balance={student.balance} />
               </td>
+              {showStatus && (
+                <td className="px-4 py-3">
+                  <StudentStatusBadge status={student.status} />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

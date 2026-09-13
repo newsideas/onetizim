@@ -1,15 +1,32 @@
 import { createClient } from "@/lib/supabase/server";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
 import { NewStudentButton } from "@/components/students/NewStudentButton";
+import { StudentsFilter } from "@/components/students/StudentsFilter";
 
-export default async function StudentsPage() {
+const VALID_STATUSES = ["active", "frozen", "archived", "all"];
+
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const params = await searchParams;
+  const status =
+    params.status && VALID_STATUSES.includes(params.status) ? params.status : "active";
+
   const supabase = await createClient();
 
+  let studentsQuery = supabase
+    .from("students")
+    .select("*, group:groups(name)")
+    .order("full_name");
+
+  if (status !== "all") {
+    studentsQuery = studentsQuery.eq("status", status);
+  }
+
   const [{ data: students }, { data: groups }] = await Promise.all([
-    supabase
-      .from("students")
-      .select("*, group:groups(name)")
-      .order("created_at", { ascending: false }),
+    studentsQuery,
     supabase.from("groups").select("id, name").order("name"),
   ]);
 
@@ -19,7 +36,17 @@ export default async function StudentsPage() {
         <h1 className="text-xl font-semibold text-white">O&apos;quvchilar</h1>
         <NewStudentButton groups={groups ?? []} />
       </div>
-      <StudentsTable students={(students as StudentTableRow[]) ?? []} />
+
+      <StudentsFilter current={status} />
+
+      <StudentsTable
+        students={(students as StudentTableRow[]) ?? []}
+        emptyText={
+          status === "active"
+            ? "Hali aktiv o'quvchilar yo'q. \"Yangi o'quvchi\" tugmasi orqali qo'shing."
+            : "Bu holatda o'quvchi yo'q."
+        }
+      />
     </div>
   );
 }

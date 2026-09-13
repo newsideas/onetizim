@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
 import { studentSchema, type StudentInput } from "@/lib/validations/student";
+import type { StudentStatus } from "@/types/database";
 
 export async function createStudent(input: StudentInput) {
   const parsed = studentSchema.safeParse(input);
@@ -27,4 +28,29 @@ export async function createStudent(input: StudentInput) {
   }
 
   revalidatePath("/students");
+}
+
+/**
+ * O'quvchi holatini o'zgartiradi (aktiv / muzlatilgan / arxiv).
+ * Muzlatilgan va arxivlangan o'quvchiga oylik hisob yozilmaydi
+ * (charge_monthly_fees faqat status = 'active' bo'lganlarni oladi).
+ */
+export async function updateStudentStatus(
+  studentId: string,
+  status: StudentStatus,
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("students")
+    .update({ status })
+    .eq("id", studentId);
+
+  if (error) {
+    throw new Error("Holatni o'zgartirishda xatolik: " + error.message);
+  }
+
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/attendance");
 }
