@@ -9,6 +9,14 @@ export function formatDate(date: Date | string): string {
   return `${day}.${month}.${year}`;
 }
 
+/**
+ * Postgres "time" qiymatini qisqartiradi: "08:30:00" -> "08:30".
+ */
+export function formatTime(time: string | null): string {
+  if (!time) return "";
+  return time.slice(0, 5);
+}
+
 export const HAFTA_KUNLARI = [
   "Dushanba",
   "Seshanba",
