@@ -42,11 +42,15 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setServerError(
-        error.message === "User already registered"
-          ? "Bu email allaqachon ro'yxatdan o'tgan"
-          : "Ro'yxatdan o'tishda xatolik yuz berdi",
-      );
+      if (error.message === "User already registered") {
+        setServerError("Bu email allaqachon ro'yxatdan o'tgan");
+      } else if (error.status === 429) {
+        setServerError(
+          "Email yuborish limiti tugadi. Bir necha daqiqadan so'ng qayta urinib ko'ring.",
+        );
+      } else {
+        setServerError("Ro'yxatdan o'tishda xatolik yuz berdi");
+      }
       return;
     }
 
