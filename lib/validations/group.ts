@@ -11,6 +11,19 @@ export const groupSchema = z.object({
   monthlyPrice: z
     .number({ message: "Narx raqam bo'lishi kerak" })
     .min(0, "Narx manfiy bo'lishi mumkin emas"),
+  educationType: z.enum(["offline", "online"]),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  lessonDurationMinutes: z
+    .number({ message: "Davomiylik raqam bo'lishi kerak" })
+    .int()
+    .positive("Davomiylik musbat bo'lishi kerak")
+    .optional(),
 });
 
 export type GroupInput = z.infer<typeof groupSchema>;
+
+export const EDUCATION_TYPE_LABELS = {
+  offline: "Oflayn",
+  online: "Onlayn",
+} as const;

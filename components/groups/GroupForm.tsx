@@ -4,17 +4,35 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { groupSchema, type GroupInput } from "@/lib/validations/group";
-import { createGroup } from "@/lib/actions/groups";
+import {
+  groupSchema,
+  EDUCATION_TYPE_LABELS,
+  type GroupInput,
+} from "@/lib/validations/group";
+import { createGroup, updateGroup } from "@/lib/actions/groups";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Select } from "@/components/ui/Select";
 import { FormError } from "@/components/ui/FormError";
 import { HAFTA_KUNLARI } from "@/lib/utils/date";
 
-export function GroupForm({ onSuccess }: { onSuccess: () => void }) {
+/**
+ * Guruh formasi. `groupId` berilsa tahrirlash, berilmasa yangi guruh
+ * yaratish rejimida ishlaydi.
+ */
+export function GroupForm({
+  onSuccess,
+  groupId,
+  defaultValues,
+}: {
+  onSuccess: () => void;
+  groupId?: string;
+  defaultValues?: Partial<GroupInput>;
+}) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const isEdit = Boolean(groupId);
 
   const {
     register,
@@ -24,7 +42,12 @@ export function GroupForm({ onSuccess }: { onSuccess: () => void }) {
     formState: { errors, isSubmitting },
   } = useForm<GroupInput>({
     resolver: zodResolver(groupSchema),
-    defaultValues: { scheduleDays: [], monthlyPrice: 0 },
+    defaultValues: {
+      scheduleDays: [],
+      monthlyPrice: 0,
+      educationType: "offline",
+      ...defaultValues,
+    },
   });
 
   const selectedDays = watch("scheduleDays");
@@ -39,7 +62,11 @@ export function GroupForm({ onSuccess }: { onSuccess: () => void }) {
   async function onSubmit(values: GroupInput) {
     setServerError(null);
     try {
-      await createGroup(values);
+      if (groupId) {
+        await updateGroup(groupId, values);
+      } else {
+        await createGroup(values);
+      }
       router.refresh();
       onSuccess();
     } catch (e) {
@@ -60,23 +87,36 @@ export function GroupForm({ onSuccess }: { onSuccess: () => void }) {
         <FormError message={errors.name?.message} />
       </div>
 
-      <div>
-        <Label htmlFor="subject">Fan</Label>
-        <Input id="subject" placeholder="Masalan: Matematika" {...register("subject")} />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="subject">Fan</Label>
+          <Input id="subject" placeholder="Matematika" {...register("subject")} />
+        </div>
+        <div>
+          <Label htmlFor="educationType">Ta&apos;lim turi</Label>
+          <Select id="educationType" {...register("educationType")}>
+            {Object.entries(EDUCATION_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
 
-      <div>
-        <Label htmlFor="teacherName">O&apos;qituvchi</Label>
-        <Input
-          id="teacherName"
-          placeholder="Masalan: Aziz Karimov"
-          {...register("teacherName")}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="room">Xona</Label>
-        <Input id="room" placeholder="Masalan: 205-xona" {...register("room")} />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="teacherName">O&apos;qituvchi</Label>
+          <Input
+            id="teacherName"
+            placeholder="Aziz Karimov"
+            {...register("teacherName")}
+          />
+        </div>
+        <div>
+          <Label htmlFor="room">Xona</Label>
+          <Input id="room" placeholder="205-xona" {...register("room")} />
+        </div>
       </div>
 
       <div>
@@ -100,14 +140,38 @@ export function GroupForm({ onSuccess }: { onSuccess: () => void }) {
         <FormError message={errors.scheduleDays?.message} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label htmlFor="startTime">Boshlanish vaqti</Label>
+          <Label htmlFor="startTime">Boshlanishi</Label>
           <Input id="startTime" type="time" {...register("startTime")} />
         </div>
         <div>
-          <Label htmlFor="endTime">Tugash vaqti</Label>
+          <Label htmlFor="endTime">Tugashi</Label>
           <Input id="endTime" type="time" {...register("endTime")} />
+        </div>
+        <div>
+          <Label htmlFor="lessonDurationMinutes">Davomiyligi (daq)</Label>
+          <Input
+            id="lessonDurationMinutes"
+            type="number"
+            min={1}
+            step={5}
+            placeholder="90"
+            {...register("lessonDurationMinutes", {
+              setValueAs: (v) => (v === "" ? undefined : Number(v)),
+            })}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="startDate">Boshlanish sanasi</Label>
+          <Input id="startDate" type="date" {...register("startDate")} />
+        </div>
+        <div>
+          <Label htmlFor="endDate">Tugash sanasi</Label>
+          <Input id="endDate" type="date" {...register("endDate")} />
         </div>
       </div>
 
@@ -127,7 +191,11 @@ export function GroupForm({ onSuccess }: { onSuccess: () => void }) {
       <FormError message={serverError ?? undefined} />
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saqlanmoqda..." : "Guruhni saqlash"}
+        {isSubmitting
+          ? "Saqlanmoqda..."
+          : isEdit
+            ? "O'zgarishlarni saqlash"
+            : "Guruhni saqlash"}
       </Button>
     </form>
   );

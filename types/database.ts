@@ -7,7 +7,7 @@
 
 export type OrganizationType = "togarak" | "maktab";
 export type SalaryType = "fixed" | "per_lesson" | "percent";
-export type StudentStatus = "active" | "archived";
+export type StudentStatus = "active" | "frozen" | "archived";
 export type AttendanceStatus = "present" | "absent" | "late";
 export type PaymentMethod = "naqd" | "karta" | "click" | "payme";
 
@@ -40,6 +40,10 @@ export interface Group {
   start_time: string | null;
   end_time: string | null;
   monthly_price: number;
+  start_date: string | null;
+  end_date: string | null;
+  lesson_duration_minutes: number | null;
+  education_type: "offline" | "online" | null;
   created_at: string;
 }
 
