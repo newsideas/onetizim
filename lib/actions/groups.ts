@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
 import { groupSchema, type GroupInput } from "@/lib/validations/group";
 
 /**
@@ -16,17 +17,7 @@ export async function createGroup(input: GroupInput) {
   const values = parsed.data;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Avtorizatsiyadan o'tilmagan");
-
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("owner_id", user.id)
-    .single();
-  if (!org) throw new Error("Tashkilot topilmadi");
+  const orgId = await getCurrentOrgId(supabase);
 
   let teacherId: string | null = null;
   const teacherName = values.teacherName?.trim();
@@ -35,7 +26,7 @@ export async function createGroup(input: GroupInput) {
     const { data: existingTeacher } = await supabase
       .from("teachers")
       .select("id")
-      .eq("org_id", org.id)
+      .eq("org_id", orgId)
       .eq("full_name", teacherName)
       .maybeSingle();
 
@@ -44,7 +35,7 @@ export async function createGroup(input: GroupInput) {
     } else {
       const { data: newTeacher, error: teacherError } = await supabase
         .from("teachers")
-        .insert({ org_id: org.id, full_name: teacherName })
+        .insert({ org_id: orgId, full_name: teacherName })
         .select("id")
         .single();
 
@@ -56,7 +47,7 @@ export async function createGroup(input: GroupInput) {
   }
 
   const { error } = await supabase.from("groups").insert({
-    org_id: org.id,
+    org_id: orgId,
     name: values.name,
     subject: values.subject || null,
     teacher_id: teacherId,
