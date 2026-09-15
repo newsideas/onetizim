@@ -29,7 +29,7 @@ export function Header({
       {/* Mobilda muassasa nomi, desktopda foydalanuvchi ma'lumoti */}
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-ink md:hidden">
-          {orgName || "IPRO TIZIM"}
+          {orgName || "EduGram"}
         </div>
         <div className="hidden md:block">
           <div className="truncate text-sm font-medium text-ink">

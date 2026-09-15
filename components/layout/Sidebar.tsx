@@ -20,10 +20,10 @@ export function Sidebar({
   return (
     <nav className="flex h-full flex-col bg-surface">
       {/* Muassasa nomi va turi */}
-      <div className="border-b border-line px-4 py-4">
-        <Logo className="mb-3 h-16" />
-        <div className="truncate text-base font-semibold text-ink">
-          {orgName || "IPRO TIZIM"}
+      <div className="border-b border-line px-4 pt-5 pb-4 text-center">
+        <Logo className="mb-3 h-24 justify-center" />
+        <div className="truncate text-sm font-semibold text-ink">
+          {orgName || "EduGram"}
         </div>
         <div className="text-xs text-ink-faint">{terms.label}</div>
       </div>
@@ -53,7 +53,7 @@ export function Sidebar({
       </div>
 
       <div className="border-t border-line px-4 py-3">
-        <div className="text-xs text-ink-faint">IPRO TIZIM</div>
+        <div className="text-xs text-ink-faint">EduGram system</div>
       </div>
     </nav>
   );

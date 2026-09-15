@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "To'garak CRM",
-  description: "To'garak va xususiy maktablar uchun boshqaruv tizimi",
+  title: "EduGram System",
+  description: "Xususiy maktab, bog'cha va o'quv markazlari uchun boshqaruv tizimi",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
