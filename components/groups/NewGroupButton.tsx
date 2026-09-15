@@ -10,7 +10,7 @@ import { useSegment } from "@/components/layout/SegmentProvider";
 
 export function NewGroupButton() {
   const searchParams = useSearchParams();
-  // Header'dagi "+" menyusi /groups?new=1 ga o'tadi — modal darhol ochilsin.
+  // Header'dagi "+" menyusi /settings/classes?new=1 ga o'tadi — modal darhol ochilsin.
   const [open, setOpen] = useState(() => searchParams.get("new") === "1");
   const { terms } = useSegment();
 

@@ -23,7 +23,7 @@ export function DashboardShell({
     <div className="min-h-screen bg-canvas text-ink">
       {/* Desktop: doim ko'rinadigan sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
-        <Sidebar orgName={orgName} />
+        <Sidebar />
       </aside>
 
       {/* Mobil: ustidan chiqadigan sidebar (drawer) */}
@@ -35,7 +35,7 @@ export function DashboardShell({
             aria-hidden="true"
           />
           <aside className="absolute inset-y-0 left-0 w-64">
-            <Sidebar orgName={orgName} onNavigate={() => setSidebarOpen(false)} />
+            <Sidebar onNavigate={() => setSidebarOpen(false)} />
           </aside>
         </div>
       )}

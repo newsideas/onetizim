@@ -91,5 +91,5 @@ export async function markAttendance(
     }
   }
 
-  revalidatePath("/attendance");
+  revalidatePath("/attendances-students");
 }

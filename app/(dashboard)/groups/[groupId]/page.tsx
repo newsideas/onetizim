@@ -41,7 +41,7 @@ export default async function GroupDetailPage({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
-            href="/groups"
+            href="/settings/classes"
             className="rounded-lg p-2 text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
             aria-label={`${terms.groupPlural}ga qaytish`}
           >

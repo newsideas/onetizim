@@ -71,7 +71,7 @@ export function Header({
         <ThemeToggle />
 
         <Link
-          href="/schedule"
+          href="/education/class-schedule"
           className={`${ICON_BUTTON} hidden lg:block`}
           aria-label="Dars jadvali"
           title="Dars jadvali"
@@ -80,7 +80,7 @@ export function Header({
         </Link>
 
         <Link
-          href="/attendance"
+          href="/attendances-students"
           className={`${ICON_BUTTON} hidden lg:block`}
           aria-label="Davomat"
           title="Davomat"

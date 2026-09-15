@@ -27,8 +27,8 @@ export function ScheduleViewToggle({
         const Icon = o.icon;
         const href =
           o.value === "week"
-            ? "/schedule"
-            : `/schedule?view=day&day=${encodeURIComponent(day)}`;
+            ? "/education/class-schedule"
+            : `/education/class-schedule?view=day&day=${encodeURIComponent(day)}`;
 
         return (
           <Link
@@ -56,7 +56,7 @@ export function DayPicker({ current }: { current: string }) {
       {HAFTA_KUNLARI.map((d) => (
         <Link
           key={d}
-          href={`/schedule?view=day&day=${encodeURIComponent(d)}`}
+          href={`/education/class-schedule?view=day&day=${encodeURIComponent(d)}`}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
             current === d
               ? "bg-brand-600 text-white"

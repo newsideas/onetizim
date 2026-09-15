@@ -53,7 +53,7 @@ export function OrgSwitcher({ orgName }: { orgName?: string }) {
             <div className="text-xs text-ink-faint">{terms.label}</div>
           </div>
           <div className="my-1 border-t border-line" />
-          <Link href="/settings" onClick={close}>
+          <Link href="/settings/client-branding" onClick={close}>
             <PopoverItem>
               <Settings size={15} className="text-ink-muted" />
               Muassasa sozlamalari
@@ -78,7 +78,7 @@ export function TrialBadge({ daysLeft }: { daysLeft: number | null }) {
 
   return (
     <Link
-      href="/settings"
+      href="/settings/client-branding"
       className={`hidden shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white transition-colors lg:inline-flex ${
         expired
           ? "bg-red-600 hover:bg-red-700"
@@ -153,8 +153,8 @@ export function QuickAddMenu() {
 
   const items = [
     { href: "/students/new", label: terms.newStudent, icon: Users },
-    { href: "/groups?new=1", label: terms.newGroup, icon: Building2 },
-    { href: "/payments", label: "To'lov qabul qilish", icon: Wallet },
+    { href: "/settings/classes?new=1", label: terms.newGroup, icon: Building2 },
+    { href: "/receipts", label: "To'lov qabul qilish", icon: Wallet },
   ];
 
   return (
@@ -202,14 +202,14 @@ export function NotificationsMenu({
 
   if (debtorCount > 0) {
     notices.push({
-      href: "/payments",
+      href: "/receipts",
       text: `${debtorCount} ta ${terms.student.toLowerCase()}da qarz bor`,
       urgent: true,
     });
   }
   if (trialDaysLeft !== null && trialDaysLeft <= 7) {
     notices.push({
-      href: "/settings",
+      href: "/settings/client-branding",
       text:
         trialDaysLeft <= 0
           ? "Obuna muddati tugagan"
@@ -301,7 +301,7 @@ export function UserMenu({
             </div>
           </div>
           <div className="my-1 border-t border-line" />
-          <Link href="/settings" onClick={close}>
+          <Link href="/settings/client-branding" onClick={close}>
             <PopoverItem>
               <Settings size={15} className="text-ink-muted" />
               Sozlamalar

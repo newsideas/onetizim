@@ -16,7 +16,7 @@ export function StudentsFilter({ current }: { current: string }) {
       {FILTERS.map((f) => (
         <Link
           key={f.value}
-          href={f.value === "active" ? "/students" : `/students?status=${f.value}`}
+          href={f.value === "active" ? "/students/list" : `/students/list?status=${f.value}`}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
             current === f.value
               ? "bg-brand-600 text-white"

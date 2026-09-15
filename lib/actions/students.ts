@@ -69,7 +69,7 @@ export async function createStudent(input: StudentInput) {
     throw new Error("Saqlashda xatolik: " + error.message);
   }
 
-  revalidatePath("/students");
+  revalidatePath("/students/list");
   return data.id as string;
 }
 
@@ -89,7 +89,7 @@ export async function updateStudent(studentId: string, input: StudentInput) {
     throw new Error("Yangilashda xatolik: " + error.message);
   }
 
-  revalidatePath("/students");
+  revalidatePath("/students/list");
   revalidatePath(`/students/${studentId}`);
 }
 
@@ -113,7 +113,7 @@ export async function updateStudentStatus(
     throw new Error("Holatni o'zgartirishda xatolik: " + error.message);
   }
 
-  revalidatePath("/students");
+  revalidatePath("/students/list");
   revalidatePath(`/students/${studentId}`);
-  revalidatePath("/attendance");
+  revalidatePath("/attendances-students");
 }

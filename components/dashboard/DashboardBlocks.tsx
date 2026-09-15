@@ -36,7 +36,7 @@ export function FinancialActivity({
         title="Moliyaviy faollik"
         action={
           <Link
-            href="/payments"
+            href="/receipts"
             className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
           >
             Barchasi <ArrowRight size={14} />
@@ -393,15 +393,15 @@ export function QuickActions({ terms }: { terms: SegmentTerms }) {
       title: terms.newStudent,
       hint: "Qabul qilish",
     },
-    { href: "/groups", icon: BookOpen, title: terms.newGroup, hint: "Ochish" },
+    { href: "/settings/classes", icon: BookOpen, title: terms.newGroup, hint: "Ochish" },
     {
-      href: "/payments",
+      href: "/receipts",
       icon: Wallet,
       title: "To'lov",
       hint: "Tushumni kiritish",
     },
     {
-      href: "/attendance",
+      href: "/attendances-students",
       icon: CalendarCheck,
       title: "Davomat",
       hint: "Belgilash",

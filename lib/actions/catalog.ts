@@ -26,7 +26,7 @@ export async function createCatalogItem(table: CatalogTable, name: string) {
     );
   }
 
-  revalidatePath("/settings");
+  revalidatePath("/settings/client-branding");
 }
 
 export async function renameCatalogItem(
@@ -51,9 +51,9 @@ export async function renameCatalogItem(
     );
   }
 
-  revalidatePath("/settings");
-  revalidatePath("/groups");
-  revalidatePath("/schedule");
+  revalidatePath("/settings/client-branding");
+  revalidatePath("/settings/classes");
+  revalidatePath("/education/class-schedule");
 }
 
 /**
@@ -66,7 +66,7 @@ export async function deleteCatalogItem(table: CatalogTable, id: string) {
 
   if (error) throw new Error("O'chirishda xatolik: " + error.message);
 
-  revalidatePath("/settings");
-  revalidatePath("/groups");
-  revalidatePath("/schedule");
+  revalidatePath("/settings/client-branding");
+  revalidatePath("/settings/classes");
+  revalidatePath("/education/class-schedule");
 }

@@ -46,7 +46,7 @@ export default async function StudentDetailPage({
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Link
-          href="/students"
+          href="/students/list"
           className="rounded-lg p-2 text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
           aria-label="O'quvchilarga qaytish"
         >

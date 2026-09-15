@@ -21,7 +21,7 @@ export default async function NewStudentPage() {
       <FormPageHeader
         title={terms.studentPlural}
         breadcrumb={`${terms.studentPlural} bazasi ro'yxati › Qo'shish`}
-        backHref="/students"
+        backHref="/students/list"
       />
 
       <Card className="p-5">

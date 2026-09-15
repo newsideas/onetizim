@@ -93,8 +93,8 @@ export async function createGroup(input: GroupInput) {
 
   if (error) throw new Error("Guruh yaratishda xatolik: " + error.message);
 
-  revalidatePath("/groups");
-  revalidatePath("/schedule");
+  revalidatePath("/settings/classes");
+  revalidatePath("/education/class-schedule");
 }
 
 export async function updateGroup(groupId: string, input: GroupInput) {
@@ -116,7 +116,7 @@ export async function updateGroup(groupId: string, input: GroupInput) {
 
   if (error) throw new Error("Guruhni yangilashda xatolik: " + error.message);
 
-  revalidatePath("/groups");
+  revalidatePath("/settings/classes");
   revalidatePath(`/groups/${groupId}`);
-  revalidatePath("/schedule");
+  revalidatePath("/education/class-schedule");
 }
