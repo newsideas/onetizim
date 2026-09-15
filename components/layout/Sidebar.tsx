@@ -20,7 +20,7 @@ export function Sidebar({
   return (
     <nav className="flex h-full flex-col bg-brand-700">
       <div className="px-5 pt-6 pb-5">
-        <Logo variant="white" className="h-9" />
+        <Logo variant="white" className="h-12" />
       </div>
 
       <div className="flex-1 space-y-1 overflow-y-auto p-3">
