@@ -44,7 +44,7 @@ export default function LoginPage() {
 
       <div className="flex w-full items-center justify-center px-4 py-10 lg:w-1/2">
         <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8 shadow-sm">
-          <Logo className="mb-6 h-20" />
+          <Logo className="mb-6 h-12" />
 
           <h1 className="text-2xl font-semibold text-ink">Tizimga kirish</h1>
           <p className="mt-1 mb-6 text-sm text-ink-muted">

@@ -48,7 +48,7 @@ const FEATURES = [
 export function AuthShowcase() {
   return (
     <div className="hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:px-12 xl:px-20">
-      <Logo className="mb-8 h-24" />
+      <Logo className="mb-8 h-16" />
 
       <h2 className="text-2xl font-semibold text-ink">
         Muassasangizni bitta tizimda to&apos;laqonli boshqaring

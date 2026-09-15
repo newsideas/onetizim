@@ -21,7 +21,7 @@ export function Sidebar({
     <nav className="flex h-full flex-col bg-surface">
       {/* Muassasa nomi va turi */}
       <div className="border-b border-line px-4 pt-5 pb-4 text-center">
-        <Logo className="mb-3 h-24 justify-center" />
+        <Logo className="mb-3 h-10 justify-center" />
         <div className="truncate text-sm font-semibold text-ink">
           {orgName || "EduGram"}
         </div>

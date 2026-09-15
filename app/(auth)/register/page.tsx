@@ -104,7 +104,7 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-brand-50 via-canvas to-brand-100 px-4 py-10">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-6 flex justify-center"><Logo className="h-20" /></div>
+        <div className="mb-6 flex justify-center"><Logo className="h-14" /></div>
 
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm md:p-8">
           <h1 className="text-center text-2xl font-semibold text-ink">

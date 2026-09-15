@@ -24,8 +24,8 @@ export function Logo({
       <Image
         src={src}
         alt="EDUGRAM SYSTEM"
-        width={180}
-        height={180}
+        width={420}
+        height={168}
         className="h-full w-auto"
         priority
       />
