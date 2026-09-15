@@ -8,10 +8,14 @@ export function DashboardShell({
   children,
   orgName,
   userEmail,
+  trialDaysLeft,
+  debtorCount,
 }: {
   children: React.ReactNode;
   orgName?: string;
   userEmail?: string;
+  trialDaysLeft: number | null;
+  debtorCount: number;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -40,6 +44,8 @@ export function DashboardShell({
         <Header
           orgName={orgName}
           userEmail={userEmail}
+          trialDaysLeft={trialDaysLeft}
+          debtorCount={debtorCount}
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="p-4 md:p-6">{children}</main>

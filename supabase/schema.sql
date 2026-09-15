@@ -18,6 +18,9 @@ create table organizations (
   name text not null,
   type text not null check (type in ('maktab', 'bogcha', 'markaz')),
   owner_id uuid references auth.users(id) unique,
+  -- Obuna: ro'yxatdan o'tganda 14 kunlik bepul sinov beriladi.
+  plan text not null default 'trial' check (plan in ('trial', 'active', 'expired')),
+  trial_ends_at timestamptz default (now() + interval '14 days'),
   created_at timestamptz default now()
 );
 

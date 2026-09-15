@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /**
- * IPRO TIZIM dizayn tizimi — yorug' mavzu, yashil-turkuaz aksent.
+ * EduGram dizayn tizimi — yorug' mavzu, yashil-turkuaz aksent.
  *
  * Ranglarni shu yerda o'zgartirsangiz butun ilova bo'ylab qo'llanadi.
  * Komponentlarda `bg-canvas`, `text-brand-600`, `border-line` kabi
@@ -31,6 +31,74 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/**
+ * To'q mavzu.
+ *
+ * Komponentlar rangni to'g'ridan-to'g'ri yozmasdan `surface`, `canvas`,
+ * `ink` tokenlaridan oladi, shuning uchun bu yerda faqat tokenlarning
+ * qiymatini almashtirish kifoya.
+ *
+ * Standart holatda tizim sozlamasiga ergashadi; foydalanuvchi o'zi
+ * tanlasa, `data-theme` atributi ustun turadi. Atribut server'da
+ * cookie'dan o'qib qo'yiladi — shuning uchun sahifa "yonib" ketmaydi.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --color-canvas: #0e1620;
+    --color-surface: #16202c;
+    --color-line: #26323f;
+
+    --color-ink: #e8eef5;
+    --color-ink-muted: #9aa8b8;
+    --color-ink-faint: #6b7b8c;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-canvas: #0e1620;
+  --color-surface: #16202c;
+  --color-line: #26323f;
+
+  --color-ink: #e8eef5;
+  --color-ink-muted: #9aa8b8;
+  --color-ink-faint: #6b7b8c;
+}
+
+/**
+ * Mavzu almashtirgichdagi ikonkalar. Qaysi biri ko'rinishi CSS orqali
+ * hal qilinadi — shunda tugma JS holatiga muhtoj bo'lmaydi va
+ * server bilan brauzer render'i hech qachon farq qilmaydi.
+ */
+.theme-icon-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-icon-dark {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .theme-icon-light {
+    display: none;
+  }
+}
+
+:root[data-theme="dark"] .theme-icon-dark {
+  display: block;
+}
+:root[data-theme="dark"] .theme-icon-light {
+  display: none;
+}
+:root[data-theme="light"] .theme-icon-dark {
+  display: none;
+}
+:root[data-theme="light"] .theme-icon-light {
+  display: block;
 }
 
 body {

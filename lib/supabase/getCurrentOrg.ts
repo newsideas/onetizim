@@ -12,6 +12,8 @@ export interface CurrentOrg {
   director_last_name: string | null;
   director_first_name: string | null;
   phone: string | null;
+  plan: string | null;
+  trial_ends_at: string | null;
 }
 
 /** Joriy (kirgan) foydalanuvchining tashkiloti — turi bilan birga. */

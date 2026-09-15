@@ -45,3 +45,20 @@ export function bugungiKun(): string {
   const jsDay = new Date().getDay(); // 0 = Yakshanba
   return HAFTA_KUNLARI[(jsDay + 6) % 7];
 }
+
+/**
+ * Berilgan sanagacha necha kun qolganini qaytaradi (bugun = 0).
+ * Sana yo'q bo'lsa null — chaqiruvchi ko'rsatkichni umuman chizmaydi.
+ */
+export function daysUntil(date: string | null | undefined): number | null {
+  if (!date) return null;
+
+  const target = new Date(date);
+  if (Number.isNaN(target.getTime())) return null;
+
+  const startOfDay = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+  const diffMs = startOfDay(target) - startOfDay(new Date());
+  return Math.round(diffMs / 86_400_000);
+}

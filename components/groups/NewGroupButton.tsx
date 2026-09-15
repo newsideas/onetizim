@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -8,7 +9,9 @@ import { GroupForm } from "@/components/groups/GroupForm";
 import { useSegment } from "@/components/layout/SegmentProvider";
 
 export function NewGroupButton() {
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  // Header'dagi "+" menyusi /groups?new=1 ga o'tadi — modal darhol ochilsin.
+  const [open, setOpen] = useState(() => searchParams.get("new") === "1");
   const { terms } = useSegment();
 
   return (
