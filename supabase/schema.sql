@@ -1,8 +1,8 @@
 -- schema.sql — toza bazani bir marta o'rnatish uchun to'liq sxema.
 --
--- Bu fayl 0001–0009 migratsiyalarining YAKUNIY natijasi. Yangi Supabase
--- loyihasida migratsiyalarni bittalab ishga tushirish o'rniga shuni bir
--- marta SQL Editor'da ishga tushiring.
+-- Bu fayl barcha migratsiyalarning (0001–0012) YAKUNIY natijasi.
+-- Yangi Supabase loyihasida migratsiyalarni bittalab ishga tushirish
+-- o'rniga shu bitta faylni SQL Editor'da ishga tushiring.
 --
 -- Mavjud (ishlab turgan) bazaga qo'llamang — u yerda migratsiyalar
 -- ketma-ket qo'llanilgan bo'lishi kerak.
@@ -21,6 +21,18 @@ create table organizations (
   -- Obuna: ro'yxatdan o'tganda 14 kunlik bepul sinov beriladi.
   plan text not null default 'trial' check (plan in ('trial', 'active', 'expired')),
   trial_ends_at timestamptz default (now() + interval '14 days'),
+
+  -- Rasmiy rekvizitlar: shartnoma va hisobotlarda ishlatiladi.
+  tin text,                                -- STIR (soliq to'lovchi raqami)
+  region text,
+  district text,
+  address text,
+
+  -- Rahbar — tizimning mas'ul shaxsi.
+  director_last_name text,
+  director_first_name text,
+  phone text,
+
   created_at timestamptz default now()
 );
 
@@ -74,11 +86,46 @@ create table groups (
 );
 
 -- O'quvchi / bola
+-- Shartnoma rasmiy hujjat bo'lgani uchun o'quvchi haqida to'liq
+-- ma'lumot saqlanadi: FISH alohida maydonlarda, guvohnoma/pasport,
+-- ota-ona (vasiy) va yashash manzili.
 create table students (
   id uuid primary key default gen_random_uuid(),
   org_id uuid references organizations(id) on delete cascade,
   group_id uuid references groups(id) on delete set null,
+
+  -- FISH maydonlaridan trigger orqali yig'iladi (pastga qarang).
   full_name text not null,
+  last_name text,
+  first_name text,
+  middle_name text,
+  birth_date date,
+  gender text check (gender in ('erkak','ayol')),
+  nationality text,
+
+  -- Tug'ilganlik haqida guvohnoma
+  birth_cert_series text,
+  birth_cert_number text,
+
+  -- Pasport (katta yoshdagilar uchun)
+  passport_number text,
+  passport_pinfl text,
+  passport_issued_date date,
+
+  -- Ota-ona yoki vasiy
+  parent_full_name text,
+  parent_relation text,
+  parent_passport_number text,
+  parent_pinfl text,
+  parent_passport_issued_date date,
+  parent_passport_issued_by text,
+  parent_phone text,
+
+  -- Yashash manzili
+  region text,
+  district text,
+  address text,
+
   phone text,
   parent_telegram_chat_id bigint,
   balance numeric not null default 0,      -- manfiy = qarzdor
@@ -256,6 +303,29 @@ create trigger trg_apply_charge_to_balance
 after insert on charges
 for each row
 execute function apply_charge_to_balance();
+
+-- full_name'ni FISH maydonlaridan avtomatik yig'ish.
+-- Eski yozuvlar va faqat full_name kiritilgan holatlar buzilmaydi.
+create or replace function public.sync_student_full_name()
+returns trigger
+language plpgsql
+as $
+begin
+  if new.last_name is not null or new.first_name is not null then
+    new.full_name := trim(
+      coalesce(new.last_name, '') || ' ' ||
+      coalesce(new.first_name, '') || ' ' ||
+      coalesce(new.middle_name, '')
+    );
+  end if;
+  return new;
+end;
+$;
+
+create trigger trg_sync_student_full_name
+before insert or update on students
+for each row
+execute function sync_student_full_name();
 
 -- ============================================================
 -- OYLIK HISOBNI YOPISH
