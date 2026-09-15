@@ -6,6 +6,8 @@ import { GroupInfoCard } from "@/components/groups/GroupInfoCard";
 import { EditGroupButton } from "@/components/groups/EditGroupButton";
 import { GROUP_SELECT, type GroupRow } from "@/components/groups/GroupsTable";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
+import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { termsFor, type Segment } from "@/lib/segment";
 
 export default async function GroupDetailPage({
   params,
@@ -15,7 +17,7 @@ export default async function GroupDetailPage({
   const { groupId } = await params;
   const supabase = await createClient();
 
-  const [{ data: groupData }, { data: students }] = await Promise.all([
+  const [{ data: groupData }, { data: students }, org] = await Promise.all([
     supabase.from("groups").select(GROUP_SELECT).eq("id", groupId).maybeSingle(),
     supabase
       .from("students")
@@ -23,6 +25,7 @@ export default async function GroupDetailPage({
       .eq("group_id", groupId)
       .neq("status", "archived")
       .order("full_name"),
+    getCurrentOrg(supabase),
   ]);
 
   if (!groupData) notFound();
@@ -30,6 +33,8 @@ export default async function GroupDetailPage({
   // Supabase inferi to-one join'ni massiv deb hisoblaydi (0008 izohiga qarang).
   const group = groupData as unknown as GroupRow;
   const studentRows = (students ?? []) as unknown as StudentTableRow[];
+  const segment = (org.type ?? "markaz") as Segment;
+  const terms = termsFor(segment);
 
   return (
     <div className="space-y-4">
@@ -38,7 +43,7 @@ export default async function GroupDetailPage({
           <Link
             href="/groups"
             className="rounded-lg p-2 text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
-            aria-label="Guruhlarga qaytish"
+            aria-label={`${terms.groupPlural}ga qaytish`}
           >
             <ArrowLeft size={18} />
           </Link>
@@ -65,16 +70,21 @@ export default async function GroupDetailPage({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <GroupInfoCard group={group} studentCount={studentRows.length} />
+          <GroupInfoCard
+            group={group}
+            studentCount={studentRows.length}
+            segment={segment}
+          />
         </div>
 
         <div className="space-y-2 lg:col-span-2">
           <h2 className="text-sm font-semibold text-ink-muted">
-            Guruh o&apos;quvchilari
+            {terms.group} {terms.studentPlural.toLowerCase()}i
           </h2>
           <StudentsTable
             students={studentRows}
-            emptyText="Bu guruhda hali o'quvchi yo'q."
+            emptyText={`Bu ${terms.group.toLowerCase()}da hali ${terms.student.toLowerCase()} yo'q.`}
+            groupLabel={terms.group}
           />
         </div>
       </div>

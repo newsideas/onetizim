@@ -5,7 +5,7 @@ export const groupSchema = z.object({
   subject: z.string().optional(),
   teacherName: z.string().optional(),
   room: z.string().optional(),
-  scheduleDays: z.array(z.string()).min(1, "Kamida bitta kun tanlang"),
+  scheduleDays: z.array(z.string()),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   monthlyPrice: z

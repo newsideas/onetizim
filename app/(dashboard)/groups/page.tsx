@@ -6,12 +6,13 @@ import {
 } from "@/components/groups/GroupsTable";
 import { NewGroupButton } from "@/components/groups/NewGroupButton";
 import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
-import { termsFor } from "@/lib/segment";
+import { termsFor, type Segment } from "@/lib/segment";
 
 export default async function GroupsPage() {
   const supabase = await createClient();
 
-  const terms = termsFor((await getCurrentOrg(supabase)).type);
+  const segment = ((await getCurrentOrg(supabase)).type ?? "markaz") as Segment;
+  const terms = termsFor(segment);
 
   const { data: groups } = await supabase
     .from("groups")
@@ -24,7 +25,10 @@ export default async function GroupsPage() {
         <h1 className="text-xl font-semibold text-ink">{terms.groupPlural}</h1>
         <NewGroupButton />
       </div>
-      <GroupsTable groups={(groups ?? []) as unknown as GroupRow[]} />
+      <GroupsTable
+        groups={(groups ?? []) as unknown as GroupRow[]}
+        segment={segment}
+      />
     </div>
   );
 }

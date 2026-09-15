@@ -9,10 +9,13 @@ export function StudentsTable({
   students,
   showStatus = true,
   emptyText = "Hali o'quvchilar yo'q.",
+  groupLabel = "Guruh",
 }: {
   students: StudentTableRow[];
   showStatus?: boolean;
   emptyText?: string;
+  /** Muassasa turiga qarab "Sinf" yoki "Guruh". */
+  groupLabel?: string;
 }) {
   if (students.length === 0) {
     return (
@@ -28,7 +31,7 @@ export function StudentsTable({
         <thead className="bg-canvas text-ink-muted">
           <tr>
             <th className="px-4 py-3 font-medium">Ism familiyasi</th>
-            <th className="px-4 py-3 font-medium">Guruh</th>
+            <th className="px-4 py-3 font-medium">{groupLabel}</th>
             <th className="px-4 py-3 font-medium">Telefon</th>
             <th className="px-4 py-3 font-medium">Balans</th>
             {showStatus && <th className="px-4 py-3 font-medium">Holati</th>}

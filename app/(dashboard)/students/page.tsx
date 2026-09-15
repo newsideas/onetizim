@@ -44,9 +44,10 @@ export default async function StudentsPage({
         students={(students as StudentTableRow[]) ?? []}
         emptyText={
           status === "active"
-            ? "Hali aktiv o'quvchilar yo'q. \"Yangi o'quvchi\" tugmasi orqali qo'shing."
-            : "Bu holatda o'quvchi yo'q."
+            ? `Hali aktiv ${terms.studentPlural.toLowerCase()} yo'q. "${terms.newStudent}" tugmasi orqali qo'shing.`
+            : `Bu holatda ${terms.student.toLowerCase()} yo'q.`
         }
+        groupLabel={terms.group}
       />
     </div>
   );
