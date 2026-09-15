@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Logo } from "@/components/ui/Logo";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -43,10 +44,7 @@ export default function LoginPage() {
 
       <div className="flex w-full items-center justify-center px-4 py-10 lg:w-1/2">
         <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8 shadow-sm">
-          {/* Logo joyi (mobil va desktop) */}
-          <div className="mb-6 flex h-12 w-36 items-center rounded-lg border border-dashed border-brand-200 px-3 text-xs text-brand-600">
-            Logotip uchun joy
-          </div>
+          <Logo className="mb-6 h-20" />
 
           <h1 className="text-2xl font-semibold text-ink">Tizimga kirish</h1>
           <p className="mt-1 mb-6 text-sm text-ink-muted">

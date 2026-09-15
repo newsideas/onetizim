@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Logo } from "@/components/ui/Logo";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -103,10 +104,7 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-brand-50 via-canvas to-brand-100 px-4 py-10">
       <div className="mx-auto max-w-4xl">
-        {/* Logotip uchun joy — mijoz o'zi qo'yadi */}
-        <div className="mx-auto mb-6 flex h-12 w-36 items-center justify-center rounded-lg border border-dashed border-brand-300 text-xs text-brand-600">
-          Logotip uchun joy
-        </div>
+        <div className="mb-6 flex justify-center"><Logo className="h-20" /></div>
 
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm md:p-8">
           <h1 className="text-center text-2xl font-semibold text-ink">

@@ -6,6 +6,7 @@ import {
   Users,
   ShieldCheck,
 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 const FEATURES = [
   {
@@ -47,10 +48,7 @@ const FEATURES = [
 export function AuthShowcase() {
   return (
     <div className="hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:px-12 xl:px-20">
-      {/* Logo joyi */}
-      <div className="mb-8 flex h-14 w-44 items-center rounded-lg border border-dashed border-brand-200 px-3 text-sm text-brand-600">
-        Logotip uchun joy
-      </div>
+      <Logo className="mb-8 h-24" />
 
       <h2 className="text-2xl font-semibold text-ink">
         Muassasangizni bitta tizimda to&apos;laqonli boshqaring

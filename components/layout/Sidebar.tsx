@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buildNavItems } from "@/lib/navigation";
 import { useSegment } from "@/components/layout/SegmentProvider";
+import { Logo } from "@/components/ui/Logo";
 
 export function Sidebar({
   onNavigate,
@@ -20,6 +21,7 @@ export function Sidebar({
     <nav className="flex h-full flex-col bg-surface">
       {/* Muassasa nomi va turi */}
       <div className="border-b border-line px-4 py-4">
+        <Logo className="mb-3 h-16" />
         <div className="truncate text-base font-semibold text-ink">
           {orgName || "IPRO TIZIM"}
         </div>
