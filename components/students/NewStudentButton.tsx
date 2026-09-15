@@ -19,7 +19,7 @@ export function NewStudentButton({ groups }: { groups: GroupOption[] }) {
 
       <Modal open={open} onClose={() => setOpen(false)} title={`${terms.newStudent} qo'shish`}>
         {groups.length === 0 ? (
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-ink-muted">
             Avval kamida bitta {terms.group.toLowerCase()} yarating, keyin
             {terms.student.toLowerCase()} qo&apos;shishingiz mumkin.
           </p>

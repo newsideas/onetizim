@@ -71,8 +71,8 @@ export function CatalogManager({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-white/10 p-4">
-      <h2 className="text-sm font-semibold text-white">{title}</h2>
+    <div className="space-y-3 rounded-xl border border-line p-4">
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
 
       <form
         className="flex gap-2"
@@ -94,11 +94,11 @@ export function CatalogManager({
       <FormError message={error ?? undefined} />
 
       {items.length === 0 ? (
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-ink-faint">
           Hali qo&apos;shilmagan. Guruh yaratganda ham avtomatik qo&apos;shiladi.
         </p>
       ) : (
-        <ul className="divide-y divide-white/10">
+        <ul className="divide-y divide-line">
           {items.map((item) => (
             <li key={item.id} className="flex items-center gap-2 py-2">
               {editingId === item.id ? (
@@ -112,7 +112,7 @@ export function CatalogManager({
                     type="button"
                     onClick={() => handleRename(item.id)}
                     disabled={pending}
-                    className="rounded-lg p-1.5 text-green-400 hover:bg-white/5"
+                    className="rounded-lg p-1.5 text-green-400 hover:bg-canvas"
                     aria-label="Saqlash"
                   >
                     <Check size={16} />
@@ -120,7 +120,7 @@ export function CatalogManager({
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
-                    className="rounded-lg p-1.5 text-white/50 hover:bg-white/5"
+                    className="rounded-lg p-1.5 text-ink-faint hover:bg-canvas"
                     aria-label="Bekor qilish"
                   >
                     <X size={16} />
@@ -128,14 +128,14 @@ export function CatalogManager({
                 </>
               ) : (
                 <>
-                  <span className="flex-1 text-sm text-white">{item.name}</span>
+                  <span className="flex-1 text-sm text-ink">{item.name}</span>
                   <button
                     type="button"
                     onClick={() => {
                       setEditingId(item.id);
                       setEditingName(item.name);
                     }}
-                    className="rounded-lg p-1.5 text-white/50 hover:bg-white/5 hover:text-white"
+                    className="rounded-lg p-1.5 text-ink-faint hover:bg-canvas hover:text-ink"
                     aria-label="Nomini o'zgartirish"
                   >
                     <Pencil size={15} />
@@ -144,7 +144,7 @@ export function CatalogManager({
                     type="button"
                     onClick={() => run(() => deleteCatalogItem(table, item.id))}
                     disabled={pending}
-                    className="rounded-lg p-1.5 text-white/50 hover:bg-red-500/10 hover:text-red-400"
+                    className="rounded-lg p-1.5 text-ink-faint hover:bg-red-500/10 hover:text-red-400"
                     aria-label="O'chirish"
                   >
                     <Trash2 size={15} />

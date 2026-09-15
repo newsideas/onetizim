@@ -6,8 +6,8 @@ import type { GroupRow } from "@/components/groups/GroupsTable";
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="text-white/50">{label}</span>
-      <span className="text-right text-white">{value}</span>
+      <span className="text-ink-faint">{label}</span>
+      <span className="text-right text-ink">{value}</span>
     </div>
   );
 }
@@ -32,9 +32,9 @@ export function GroupInfoCard({
       : "—";
 
   return (
-    <div className="space-y-5 rounded-xl border border-white/10 p-4 text-sm">
+    <div className="space-y-5 rounded-xl border border-line p-4 text-sm">
       <div>
-        <h2 className="mb-3 text-xs font-semibold tracking-wide text-white/40 uppercase">
+        <h2 className="mb-3 text-xs font-semibold tracking-wide text-ink-faint uppercase">
           Guruh ma&apos;lumotlari
         </h2>
         <div className="space-y-2.5">
@@ -53,8 +53,8 @@ export function GroupInfoCard({
         </div>
       </div>
 
-      <div className="border-t border-white/10 pt-4">
-        <h2 className="mb-3 text-xs font-semibold tracking-wide text-white/40 uppercase">
+      <div className="border-t border-line pt-4">
+        <h2 className="mb-3 text-xs font-semibold tracking-wide text-ink-faint uppercase">
           Dars jadvali
         </h2>
         <div className="space-y-2.5">
@@ -74,8 +74,8 @@ export function GroupInfoCard({
         </div>
       </div>
 
-      <div className="border-t border-white/10 pt-4">
-        <h2 className="mb-3 text-xs font-semibold tracking-wide text-white/40 uppercase">
+      <div className="border-t border-line pt-4">
+        <h2 className="mb-3 text-xs font-semibold tracking-wide text-ink-faint uppercase">
           Moliyaviy
         </h2>
         <div className="space-y-2.5">

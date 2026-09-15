@@ -16,16 +16,16 @@ export function StudentsTable({
 }) {
   if (students.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+      <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
         {emptyText}
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/5 text-white/60">
+        <thead className="bg-canvas text-ink-muted">
           <tr>
             <th className="px-4 py-3 font-medium">Ism familiyasi</th>
             <th className="px-4 py-3 font-medium">Guruh</th>
@@ -34,19 +34,19 @@ export function StudentsTable({
             {showStatus && <th className="px-4 py-3 font-medium">Holati</th>}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/10">
+        <tbody className="divide-y divide-line">
           {students.map((student) => (
-            <tr key={student.id} className="hover:bg-white/5">
+            <tr key={student.id} className="hover:bg-canvas">
               <td className="px-4 py-3">
                 <Link
                   href={`/students/${student.id}`}
-                  className="font-medium text-white hover:text-blue-400"
+                  className="font-medium text-ink hover:text-brand-600"
                 >
                   {student.full_name}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-white/70">{student.group?.name || "—"}</td>
-              <td className="px-4 py-3 text-white/70">{student.phone || "—"}</td>
+              <td className="px-4 py-3 text-ink-muted">{student.group?.name || "—"}</td>
+              <td className="px-4 py-3 text-ink-muted">{student.phone || "—"}</td>
               <td className="px-4 py-3">
                 <BalanceBadge balance={student.balance} />
               </td>

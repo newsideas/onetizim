@@ -19,8 +19,8 @@ export function StudentsFilter({ current }: { current: string }) {
           href={f.value === "active" ? "/students" : `/students?status=${f.value}`}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
             current === f.value
-              ? "bg-blue-600 text-white"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
+              ? "bg-brand-600 text-white"
+              : "bg-canvas text-ink-muted hover:bg-line"
           }`}
         >
           {f.label}

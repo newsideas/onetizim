@@ -38,7 +38,7 @@ export default async function SchedulePage({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-white">Dars jadvali</h1>
+        <h1 className="text-xl font-semibold text-ink">Dars jadvali</h1>
         <ScheduleViewToggle view={view} day={day} />
       </div>
 

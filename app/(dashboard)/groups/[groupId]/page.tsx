@@ -37,12 +37,12 @@ export default async function GroupDetailPage({
         <div className="flex items-center gap-3">
           <Link
             href="/groups"
-            className="rounded-lg p-2 text-white/50 transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-lg p-2 text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
             aria-label="Guruhlarga qaytish"
           >
             <ArrowLeft size={18} />
           </Link>
-          <h1 className="text-xl font-semibold text-white">{group.name}</h1>
+          <h1 className="text-xl font-semibold text-ink">{group.name}</h1>
         </div>
         <EditGroupButton
           groupId={groupId}
@@ -69,7 +69,7 @@ export default async function GroupDetailPage({
         </div>
 
         <div className="space-y-2 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-white/70">
+          <h2 className="text-sm font-semibold text-ink-muted">
             Guruh o&apos;quvchilari
           </h2>
           <StudentsTable

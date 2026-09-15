@@ -27,7 +27,9 @@ export default async function DashboardLayout({
 
   return (
     <SegmentProvider segment={org.type}>
-      <DashboardShell orgName={org.name}>{children}</DashboardShell>
+      <DashboardShell orgName={org.name} userEmail={user.email}>
+        {children}
+      </DashboardShell>
     </SegmentProvider>
   );
 }

@@ -13,7 +13,7 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
 const STATUS_COLORS: Record<AttendanceStatus, string> = {
   present: "bg-green-600 text-white",
   absent: "bg-red-600 text-white",
-  late: "bg-yellow-600 text-white",
+  late: "bg-amber-500 text-white",
 };
 
 const STATUS_ORDER: AttendanceStatus[] = ["present", "absent", "late"];
@@ -41,25 +41,25 @@ export function AttendanceTable({
 
   if (students.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+      <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
         Bu guruhda o&apos;quvchi yo&apos;q.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/5 text-white/60">
+        <thead className="bg-canvas text-ink-muted">
           <tr>
             <th className="px-4 py-3 font-medium">Ism familiyasi</th>
             <th className="px-4 py-3 font-medium">Davomat</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/10">
+        <tbody className="divide-y divide-line">
           {students.map((student) => (
-            <tr key={student.id} className="hover:bg-white/5">
-              <td className="px-4 py-3 text-white">{student.full_name}</td>
+            <tr key={student.id} className="hover:bg-canvas">
+              <td className="px-4 py-3 text-ink">{student.full_name}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
                   {STATUS_ORDER.map((status) => (
@@ -71,7 +71,7 @@ export function AttendanceTable({
                       className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
                         student.status === status
                           ? STATUS_COLORS[status]
-                          : "bg-white/5 text-white/60 hover:bg-white/10"
+                          : "bg-canvas text-ink-muted hover:bg-line"
                       }`}
                     >
                       {STATUS_LABELS[status]}

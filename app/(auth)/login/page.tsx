@@ -37,9 +37,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0f1420] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-4">
       <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-semibold text-white">
+        <h1 className="mb-6 text-center text-2xl font-semibold text-ink">
           Kirish
         </h1>
 
@@ -75,9 +75,9 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-white/60">
+        <p className="mt-6 text-center text-sm text-ink-muted">
           Hisobingiz yo&apos;qmi?{" "}
-          <Link href="/register" className="text-blue-400 hover:underline">
+          <Link href="/register" className="text-brand-600 hover:underline">
             Ro&apos;yxatdan o&apos;tish
           </Link>
         </p>

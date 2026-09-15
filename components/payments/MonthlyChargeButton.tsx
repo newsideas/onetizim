@@ -55,7 +55,7 @@ export function MonthlyChargeButton() {
 
       <Modal open={open} onClose={handleClose} title="Oylik hisobni yopish">
         <div className="space-y-4">
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-ink-muted">
             Tanlangan oy uchun barcha aktiv o&apos;quvchilarning balansidan
             guruhining oylik narxi ayiriladi. Allaqachon hisoblangan
             o&apos;quvchilar ikkinchi marta hisoblanmaydi.

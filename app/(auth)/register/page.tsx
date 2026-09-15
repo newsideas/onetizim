@@ -70,12 +70,12 @@ export default function RegisterPage() {
 
   if (confirmEmailSent) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0f1420] px-4">
-        <div className="max-w-sm text-center text-white">
-          <h1 className="mb-2 text-xl font-semibold">Email tasdiqlanishi kerak</h1>
-          <p className="text-white/60">
+      <main className="flex min-h-screen items-center justify-center bg-canvas px-4">
+        <div className="max-w-sm text-center">
+          <h1 className="mb-2 text-xl font-semibold text-ink">Email tasdiqlanishi kerak</h1>
+          <p className="text-ink-muted">
             Emailingizga tasdiqlash havolasi yuborildi. Tasdiqlagach,{" "}
-            <Link href="/login" className="text-blue-400 hover:underline">
+            <Link href="/login" className="text-brand-600 hover:underline">
               tizimga kiring
             </Link>{" "}
             — tashkilotingiz avtomatik yaratiladi.
@@ -86,9 +86,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0f1420] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-4">
       <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-semibold text-white">
+        <h1 className="mb-6 text-center text-2xl font-semibold text-ink">
           Ro&apos;yxatdan o&apos;tish
         </h1>
 
@@ -119,22 +119,22 @@ export default function RegisterPage() {
                     onClick={() => setValue("orgType", s, { shouldValidate: true })}
                     className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
                       isSelected
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                        ? "border-brand-500 bg-brand-50"
+                        : "border-line bg-surface hover:bg-canvas"
                     }`}
                   >
                     <div
                       className={`rounded-lg p-2 ${
                         isSelected
-                          ? "bg-blue-500/20 text-blue-400"
-                          : "bg-white/5 text-white/50"
+                          ? "bg-brand-100 text-brand-600"
+                          : "bg-canvas text-ink-faint"
                       }`}
                     >
                       <Icon size={18} />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-white">{t.label}</div>
-                      <div className="text-xs text-white/50">{t.description}</div>
+                      <div className="text-sm font-medium text-ink">{t.label}</div>
+                      <div className="text-xs text-ink-muted">{t.description}</div>
                     </div>
                   </button>
                 );
@@ -174,9 +174,9 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-white/60">
+        <p className="mt-6 text-center text-sm text-ink-muted">
           Hisobingiz bormi?{" "}
-          <Link href="/login" className="text-blue-400 hover:underline">
+          <Link href="/login" className="text-brand-600 hover:underline">
             Kirish
           </Link>
         </p>

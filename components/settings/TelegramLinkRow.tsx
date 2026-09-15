@@ -21,20 +21,20 @@ export function TelegramLinkRow({
   }
 
   return (
-    <tr className="hover:bg-white/5">
-      <td className="px-4 py-3 text-white">{studentName}</td>
+    <tr className="hover:bg-canvas">
+      <td className="px-4 py-3 text-ink">{studentName}</td>
       <td className="px-4 py-3">
         {connected ? (
           <span className="text-green-400">Ulangan</span>
         ) : (
-          <span className="text-white/50">Ulanmagan</span>
+          <span className="text-ink-faint">Ulanmagan</span>
         )}
       </td>
       <td className="px-4 py-3">
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="inline-flex items-center gap-2 rounded-lg bg-canvas px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-line hover:text-ink"
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? "Nusxalandi" : "Havolani nusxalash"}

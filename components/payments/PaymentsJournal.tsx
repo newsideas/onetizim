@@ -15,7 +15,7 @@ export interface PaymentJournalRow {
 export function PaymentsJournal({ payments }: { payments: PaymentJournalRow[] }) {
   if (payments.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+      <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
         Hali to&apos;lovlar yo&apos;q. &quot;Yangi to&apos;lov&quot; tugmasi orqali
         kiriting.
       </div>
@@ -23,9 +23,9 @@ export function PaymentsJournal({ payments }: { payments: PaymentJournalRow[] })
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/5 text-white/60">
+        <thead className="bg-canvas text-ink-muted">
           <tr>
             <th className="px-4 py-3 font-medium">O&apos;quvchi</th>
             <th className="px-4 py-3 font-medium">Summa</th>
@@ -34,16 +34,16 @@ export function PaymentsJournal({ payments }: { payments: PaymentJournalRow[] })
             <th className="px-4 py-3 font-medium">Izoh</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/10">
+        <tbody className="divide-y divide-line">
           {payments.map((p) => (
-            <tr key={p.id} className="hover:bg-white/5">
-              <td className="px-4 py-3 text-white">{p.student?.full_name || "—"}</td>
-              <td className="px-4 py-3 text-white/70">{formatSom(p.amount)}</td>
-              <td className="px-4 py-3 text-white/70">
+            <tr key={p.id} className="hover:bg-canvas">
+              <td className="px-4 py-3 text-ink">{p.student?.full_name || "—"}</td>
+              <td className="px-4 py-3 text-ink-muted">{formatSom(p.amount)}</td>
+              <td className="px-4 py-3 text-ink-muted">
                 {METHOD_LABELS[p.method] ?? p.method}
               </td>
-              <td className="px-4 py-3 text-white/70">{formatDate(p.paid_at)}</td>
-              <td className="px-4 py-3 text-white/70">{p.note || "—"}</td>
+              <td className="px-4 py-3 text-ink-muted">{formatDate(p.paid_at)}</td>
+              <td className="px-4 py-3 text-ink-muted">{p.note || "—"}</td>
             </tr>
           ))}
         </tbody>

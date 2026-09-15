@@ -7,8 +7,8 @@ export const Input = forwardRef<
   return (
     <input
       ref={ref}
-      className={`w-full rounded-lg border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-        error ? "border-red-500" : "border-white/10"
+      className={`w-full rounded-lg border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none ${
+        error ? "border-red-400" : "border-line"
       } ${className}`}
       {...props}
     />

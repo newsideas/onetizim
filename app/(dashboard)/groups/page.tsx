@@ -21,7 +21,7 @@ export default async function GroupsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-white">{terms.groupPlural}</h1>
+        <h1 className="text-xl font-semibold text-ink">{terms.groupPlural}</h1>
         <NewGroupButton />
       </div>
       <GroupsTable groups={(groups ?? []) as unknown as GroupRow[]} />

@@ -13,9 +13,9 @@ export default async function TelegramSettingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-white">Telegram bot</h1>
+      <h1 className="text-xl font-semibold text-ink">Telegram bot</h1>
 
-      <div className="rounded-xl border border-white/10 p-4 text-sm text-white/60">
+      <div className="rounded-xl border border-line p-4 text-sm text-ink-muted">
         <p>
           Har bir o&apos;quvchi uchun alohida havola bor. Havolani ota-onaga
           yuboring — u bosgach bot ulanadi va farzandi haqidagi xabarlarni
@@ -23,7 +23,7 @@ export default async function TelegramSettingsPage() {
         </p>
         {botUsername ? (
           <p className="mt-2">
-            Bot: <span className="text-white">@{botUsername}</span>
+            Bot: <span className="text-ink">@{botUsername}</span>
           </p>
         ) : (
           <p className="mt-2 text-red-400">
@@ -33,20 +33,20 @@ export default async function TelegramSettingsPage() {
       </div>
 
       {!students || students.length === 0 ? (
-        <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+        <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
           Avval o&apos;quvchi qo&apos;shing.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/10">
+        <div className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full text-left text-sm">
-            <thead className="bg-white/5 text-white/60">
+            <thead className="bg-canvas text-ink-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">O&apos;quvchi</th>
                 <th className="px-4 py-3 font-medium">Holati</th>
                 <th className="px-4 py-3 font-medium">Ulash havolasi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-line">
               {students.map((student) => (
                 <TelegramLinkRow
                   key={student.id}

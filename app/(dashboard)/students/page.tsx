@@ -37,7 +37,7 @@ export default async function StudentsPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-white">{terms.studentPlural}</h1>
+        <h1 className="text-xl font-semibold text-ink">{terms.studentPlural}</h1>
         <NewStudentButton groups={groups ?? []} />
       </div>
 

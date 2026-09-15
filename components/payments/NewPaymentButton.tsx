@@ -17,7 +17,7 @@ export function NewPaymentButton({ students }: { students: StudentOption[] }) {
 
       <Modal open={open} onClose={() => setOpen(false)} title="Yangi to'lov kiritish">
         {students.length === 0 ? (
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-ink-muted">
             Avval kamida bitta o&apos;quvchi qo&apos;shing.
           </p>
         ) : (

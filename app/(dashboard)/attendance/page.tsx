@@ -19,8 +19,8 @@ export default async function AttendancePage({
   if (!groups || groups.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-white">Davomat</h1>
-        <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+        <h1 className="text-xl font-semibold text-ink">Davomat</h1>
+        <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
           Avval kamida bitta guruh yarating.
         </div>
       </div>
@@ -37,7 +37,7 @@ export default async function AttendancePage({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-white">Davomat</h1>
+      <h1 className="text-xl font-semibold text-ink">Davomat</h1>
       <AttendanceFilters groups={groups} groupId={groupId} date={date} />
       <AttendanceTable
         key={`${groupId}-${date}`}

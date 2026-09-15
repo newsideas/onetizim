@@ -16,16 +16,16 @@ export const GROUP_SELECT =
 export function GroupsTable({ groups }: { groups: GroupRow[] }) {
   if (groups.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+      <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
         Hali guruhlar yo&apos;q. &quot;Yangi guruh&quot; tugmasi orqali qo&apos;shing.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/5 text-white/60">
+        <thead className="bg-canvas text-ink-muted">
           <tr>
             <th className="px-4 py-3 font-medium">Nomi</th>
             <th className="px-4 py-3 font-medium">Fan</th>
@@ -35,26 +35,26 @@ export function GroupsTable({ groups }: { groups: GroupRow[] }) {
             <th className="px-4 py-3 font-medium">Narxi</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/10">
+        <tbody className="divide-y divide-line">
           {groups.map((group) => (
-            <tr key={group.id} className="hover:bg-white/5">
+            <tr key={group.id} className="hover:bg-canvas">
               <td className="px-4 py-3">
                 <Link
                   href={`/groups/${group.id}`}
-                  className="font-medium text-white hover:text-blue-400"
+                  className="font-medium text-ink hover:text-brand-600"
                 >
                   {group.name}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-white/70">{group.course?.name || "—"}</td>
-              <td className="px-4 py-3 text-white/70">
+              <td className="px-4 py-3 text-ink-muted">{group.course?.name || "—"}</td>
+              <td className="px-4 py-3 text-ink-muted">
                 {group.teacher?.full_name || "—"}
               </td>
-              <td className="px-4 py-3 text-white/70">{group.room?.name || "—"}</td>
-              <td className="px-4 py-3 text-white/70">
+              <td className="px-4 py-3 text-ink-muted">{group.room?.name || "—"}</td>
+              <td className="px-4 py-3 text-ink-muted">
                 {group.schedule_days?.map((d) => d.slice(0, 3)).join(", ") || "—"}
               </td>
-              <td className="px-4 py-3 text-white/70">
+              <td className="px-4 py-3 text-ink-muted">
                 {formatSom(group.monthly_price)}
               </td>
             </tr>

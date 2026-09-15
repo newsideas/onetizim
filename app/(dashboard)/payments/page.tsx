@@ -27,7 +27,7 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-white">To&apos;lovlar</h1>
+        <h1 className="text-xl font-semibold text-ink">To&apos;lovlar</h1>
         <div className="flex gap-2">
           <MonthlyChargeButton />
           <NewPaymentButton students={students ?? []} />
@@ -37,7 +37,7 @@ export default async function PaymentsPage() {
       <DebtorsList debtors={debtors ?? []} />
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-white/70">To&apos;lovlar jurnali</h2>
+        <h2 className="text-sm font-semibold text-ink-muted">To&apos;lovlar jurnali</h2>
         <PaymentsJournal payments={(payments as PaymentJournalRow[]) ?? []} />
       </div>
     </div>

@@ -129,8 +129,8 @@ export function GroupForm({
               onClick={() => toggleDay(day)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 selectedDays.includes(day)
-                  ? "bg-blue-600 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                  ? "bg-brand-600 text-white"
+                  : "bg-canvas text-ink-muted hover:bg-line"
               }`}
             >
               {day.slice(0, 3)}

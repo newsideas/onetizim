@@ -38,7 +38,7 @@ export function DayScheduleGrid({
 
   if (dayGroups.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 p-8 text-center text-white/50">
+      <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
         {day} kuni dars yo&apos;q.
       </div>
     );
@@ -69,7 +69,7 @@ export function DayScheduleGrid({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-xl border border-white/10">
+      <div className="overflow-x-auto rounded-xl border border-line">
         <div
           className="grid min-w-max"
           style={{
@@ -78,11 +78,11 @@ export function DayScheduleGrid({
           }}
         >
           {/* Sarlavha: bo'sh burchak + xona nomlari */}
-          <div className="sticky left-0 z-20 border-r border-b border-white/10 bg-[#141a2a]" />
+          <div className="sticky left-0 z-20 border-r border-b border-line bg-surface" />
           {rooms.map((room, i) => (
             <div
               key={room.key}
-              className="border-b border-white/10 bg-[#141a2a] px-3 py-2 text-sm font-medium text-white"
+              className="border-b border-line bg-surface px-3 py-2 text-sm font-medium text-ink"
               style={{ gridColumn: i + 2, gridRow: 1 }}
             >
               {room.name}
@@ -93,7 +93,7 @@ export function DayScheduleGrid({
           {slots.map((minutes, i) => (
             <div
               key={`t-${minutes}`}
-              className="sticky left-0 z-20 border-r border-b border-white/5 bg-[#0f1420] px-2 py-1 text-xs text-white/40"
+              className="sticky left-0 z-20 border-r border-b border-line/70 bg-canvas px-2 py-1 text-xs text-ink-faint"
               style={{ gridColumn: 1, gridRow: i + 2 }}
             >
               {minutes % 60 === 0 ? minutesToTime(minutes) : ""}
@@ -105,8 +105,8 @@ export function DayScheduleGrid({
             rooms.map((room, j) => (
               <div
                 key={`c-${room.key}-${minutes}`}
-                className={`border-b border-white/5 ${
-                  minutes % 60 === 0 ? "border-t border-t-white/10" : ""
+                className={`border-b border-line/70 ${
+                  minutes % 60 === 0 ? "border-t border-t-line" : ""
                 }`}
                 style={{ gridColumn: j + 2, gridRow: i + 2 }}
               />
@@ -130,19 +130,19 @@ export function DayScheduleGrid({
             return (
               <div
                 key={g.id}
-                className="z-10 m-0.5 overflow-hidden rounded-lg border border-blue-500/30 bg-blue-500/15 px-2 py-1.5"
+                className="z-10 m-0.5 overflow-hidden rounded-lg border border-brand-200 bg-brand-50 px-2 py-1.5"
                 style={{
                   gridColumn: colIndex + 2,
                   gridRow: `${startRow} / ${endRow}`,
                 }}
               >
-                <div className="text-xs font-medium text-white">{g.name}</div>
-                <div className="text-[11px] text-white/60">
+                <div className="text-xs font-medium text-ink">{g.name}</div>
+                <div className="text-[11px] text-ink-muted">
                   {formatTime(g.start_time)}
                   {g.end_time ? `–${formatTime(g.end_time)}` : ""}
                 </div>
                 {g.teacher?.full_name && (
-                  <div className="truncate text-[11px] text-white/45">
+                  <div className="truncate text-[11px] text-ink-faint">
                     {g.teacher.full_name}
                   </div>
                 )}
@@ -153,15 +153,15 @@ export function DayScheduleGrid({
       </div>
 
       {untimed.length > 0 && (
-        <div className="rounded-xl border border-white/10 p-4">
-          <h2 className="mb-2 text-xs font-semibold tracking-wide text-white/40 uppercase">
+        <div className="rounded-xl border border-line p-4">
+          <h2 className="mb-2 text-xs font-semibold tracking-wide text-ink-faint uppercase">
             Vaqti belgilanmagan
           </h2>
           <div className="flex flex-wrap gap-2">
             {untimed.map((g) => (
               <span
                 key={g.id}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70"
+                className="rounded-lg border border-line bg-canvas px-3 py-1.5 text-xs text-ink-muted"
               >
                 {g.name}
                 {g.room?.name ? ` · ${g.room.name}` : ""}

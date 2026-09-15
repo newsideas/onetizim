@@ -36,8 +36,8 @@ export function ScheduleViewToggle({
             href={href}
             className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               view === o.value
-                ? "bg-blue-600 text-white"
-                : "bg-white/5 text-white/60 hover:bg-white/10"
+                ? "bg-brand-600 text-white"
+                : "bg-canvas text-ink-muted hover:bg-line"
             }`}
           >
             <Icon size={14} />
@@ -59,8 +59,8 @@ export function DayPicker({ current }: { current: string }) {
           href={`/schedule?view=day&day=${encodeURIComponent(d)}`}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
             current === d
-              ? "bg-blue-600 text-white"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
+              ? "bg-brand-600 text-white"
+              : "bg-canvas text-ink-muted hover:bg-line"
           }`}
         >
           {d}
