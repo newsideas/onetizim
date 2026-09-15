@@ -2,15 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navItems } from "@/lib/navigation";
+import { buildNavItems } from "@/lib/navigation";
+import { useSegment } from "@/components/layout/SegmentProvider";
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function Sidebar({
+  onNavigate,
+  orgName,
+}: {
+  onNavigate?: () => void;
+  orgName?: string;
+}) {
   const pathname = usePathname();
+  const { terms } = useSegment();
+  const navItems = buildNavItems(terms);
 
   return (
     <nav className="flex h-full flex-col gap-1 p-3">
-      <div className="mb-4 px-2 py-2 text-lg font-semibold text-white">
-        To&apos;garak CRM
+      <div className="mb-4 px-2 py-2">
+        <div className="truncate text-lg font-semibold text-white">
+          {orgName || "IPRO TIZIM"}
+        </div>
+        <div className="text-xs text-white/40">{terms.label}</div>
       </div>
 
       {navItems.map((item) => {

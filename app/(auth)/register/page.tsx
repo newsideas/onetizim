@@ -10,7 +10,7 @@ import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Select } from "@/components/ui/Select";
+import { SEGMENTS, SEGMENT_TERMS } from "@/lib/segment";
 import { FormError } from "@/components/ui/FormError";
 
 export default function RegisterPage() {
@@ -21,11 +21,15 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { orgType: "togarak" },
+    defaultValues: { orgType: "markaz" },
   });
+
+  const selectedType = watch("orgType");
 
   async function onSubmit(values: RegisterInput) {
     setServerError(null);
@@ -101,11 +105,41 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <Label htmlFor="orgType">Tashkilot turi</Label>
-            <Select id="orgType" error={errors.orgType?.message} {...register("orgType")}>
-              <option value="togarak">To&apos;garak</option>
-              <option value="maktab">Xususiy maktab</option>
-            </Select>
+            <Label>Muassasa turi</Label>
+            <div className="space-y-2">
+              {SEGMENTS.map((s) => {
+                const t = SEGMENT_TERMS[s];
+                const Icon = t.icon;
+                const isSelected = selectedType === s;
+
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setValue("orgType", s, { shouldValidate: true })}
+                    className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    <div
+                      className={`rounded-lg p-2 ${
+                        isSelected
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-white/5 text-white/50"
+                      }`}
+                    >
+                      <Icon size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-white">{t.label}</div>
+                      <div className="text-xs text-white/50">{t.description}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
             <FormError message={errors.orgType?.message} />
           </div>
 

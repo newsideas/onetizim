@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { CatalogManager, type CatalogItem } from "@/components/settings/CatalogManager";
+import { termsFor } from "@/lib/segment";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -24,7 +25,7 @@ export default async function SettingsPage() {
         <div className="flex justify-between">
           <span className="text-white/50">Turi</span>
           <span className="text-white">
-            {org?.type === "maktab" ? "Xususiy maktab" : "To'garak / o'quv markaz"}
+            {termsFor(org?.type).label}
           </span>
         </div>
       </div>

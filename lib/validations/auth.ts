@@ -11,8 +11,8 @@ export const registerSchema = z.object({
   orgName: z
     .string()
     .min(2, "Tashkilot nomi kamida 2 ta belgidan iborat bo'lishi kerak"),
-  orgType: z.enum(["togarak", "maktab"], {
-    message: "Tashkilot turini tanlang",
+  orgType: z.enum(["maktab", "bogcha", "markaz"], {
+    message: "Muassasa turini tanlang",
   }),
   email: z.string().email("Email noto'g'ri kiritildi"),
   password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak"),

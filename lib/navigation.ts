@@ -8,6 +8,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+import type { SegmentTerms } from "@/lib/segment";
 
 export interface NavItem {
   label: string;
@@ -15,12 +16,18 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-export const navItems: NavItem[] = [
-  { label: "Bosh sahifa", href: "/", icon: LayoutDashboard },
-  { label: "Guruhlar", href: "/groups", icon: BookOpen },
-  { label: "O'quvchilar", href: "/students", icon: Users },
-  { label: "Davomat", href: "/attendance", icon: CalendarCheck },
-  { label: "To'lovlar", href: "/payments", icon: Wallet },
-  { label: "Jadval", href: "/schedule", icon: CalendarDays },
-  { label: "Sozlamalar", href: "/settings", icon: Settings },
-];
+/**
+ * Sidebar bo'limlari muassasa turiga qarab nomlanadi:
+ * maktabda "Sinflar", bog'chada "Bolalar", markazda "Guruhlar".
+ */
+export function buildNavItems(terms: SegmentTerms): NavItem[] {
+  return [
+    { label: "Bosh sahifa", href: "/", icon: LayoutDashboard },
+    { label: terms.groupPlural, href: "/groups", icon: BookOpen },
+    { label: terms.studentPlural, href: "/students", icon: Users },
+    { label: "Davomat", href: "/attendance", icon: CalendarCheck },
+    { label: "To'lovlar", href: "/payments", icon: Wallet },
+    { label: terms.schedule, href: "/schedule", icon: CalendarDays },
+    { label: "Sozlamalar", href: "/settings", icon: Settings },
+  ];
+}

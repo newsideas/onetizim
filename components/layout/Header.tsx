@@ -3,7 +3,13 @@
 import { Menu } from "lucide-react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 
-export function Header({ onMenuClick }: { onMenuClick: () => void }) {
+export function Header({
+  onMenuClick,
+  orgName,
+}: {
+  onMenuClick: () => void;
+  orgName?: string;
+}) {
   return (
     <header className="flex items-center justify-between border-b border-white/10 bg-[#0f1420] px-4 py-3 md:px-6">
       <button
@@ -15,7 +21,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <Menu size={22} />
       </button>
 
-      <span className="font-semibold text-white md:hidden">To&apos;garak CRM</span>
+      <span className="truncate font-semibold text-white md:hidden">{orgName || "IPRO TIZIM"}</span>
 
       <div className="ml-auto">
         <SignOutButton />

@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
 import { NewStudentButton } from "@/components/students/NewStudentButton";
 import { StudentsFilter } from "@/components/students/StudentsFilter";
+import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { termsFor } from "@/lib/segment";
 
 const VALID_STATUSES = ["active", "frozen", "archived", "all"];
 
@@ -15,6 +17,8 @@ export default async function StudentsPage({
     params.status && VALID_STATUSES.includes(params.status) ? params.status : "active";
 
   const supabase = await createClient();
+
+  const terms = termsFor((await getCurrentOrg(supabase)).type);
 
   let studentsQuery = supabase
     .from("students")
@@ -33,7 +37,7 @@ export default async function StudentsPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-white">O&apos;quvchilar</h1>
+        <h1 className="text-xl font-semibold text-white">{terms.studentPlural}</h1>
         <NewStudentButton groups={groups ?? []} />
       </div>
 
