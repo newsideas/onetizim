@@ -309,7 +309,7 @@ execute function apply_charge_to_balance();
 create or replace function public.sync_student_full_name()
 returns trigger
 language plpgsql
-as $
+as $$
 begin
   if new.last_name is not null or new.first_name is not null then
     new.full_name := trim(
@@ -320,7 +320,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 create trigger trg_sync_student_full_name
 before insert or update on students
