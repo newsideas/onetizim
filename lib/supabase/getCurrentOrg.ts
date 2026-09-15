@@ -5,6 +5,13 @@ export interface CurrentOrg {
   id: string;
   name: string;
   type: Segment;
+  tin: string | null;
+  region: string | null;
+  district: string | null;
+  address: string | null;
+  director_last_name: string | null;
+  director_first_name: string | null;
+  phone: string | null;
 }
 
 /** Joriy (kirgan) foydalanuvchining tashkiloti — turi bilan birga. */
@@ -18,7 +25,7 @@ export async function getCurrentOrg(
 
   const { data: org } = await supabase
     .from("organizations")
-    .select("id, name, type")
+    .select("*")
     .eq("owner_id", user.id)
     .single();
 

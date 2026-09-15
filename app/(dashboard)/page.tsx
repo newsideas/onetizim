@@ -1,69 +1,118 @@
-import { Users, AlertTriangle, CalendarCheck, Wallet } from "lucide-react";
+import { Users, AlertTriangle, CalendarCheck, Wallet, Coins } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { getDashboardData } from "@/lib/dashboard";
+import { termsFor } from "@/lib/segment";
 import { StatCard } from "@/components/ui/StatCard";
 import { formatSom } from "@/lib/utils/currency";
-import { bugungiKun } from "@/lib/utils/date";
-
-
-function oyBoshi() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-}
+import { bugungiKun, formatDate } from "@/lib/utils/date";
+import {
+  FinancialActivity,
+  FinanceChart,
+  MonthlyTable,
+  OrgCard,
+  GroupDistribution,
+  TodayAttendance,
+  QuickActions,
+} from "@/components/dashboard/DashboardBlocks";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
+  const org = await getCurrentOrg(supabase);
+  const terms = termsFor(org.type);
+  const data = await getDashboardData(supabase);
 
-  const [activeStudents, debtors, todayGroups, monthPayments] = await Promise.all([
-    supabase
-      .from("students")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "active"),
-    supabase
-      .from("students")
-      .select("id", { count: "exact", head: true })
-      .lt("balance", 0),
-    supabase
-      .from("groups")
-      .select("id", { count: "exact", head: true })
-      .contains("schedule_days", [bugungiKun()]),
-    supabase.from("payments").select("amount").gte("paid_at", oyBoshi()),
-  ]);
-
-  const oylikDaromad = (monthPayments.data ?? []).reduce(
-    (sum, p) => sum + Number(p.amount),
-    0,
-  );
+  const director =
+    [org.director_last_name, org.director_first_name]
+      .filter(Boolean)
+      .join(" ") || null;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-ink">Bosh sahifa</h1>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Aktiv o'quvchilar"
-          value={activeStudents.count ?? 0}
-          icon={Users}
-          accent="blue"
-        />
-        <StatCard
-          label="Qarzdorlar"
-          value={debtors.count ?? 0}
-          icon={AlertTriangle}
-          accent="red"
-        />
-        <StatCard
-          label={`Bugungi darslar (${bugungiKun()})`}
-          value={todayGroups.count ?? 0}
-          icon={CalendarCheck}
-          accent="amber"
-        />
-        <StatCard
-          label="Oylik daromad"
-          value={formatSom(oylikDaromad)}
-          icon={Wallet}
-          accent="green"
-        />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-ink">Bosh sahifa</h1>
+        <p className="text-sm text-ink-muted">
+          {formatDate(new Date())} · {bugungiKun()}
+        </p>
       </div>
+
+      {/* Umumiy ko'rsatkichlar */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold tracking-wide text-ink-muted uppercase">
+          Umumiy ko&apos;rsatkichlar
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <StatCard
+            label={`Aktiv ${terms.studentPlural.toLowerCase()}`}
+            value={data.activeStudents}
+            icon={Users}
+            accent="brand"
+            hint={`Jami ${data.totalStudents} ta`}
+          />
+          <StatCard
+            label="Qarzdorlar"
+            value={data.debtorCount}
+            icon={AlertTriangle}
+            accent="red"
+            hint={data.totalDebt > 0 ? formatSom(data.totalDebt) : undefined}
+          />
+          <StatCard
+            label="Bugungi to'lov"
+            value={formatSom(data.todayPaid)}
+            icon={Wallet}
+            accent="green"
+          />
+          <StatCard
+            label="Oylik tushum"
+            value={formatSom(data.monthRevenue)}
+            icon={Coins}
+            accent="blue"
+          />
+          <StatCard
+            label={`Bugungi ${terms.lessonPlural.toLowerCase()}`}
+            value={data.todayGroups}
+            icon={CalendarCheck}
+            accent="amber"
+            hint={bugungiKun()}
+          />
+        </div>
+      </section>
+
+      {/* Moliyaviy faollik va tahlil */}
+      <section className="grid gap-4 xl:grid-cols-2">
+        <FinancialActivity
+          debtors={data.topDebtors}
+          payments={data.recentPayments}
+          debtorCount={data.debtorCount}
+          terms={terms}
+        />
+        <FinanceChart months={data.months} />
+      </section>
+
+      {/* Oylar kesimida hisob-kitob */}
+      <MonthlyTable months={data.months} />
+
+      {/* Muassasa, guruhlar va davomat */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        <OrgCard
+          name={org.name}
+          typeLabel={terms.label}
+          director={director}
+          phone={org.phone ?? null}
+          region={org.region ?? null}
+          district={org.district ?? null}
+        />
+        <GroupDistribution groups={data.groupCounts} terms={terms} />
+        <TodayAttendance
+          present={data.attendanceToday.present}
+          late={data.attendanceToday.late}
+          absent={data.attendanceToday.absent}
+          percent={data.attendanceToday.percent}
+          terms={terms}
+        />
+      </section>
+
+      <QuickActions terms={terms} />
     </div>
   );
 }
