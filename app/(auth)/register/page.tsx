@@ -175,14 +175,14 @@ export default function RegisterPage() {
                 >
                   <Input
                     id="orgName"
-                    placeholder="Masalan: Quyoshcha bogchasi"
+                    placeholder="Muassasa nomi"
                     error={errors.orgName?.message}
                     {...register("orgName")}
                   />
                 </Field>
 
                 <Field label="STIR" htmlFor="tin">
-                  <Input id="tin" placeholder="9 ta raqam" {...register("tin")} />
+                  <Input id="tin" placeholder="STIR" {...register("tin")} />
                 </Field>
 
                 <Field
@@ -213,7 +213,7 @@ export default function RegisterPage() {
                 >
                   <Input
                     id="district"
-                    placeholder="Masalan: Chilonzor"
+                    placeholder="Tuman yoki shahar"
                     error={errors.district?.message}
                     {...register("district")}
                   />
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 <Field label="To'liq manzil" htmlFor="address" span={2}>
                   <Input
                     id="address"
-                    placeholder="Ko'cha, uy raqami"
+                    placeholder="To'liq manzil"
                     {...register("address")}
                   />
                 </Field>
@@ -273,7 +273,7 @@ export default function RegisterPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+998 ## ### ## ##"
+                    placeholder="+998"
                     error={errors.phone?.message}
                     {...register("phone")}
                   />
@@ -298,7 +298,7 @@ export default function RegisterPage() {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    placeholder="direktor@maktab.uz"
+                    placeholder="Email"
                     error={errors.email?.message}
                     {...register("email")}
                   />
@@ -314,7 +314,7 @@ export default function RegisterPage() {
                     id="password"
                     type="password"
                     autoComplete="new-password"
-                    placeholder="Kamida 6 ta belgi"
+                    placeholder="Parol"
                     error={errors.password?.message}
                     {...register("password")}
                   />

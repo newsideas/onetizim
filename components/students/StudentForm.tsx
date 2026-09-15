@@ -103,10 +103,10 @@ export function StudentForm({
 
       <FormSection title="Pasport ma'lumotlari">
         <Field label="Pasport seriyasi va raqami" htmlFor="passportNumber">
-          <Input id="passportNumber" placeholder="AA 1234567" {...register("passportNumber")} />
+          <Input id="passportNumber" placeholder="Kiriting" {...register("passportNumber")} />
         </Field>
         <Field label="JSHSHIR" htmlFor="passportPinfl">
-          <Input id="passportPinfl" placeholder="14 ta raqam" {...register("passportPinfl")} />
+          <Input id="passportPinfl" placeholder="Kiriting" {...register("passportPinfl")} />
         </Field>
         <Field label="Berilgan sanasi" htmlFor="passportIssuedDate">
           <Input id="passportIssuedDate" type="date" {...register("passportIssuedDate")} />
@@ -126,10 +126,10 @@ export function StudentForm({
           </Select>
         </Field>
         <Field label="Pasport seriyasi va raqami" htmlFor="parentPassportNumber">
-          <Input id="parentPassportNumber" placeholder="AA 1234567" {...register("parentPassportNumber")} />
+          <Input id="parentPassportNumber" placeholder="Kiriting" {...register("parentPassportNumber")} />
         </Field>
         <Field label="JSHSHIR" htmlFor="parentPinfl">
-          <Input id="parentPinfl" placeholder="14 ta raqam" {...register("parentPinfl")} />
+          <Input id="parentPinfl" placeholder="Kiriting" {...register("parentPinfl")} />
         </Field>
         <Field label="Pasport berilgan sanasi" htmlFor="parentPassportIssuedDate">
           <Input id="parentPassportIssuedDate" type="date" {...register("parentPassportIssuedDate")} />
