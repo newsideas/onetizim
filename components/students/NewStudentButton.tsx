@@ -1,32 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
-import { StudentForm, type GroupOption } from "@/components/students/StudentForm";
 import { useSegment } from "@/components/layout/SegmentProvider";
 
-export function NewStudentButton({ groups }: { groups: GroupOption[] }) {
-  const [open, setOpen] = useState(false);
+/** Qo'shish endi modal emas — to'liq sahifali formaga olib boradi. */
+export function NewStudentButton() {
   const { terms } = useSegment();
 
   return (
-    <>
-      <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
-        <Plus size={16} /> {terms.newStudent}
-      </Button>
-
-      <Modal open={open} onClose={() => setOpen(false)} title={`${terms.newStudent} qo'shish`}>
-        {groups.length === 0 ? (
-          <p className="text-sm text-ink-muted">
-            Avval kamida bitta {terms.group.toLowerCase()} yarating, keyin
-            {terms.student.toLowerCase()} qo&apos;shishingiz mumkin.
-          </p>
-        ) : (
-          <StudentForm groups={groups} onSuccess={() => setOpen(false)} />
-        )}
-      </Modal>
-    </>
+    <Link
+      href="/students/new"
+      className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
+    >
+      <Plus size={16} />
+      {terms.newStudent}
+    </Link>
   );
 }

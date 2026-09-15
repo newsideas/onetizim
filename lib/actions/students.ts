@@ -6,28 +6,91 @@ import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
 import { studentSchema, type StudentInput } from "@/lib/validations/student";
 import type { StudentStatus } from "@/types/database";
 
+/** Bo'sh satrni null'ga aylantiradi (bazada bo'sh matn saqlamaslik uchun). */
+function nullable(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+/** Forma qiymatlarini students jadvali ustunlariga moslashtiradi. */
+function toStudentRow(values: StudentInput) {
+  return {
+    last_name: values.lastName.trim(),
+    first_name: values.firstName.trim(),
+    middle_name: nullable(values.middleName),
+    birth_date: nullable(values.birthDate),
+    gender: values.gender ?? null,
+    nationality: nullable(values.nationality),
+
+    birth_cert_series: nullable(values.birthCertSeries),
+    birth_cert_number: nullable(values.birthCertNumber),
+
+    passport_number: nullable(values.passportNumber),
+    passport_pinfl: nullable(values.passportPinfl),
+    passport_issued_date: nullable(values.passportIssuedDate),
+
+    parent_full_name: nullable(values.parentFullName),
+    parent_relation: nullable(values.parentRelation),
+    parent_passport_number: nullable(values.parentPassportNumber),
+    parent_pinfl: nullable(values.parentPinfl),
+    parent_passport_issued_date: nullable(values.parentPassportIssuedDate),
+    parent_passport_issued_by: nullable(values.parentPassportIssuedBy),
+    parent_phone: nullable(values.parentPhone),
+
+    region: nullable(values.region),
+    district: nullable(values.district),
+    address: nullable(values.address),
+
+    group_id: values.groupId,
+    phone: nullable(values.phone),
+
+    // full_name bazadagi trigger orqali FISH maydonlaridan yig'iladi,
+    // lekin NOT NULL bo'lgani uchun boshlang'ich qiymat beriladi.
+    full_name: `${values.lastName.trim()} ${values.firstName.trim()}`,
+  };
+}
+
 export async function createStudent(input: StudentInput) {
   const parsed = studentSchema.safeParse(input);
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
   }
-  const values = parsed.data;
 
   const supabase = await createClient();
   const orgId = await getCurrentOrgId(supabase);
 
-  const { error } = await supabase.from("students").insert({
-    org_id: orgId,
-    group_id: values.groupId,
-    full_name: values.fullName,
-    phone: values.phone || null,
-  });
+  const { data, error } = await supabase
+    .from("students")
+    .insert({ org_id: orgId, ...toStudentRow(parsed.data) })
+    .select("id")
+    .single();
 
   if (error) {
-    throw new Error("O'quvchi qo'shishda xatolik: " + error.message);
+    throw new Error("Saqlashda xatolik: " + error.message);
   }
 
   revalidatePath("/students");
+  return data.id as string;
+}
+
+export async function updateStudent(studentId: string, input: StudentInput) {
+  const parsed = studentSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("students")
+    .update(toStudentRow(parsed.data))
+    .eq("id", studentId);
+
+  if (error) {
+    throw new Error("Yangilashda xatolik: " + error.message);
+  }
+
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
 }
 
 /**

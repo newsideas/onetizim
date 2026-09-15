@@ -29,16 +29,13 @@ export default async function StudentsPage({
     studentsQuery = studentsQuery.eq("status", status);
   }
 
-  const [{ data: students }, { data: groups }] = await Promise.all([
-    studentsQuery,
-    supabase.from("groups").select("id, name").order("name"),
-  ]);
+  const { data: students } = await studentsQuery;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{terms.studentPlural}</h1>
-        <NewStudentButton groups={groups ?? []} />
+        <NewStudentButton />
       </div>
 
       <StudentsFilter current={status} />
