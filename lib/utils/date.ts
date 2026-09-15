@@ -26,3 +26,22 @@ export const HAFTA_KUNLARI = [
   "Shanba",
   "Yakshanba",
 ] as const;
+
+/** "14:30:00" -> 870 (yarim tundan boshlab daqiqalar). */
+export function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
+/** 870 -> "14:30". */
+export function minutesToTime(total: number): string {
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** Bugungi kunning o'zbekcha nomi. */
+export function bugungiKun(): string {
+  const jsDay = new Date().getDay(); // 0 = Yakshanba
+  return HAFTA_KUNLARI[(jsDay + 6) % 7];
+}

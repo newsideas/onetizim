@@ -4,7 +4,8 @@ export interface ScheduleGroup {
   id: string;
   name: string;
   course: { name: string } | null;
-  room: { name: string } | null;
+  room: { id: string; name: string } | null;
+  lesson_duration_minutes: number | null;
   schedule_days: string[] | null;
   start_time: string | null;
   end_time: string | null;

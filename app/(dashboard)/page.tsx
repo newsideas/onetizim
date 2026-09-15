@@ -2,13 +2,8 @@ import { Users, AlertTriangle, CalendarCheck, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/ui/StatCard";
 import { formatSom } from "@/lib/utils/currency";
-import { HAFTA_KUNLARI } from "@/lib/utils/date";
+import { bugungiKun } from "@/lib/utils/date";
 
-/** Bugungi kunning o'zbekcha nomi (HAFTA_KUNLARI dushanbadan boshlanadi). */
-function bugungiKun() {
-  const jsDay = new Date().getDay(); // 0 = Yakshanba
-  return HAFTA_KUNLARI[(jsDay + 6) % 7];
-}
 
 function oyBoshi() {
   const now = new Date();
