@@ -12,10 +12,15 @@ export function Logo({
   variant = "brand",
   className = "h-10",
 }: {
-  variant?: "brand" | "original";
+  variant?: "brand" | "original" | "white";
   className?: string;
 }) {
-  const src = variant === "brand" ? "/logo-brand.svg" : "/logo.svg";
+  const src =
+    variant === "brand"
+      ? "/logo-brand.svg"
+      : variant === "white"
+        ? "/logo-white.svg"
+        : "/logo.svg";
 
   return (
     <span

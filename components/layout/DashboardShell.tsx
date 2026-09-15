@@ -18,7 +18,7 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-canvas text-ink">
       {/* Desktop: doim ko'rinadigan sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line md:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
         <Sidebar orgName={orgName} />
       </aside>
 
@@ -30,7 +30,7 @@ export function DashboardShell({
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
-          <aside className="absolute inset-y-0 left-0 w-64 border-r border-line">
+          <aside className="absolute inset-y-0 left-0 w-64">
             <Sidebar orgName={orgName} onNavigate={() => setSidebarOpen(false)} />
           </aside>
         </div>
