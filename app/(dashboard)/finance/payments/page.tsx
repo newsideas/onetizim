@@ -6,6 +6,8 @@ import {
 } from "@/components/payments/PaymentsJournal";
 import { NewPaymentButton } from "@/components/payments/NewPaymentButton";
 import { MonthlyChargeButton } from "@/components/payments/MonthlyChargeButton";
+import { PaymentsTabs } from "@/components/finance/PaymentsTabs";
+import { ListPageShell } from "@/components/ui/ListPage";
 
 export default async function PaymentsPage() {
   const { supabase } = await requirePermission("payments.manage");
@@ -25,21 +27,23 @@ export default async function PaymentsPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">To&apos;lovlar</h1>
+    <ListPageShell
+      title="To'lovlar"
+      subtitle="O'quvchi to'lovlari va qarzdorlar"
+      actions={
         <div className="flex gap-2">
           <MonthlyChargeButton />
           <NewPaymentButton students={students ?? []} />
         </div>
-      </div>
-
+      }
+      tabs={<PaymentsTabs current="payments" />}
+    >
       <DebtorsList debtors={debtors ?? []} />
 
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-ink-muted">To&apos;lovlar jurnali</h2>
         <PaymentsJournal payments={(payments as PaymentJournalRow[]) ?? []} />
       </div>
-    </div>
+    </ListPageShell>
   );
 }

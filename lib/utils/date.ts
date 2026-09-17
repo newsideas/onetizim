@@ -114,6 +114,12 @@ export function nextMonth(periodStart: string): string {
   return monthStartIso(new Date(y, m, 1));
 }
 
+/** `n` oy oldingi oyning 1-sanasi (n=0 — shu oyning o'zi). */
+export function monthsAgo(n: number, from: string = monthStartIso()): string {
+  const [y, m] = from.split("-").map(Number);
+  return monthStartIso(new Date(y, m - 1 - n, 1));
+}
+
 export const MONTH_NAMES = [
   "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
   "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr",
