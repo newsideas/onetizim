@@ -42,7 +42,7 @@ export function StudentsTable({
             <tr key={student.id} className="hover:bg-canvas">
               <td className="px-4 py-3">
                 <Link
-                  href={`/students/${student.id}`}
+                  href={`/education/students/${student.id}`}
                   className="font-medium text-ink hover:text-brand-600"
                 >
                   {student.full_name}

@@ -57,7 +57,7 @@ export function StudentForm({
       } else {
         await createStudent(values);
       }
-      router.push("/students/list");
+      router.push("/education/students");
       router.refresh();
     } catch (e) {
       setServerError(e instanceof Error ? e.message : "Xatolik yuz berdi");
@@ -171,7 +171,7 @@ export function StudentForm({
       <FormError message={serverError ?? undefined} />
 
       <FormActions>
-        <Button type="button" variant="secondary" onClick={() => router.push("/students/list")}>
+        <Button type="button" variant="secondary" onClick={() => router.push("/education/students")}>
           Bekor qilish
         </Button>
         <Button type="submit" disabled={isSubmitting}>

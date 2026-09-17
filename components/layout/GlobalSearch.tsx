@@ -150,7 +150,7 @@ export function GlobalSearch() {
                 <button
                   key={hit.id}
                   type="button"
-                  onClick={() => go(`/students/${hit.id}`)}
+                  onClick={() => go(`/education/students/${hit.id}`)}
                   className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left text-sm text-ink hover:bg-canvas"
                 >
                   <span className="truncate">{hit.name}</span>
@@ -171,7 +171,7 @@ export function GlobalSearch() {
                 <button
                   key={hit.id}
                   type="button"
-                  onClick={() => go(`/groups/${hit.id}`)}
+                  onClick={() => go(`/education/groups/${hit.id}`)}
                   className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-ink hover:bg-canvas"
                 >
                   {hit.name}

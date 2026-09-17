@@ -1,37 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { buildNavSections, type NavSection } from "@/lib/navigation";
+import { buildNavSections, filterNavSections } from "@/lib/navigation";
+import type { Permission } from "@/lib/auth/permissions";
 import { useSegment } from "@/components/layout/SegmentProvider";
 import { Logo } from "@/components/ui/Logo";
 
-/** Havola joriy sahifaga mos keladimi? */
-function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+function matches(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function sectionHasActive(pathname: string, section: NavSection) {
-  if (section.href) return isActive(pathname, section.href);
-  return Boolean(section.items?.some((i) => isActive(pathname, i.href)));
+/**
+ * Joriy sahifaga eng aniq mos keladigan havola. "/settings" va
+ * "/settings/references/classrooms" ikkalasi ham mos kelsa, uzunrog'i
+ * faol hisoblanadi.
+ */
+function findActiveHref(pathname: string, hrefs: string[]) {
+  return hrefs
+    .filter((href) => matches(pathname, href))
+    .sort((a, b) => b.length - a.length)[0];
 }
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function Sidebar({
+  permissions,
+  onNavigate,
+}: {
+  permissions: readonly Permission[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const { terms } = useSegment();
-  const sections = buildNavSections(terms);
 
-  // Joriy sahifa qaysi bo'limda bo'lsa, o'sha bo'lim ochiq turadi.
-  const [open, setOpen] = useState<Set<string>>(
-    () =>
-      new Set(
-        sections
-          .filter((s) => s.items && sectionHasActive(pathname, s))
-          .map((s) => s.label),
-      ),
+  const sections = useMemo(
+    () => filterNavSections(buildNavSections(terms), permissions),
+    [terms, permissions],
   );
+
+  const activeHref = findActiveHref(
+    pathname,
+    sections.flatMap((s) => (s.items ? s.items.map((i) => i.href) : s.href ? [s.href] : [])),
+  );
+
+  const activeSection = sections.find((s) => s.items?.some((i) => i.href === activeHref))?.label;
+
+  const [open, setOpen] = useState<Set<string>>(
+    () => new Set(activeSection ? [activeSection] : []),
+  );
+
+  // Sidebar sahifalar orasida qayta mount bo'lmaydi: boshqa bo'limga
+  // o'tilganda o'sha bo'limni ochib qo'yish kerak.
+  const [prevActiveSection, setPrevActiveSection] = useState(activeSection);
+  if (activeSection !== prevActiveSection) {
+    setPrevActiveSection(activeSection);
+    if (activeSection && !open.has(activeSection)) {
+      setOpen(new Set(open).add(activeSection));
+    }
+  }
 
   function toggle(label: string) {
     setOpen((prev) => {
@@ -43,7 +71,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <nav className="flex h-full flex-col bg-brand-700">
+    <nav aria-label="Asosiy menyu" className="flex h-full flex-col bg-brand-700">
       <div className="px-5 pt-6 pb-5">
         <Logo variant="white" className="h-12" />
       </div>
@@ -51,28 +79,30 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {sections.map((section) => {
           const Icon = section.icon;
-          const active = sectionHasActive(pathname, section);
 
-          // Ichki menyusiz bo'lim — oddiy havola.
           if (section.href) {
+            const active = section.href === activeHref;
             return (
               <Link
                 key={section.label}
                 href={section.href}
                 onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-white/15 text-white"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                <Icon size={18} strokeWidth={2} />
+                <Icon size={18} strokeWidth={2} aria-hidden="true" />
                 {section.label}
               </Link>
             );
           }
 
+          const containsActive = Boolean(section.items?.some((i) => i.href === activeHref));
           const isOpen = open.has(section.label);
+          const panelId = `nav-${section.label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
 
           return (
             <div key={section.label}>
@@ -80,36 +110,43 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 type="button"
                 onClick={() => toggle(section.label)}
                 aria-expanded={isOpen}
+                aria-controls={panelId}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-white/15 text-white"
-                    : "text-white/80 hover:bg-white/10 hover:text-white"
-                }`}
+                  containsActive ? "text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
+                } ${containsActive && !isOpen ? "bg-white/15" : ""}`}
               >
-                <Icon size={18} strokeWidth={2} />
+                <Icon size={18} strokeWidth={2} aria-hidden="true" />
                 <span className="flex-1 text-left">{section.label}</span>
                 <ChevronDown
                   size={14}
+                  aria-hidden="true"
                   className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
               {isOpen && (
-                <div className="mt-0.5 mb-1 ml-4 space-y-0.5 border-l border-white/15 pl-3">
-                  {section.items?.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onNavigate}
-                      className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                        isActive(pathname, item.href)
-                          ? "bg-white/15 font-medium text-white"
-                          : "text-white/70 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                <div
+                  id={panelId}
+                  className="mt-0.5 mb-1 ml-[21px] space-y-0.5 border-l border-white/15"
+                >
+                  {section.items?.map((item) => {
+                    const active = item.href === activeHref;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onNavigate}
+                        aria-current={active ? "page" : undefined}
+                        className={`-ml-px block rounded-r-lg border-l-2 py-2 pr-3 pl-4 text-sm transition-colors ${
+                          active
+                            ? "border-white bg-white/15 font-medium text-white"
+                            : "border-transparent text-white/70 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -118,9 +155,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="mx-4 border-t border-white/10 pt-3 pb-4">
-        <div className="text-center text-xs tracking-wide text-white/40">
-          EduGram system
-        </div>
+        <div className="text-center text-xs tracking-wide text-white/40">EduGram system</div>
       </div>
     </nav>
   );

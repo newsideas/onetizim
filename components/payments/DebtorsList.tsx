@@ -22,7 +22,7 @@ export function DebtorsList({ debtors }: { debtors: Debtor[] }) {
               <tr key={d.id} className="hover:bg-canvas">
                 <td className="px-4 py-3">
                   <Link
-                    href={`/students/${d.id}`}
+                    href={`/education/students/${d.id}`}
                     className="font-medium text-ink hover:text-brand-600"
                   >
                     {d.full_name}

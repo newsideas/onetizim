@@ -44,6 +44,6 @@ export async function createPayment(input: PaymentInput) {
     );
   }
 
-  revalidatePath("/receipts");
-  revalidatePath("/students/list");
+  revalidatePath("/finance/payments");
+  revalidatePath("/education/students");
 }

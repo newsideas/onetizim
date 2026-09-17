@@ -43,8 +43,8 @@ export async function chargeMonthlyFees(period: string): Promise<number> {
     }
   }
 
-  revalidatePath("/receipts");
-  revalidatePath("/students/list");
+  revalidatePath("/finance/payments");
+  revalidatePath("/education/students");
 
   return inserted;
 }

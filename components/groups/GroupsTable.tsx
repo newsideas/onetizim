@@ -56,7 +56,7 @@ export function GroupsTable({
             <tr key={group.id} className="hover:bg-canvas">
               <td className="px-4 py-3">
                 <Link
-                  href={`/groups/${group.id}`}
+                  href={`/education/groups/${group.id}`}
                   className="font-medium text-ink hover:text-brand-600"
                 >
                   {group.name}

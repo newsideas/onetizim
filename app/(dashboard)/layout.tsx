@@ -5,6 +5,7 @@ import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { SegmentProvider } from "@/components/layout/SegmentProvider";
 import { daysUntil } from "@/lib/utils/date";
+import { permissionsFor } from "@/lib/auth/permissions";
 
 export default async function DashboardLayout({
   children,
@@ -40,6 +41,8 @@ export default async function DashboardLayout({
         userEmail={user.email}
         trialDaysLeft={daysUntil(org.trial_ends_at)}
         debtorCount={debtorCount ?? 0}
+        /* Rollar bazada hali yo'q: hozircha har bir kirgan foydalanuvchi tashkilot egasi. */
+        permissions={permissionsFor("owner")}
       >
         {children}
       </DashboardShell>

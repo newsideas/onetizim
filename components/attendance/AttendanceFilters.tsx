@@ -26,7 +26,7 @@ export function AttendanceFilters({
       group: next.group ?? groupId,
       date: next.date ?? date,
     });
-    router.push(`/attendances-students?${params.toString()}`);
+    router.push(`/education/attendance?${params.toString()}`);
   }
 
   return (

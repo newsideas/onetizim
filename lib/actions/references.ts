@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
-import { getReference, isReferenceKey, type ReferenceKey, type RefField } from "@/lib/references";
+import {
+  getReference,
+  isReferenceKey,
+  referencePath,
+  type ReferenceKey,
+  type RefField,
+} from "@/lib/references";
 
 /**
  * Ma'lumotnomalar uchun umumiy CRUD.
@@ -67,7 +73,7 @@ export async function createReferenceItem(key: string, formData: FormData) {
     );
   }
 
-  revalidatePath(config.path);
+  revalidatePath(referencePath(key));
 }
 
 export async function updateReferenceItem(key: string, id: string, formData: FormData) {
@@ -86,7 +92,7 @@ export async function updateReferenceItem(key: string, id: string, formData: For
     );
   }
 
-  revalidatePath(config.path);
+  revalidatePath(referencePath(key));
 }
 
 export async function deleteReferenceItem(key: string, id: string) {
@@ -98,5 +104,5 @@ export async function deleteReferenceItem(key: string, id: string) {
 
   if (error) throw new Error("O'chirishda xatolik: " + error.message);
 
-  revalidatePath(config.path);
+  revalidatePath(referencePath(key));
 }

@@ -36,7 +36,7 @@ export function FinancialActivity({
         title="Moliyaviy faollik"
         action={
           <Link
-            href="/receipts"
+            href="/finance/payments"
             className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
           >
             Barchasi <ArrowRight size={14} />
@@ -68,7 +68,7 @@ export function FinancialActivity({
                   <span className="w-4 text-xs text-ink-faint">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <Link
-                      href={`/students/${d.id}`}
+                      href={`/education/students/${d.id}`}
                       className="block truncate text-sm font-medium text-ink hover:text-brand-600"
                     >
                       {d.full_name}
@@ -388,20 +388,20 @@ export function TodayAttendance({
 export function QuickActions({ terms }: { terms: SegmentTerms }) {
   const actions = [
     {
-      href: "/students/new",
+      href: "/education/students/new",
       icon: UserPlus,
       title: terms.newStudent,
       hint: "Qabul qilish",
     },
-    { href: "/settings/classes", icon: BookOpen, title: terms.newGroup, hint: "Ochish" },
+    { href: "/education/groups", icon: BookOpen, title: terms.newGroup, hint: "Ochish" },
     {
-      href: "/receipts",
+      href: "/finance/payments",
       icon: Wallet,
       title: "To'lov",
       hint: "Tushumni kiritish",
     },
     {
-      href: "/attendances-students",
+      href: "/education/attendance",
       icon: CalendarCheck,
       title: "Davomat",
       hint: "Belgilash",

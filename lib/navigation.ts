@@ -1,83 +1,51 @@
 import {
-  LayoutDashboard,
-  Contact,
-  Globe,
-  Users,
-  FileText,
-  Wallet,
+  Bell,
   Briefcase,
-  CalendarCheck,
   GraduationCap,
-  UserCog,
-  MessageSquare,
+  LayoutDashboard,
   Settings,
-  CreditCard,
+  Target,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { SegmentTerms } from "@/lib/segment";
+import type { Permission } from "@/lib/auth/permissions";
+import { referencePath } from "@/lib/references";
 
 export interface NavItem {
   label: string;
   href: string;
+  permission: Permission;
 }
 
 export interface NavSection {
   label: string;
   icon: LucideIcon;
-  /** Bo'lim o'zi sahifa bo'lsa (ichki menyusiz). */
+  /** Ichki menyusiz bo'lim — o'zi sahifa. */
   href?: string;
+  permission?: Permission;
   items?: NavItem[];
 }
 
 /**
- * Sidebar tuzilmasi My School bilan bir xil: 13 bo'lim, ichki menyular
- * bosilganda ochiladi.
- *
- * Bo'lim nomlari muassasa turiga moslashadi — maktabda "Sinflar",
- * bog'cha va o'quv markazda "Guruhlar".
+ * Sidebar tuzilmasi — 7 bo'lim. Har band o'z ruxsati bilan: menyu
+ * foydalanuvchi ruxsatlari bo'yicha filtrlanadi, Proxy ham shu
+ * yo'llardan foydalanadi.
  */
 export function buildNavSections(terms: SegmentTerms): NavSection[] {
   return [
-    { label: "Bosh sahifa", href: "/", icon: LayoutDashboard },
+    { label: "Bosh sahifa", href: "/", icon: LayoutDashboard, permission: "dashboard.view" },
+
+    { label: "Lidlar", href: "/leads", icon: Target, permission: "leads.manage" },
 
     {
-      label: "CRM",
-      icon: Contact,
+      label: "O'quv jarayoni",
+      icon: GraduationCap,
       items: [
-        { label: "Lidlar", href: "/crm/potential-clients" },
-        { label: "Hisobotlar", href: "/crm/reports" },
-        { label: "Vazifalar", href: "/crm/tasks" },
-        { label: "Qo'ng'iroqlar", href: "/crm/calls" },
-        { label: "Sozlamalar", href: "/crm/settings" },
-        { label: "Target linklari", href: "/crm/target-links" },
-      ],
-    },
-
-    { label: "Veb sayt", href: "/website", icon: Globe },
-
-    {
-      label: terms.studentPlural,
-      icon: Users,
-      items: [
-        { label: `${terms.studentPlural} bazasi`, href: "/students/base" },
-        { label: `${terms.studentPlural} ro'yxati`, href: "/students/list" },
-        { label: `${terms.student}ni biriktirish`, href: "/students/assign" },
-        { label: `${terms.studentPlural} hisoboti`, href: "/students/reports" },
-      ],
-    },
-
-    {
-      label: "Shartnomalar",
-      icon: FileText,
-      items: [
-        { label: "Shartnoma belgilash", href: "/contracts/assign" },
-        { label: "To'lov monitoringi", href: "/contracts/payment-monitoring" },
-        { label: "Shartnomalar hisoboti", href: "/contracts/reports" },
-        { label: "Shartnoma shablonlari", href: "/contracts/demos" },
-        { label: "Shartnoma summalari", href: "/contracts/amounts" },
-        { label: "Shartnoma turlari", href: "/contracts/types" },
-        { label: "Shartnoma chegirmalari", href: "/contracts/discounts" },
-        { label: "Bank rekvizitlari", href: "/contracts/audits" },
+        { label: terms.studentPlural, href: "/education/students", permission: "students.view" },
+        { label: terms.groupPlural, href: "/education/groups", permission: "groups.view" },
+        { label: terms.schedule, href: "/education/schedule", permission: "schedule.view" },
+        { label: "Davomat", href: "/education/attendance", permission: "attendance.mark" },
       ],
     },
 
@@ -85,68 +53,26 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
       label: "Moliya",
       icon: Wallet,
       items: [
-        { label: "Kassa", href: "/cashbox" },
-        { label: "Kassa hisoboti", href: "/cashbox-reports" },
-        { label: "Kategoriyalar hisoboti", href: "/finance" },
-        { label: `${terms.student} to'lovlari`, href: "/receipts" },
-        { label: "Xarajatlar", href: "/expenses" },
-        { label: "Tushumlar kategoriyasi", href: "/categories-income" },
-        { label: "Xarajatlar kategoriyasi", href: "/categories-expense" },
+        { label: "To'lovlar", href: "/finance/payments", permission: "payments.manage" },
+        { label: "Shartnomalar", href: "/finance/contracts", permission: "contracts.manage" },
+        { label: "Oyliklar", href: "/finance/salaries", permission: "salaries.manage" },
+        { label: "Balans va hisobot", href: "/finance/reports", permission: "finance.reports" },
       ],
     },
 
     {
-      label: "HR",
+      label: "Xodimlar",
       icon: Briefcase,
-      items: [
-        { label: "Xodimlar maoshi", href: "/employees-salary" },
-        { label: "Xodimlar", href: "/employees-list" },
-      ],
-    },
-
-    {
-      label: "Davomat",
-      icon: CalendarCheck,
-      items: [
-        { label: "Xodimlar", href: "/attendances-employees" },
-        { label: terms.studentPlural, href: "/attendances-students" },
-        { label: "Turniket sozlamalari", href: "/attendances-turnstile" },
-        { label: "Yo'riqnoma", href: "/attendances-guide" },
-      ],
-    },
-
-    {
-      label: "O'quv bo'limi",
-      icon: GraduationCap,
-      items: [
-        { label: terms.schedule, href: "/education/class-schedule" },
-        { label: "Hisobotlar", href: "/education/reports" },
-        { label: "Imtihonlar", href: "/education/exams" },
-        { label: "Mashg'ulot turlari", href: "/education/trainings" },
-        { label: "Fanlar", href: "/education/subjects" },
-        { label: "Dars vaqtlari", href: "/education/lesson-times" },
-        { label: "Akademik davrlar", href: "/education/academic-periods" },
-        { label: "Binolar", href: "/education/buildings" },
-        { label: "Auditoriyalar", href: "/education/classrooms" },
-      ],
-    },
-
-    {
-      label: "Foydalanuvchilar",
-      icon: UserCog,
-      items: [
-        { label: "Xodimlar", href: "/users/employees" },
-        { label: "Ota-onalar", href: "/users/parents" },
-      ],
+      items: [{ label: "Xodimlar ro'yxati", href: "/staff", permission: "staff.manage" }],
     },
 
     {
       label: "Xabarnomalar",
-      icon: MessageSquare,
+      icon: Bell,
       items: [
-        { label: "SMS reestrlari", href: "/notifications/reestrs" },
-        { label: "Xabarlar", href: "/notifications/messages" },
-        { label: "SMS sozlamalari", href: "/notifications/sms-settings" },
+        { label: "Eslatmalar", href: "/notifications", permission: "notifications.manage" },
+        { label: "Telegram bot", href: "/notifications/telegram", permission: "notifications.manage" },
+        { label: "SMS", href: "/notifications/sms", permission: "notifications.manage" },
       ],
     },
 
@@ -154,17 +80,28 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
       label: "Sozlamalar",
       icon: Settings,
       items: [
-        { label: "O'quv yillari", href: "/settings/academic-years" },
-        { label: terms.groupPlural, href: "/settings/classes" },
-        { label: `${terms.group} turlari`, href: "/settings/class-types" },
-        { label: `${terms.group}ni o'zgartirish`, href: "/settings/class-change" },
-        { label: "Smenalar", href: "/settings/smena" },
-        { label: "Ta'lim tillari", href: "/settings/academic-languages" },
-        { label: "Menyular", href: "/settings/menus" },
-        { label: "Muassasa ma'lumotlari", href: "/settings/client-branding" },
+        { label: "Markaz ma'lumotlari", href: "/settings", permission: "settings.manage" },
+        { label: "Xonalar", href: referencePath("classrooms"), permission: "settings.manage" },
+        { label: "Fanlar", href: referencePath("subjects"), permission: "settings.manage" },
+        { label: "Kurs narxlari", href: referencePath("contract-amounts"), permission: "settings.manage" },
+        { label: "Ma'lumotnomalar", href: "/settings/references", permission: "settings.manage" },
       ],
     },
-
-    { label: "Balans", href: "/balance", icon: CreditCard },
   ];
+}
+
+/** Ruxsat yo'q bandlar olib tashlanadi; bandsiz qolgan bo'lim ham ko'rinmaydi. */
+export function filterNavSections(
+  sections: NavSection[],
+  permissions: readonly Permission[],
+): NavSection[] {
+  const allowed = new Set(permissions);
+
+  return sections.flatMap((section) => {
+    if (!section.items) {
+      return section.permission && allowed.has(section.permission) ? [section] : [];
+    }
+    const items = section.items.filter((item) => allowed.has(item.permission));
+    return items.length > 0 ? [{ ...section, items }] : [];
+  });
 }

@@ -51,7 +51,6 @@ export interface RefField {
 
 export interface ReferenceConfig {
   table: string;
-  path: string;
   title: string;
   subtitle: string;
   /** Qatorni boshqa ma'lumotnomalarda ko'rsatish uchun ustun. */
@@ -63,7 +62,6 @@ export interface ReferenceConfig {
 export const REFERENCES = {
   "academic-years": {
     table: "academic_years",
-    path: "/settings/academic-years",
     title: "O'quv yillari",
     subtitle: "O'quv yillari ro'yxati",
     labelField: "name",
@@ -84,7 +82,6 @@ export const REFERENCES = {
 
   "class-types": {
     table: "class_types",
-    path: "/settings/class-types",
     title: "Sinf turlari",
     subtitle: "Turlar ro'yxati",
     labelField: "name",
@@ -98,7 +95,6 @@ export const REFERENCES = {
 
   shifts: {
     table: "shifts",
-    path: "/settings/smena",
     title: "Smenalar",
     subtitle: "Smenalar ro'yxati",
     labelField: "name",
@@ -112,7 +108,6 @@ export const REFERENCES = {
 
   "academic-languages": {
     table: "academic_languages",
-    path: "/settings/academic-languages",
     title: "Ta'lim tillari",
     subtitle: "Tillar ro'yxati",
     labelField: "name",
@@ -125,7 +120,6 @@ export const REFERENCES = {
 
   buildings: {
     table: "buildings",
-    path: "/education/buildings",
     title: "Binolar",
     subtitle: "Binolar ro'yxati",
     labelField: "name",
@@ -139,9 +133,8 @@ export const REFERENCES = {
 
   classrooms: {
     table: "rooms",
-    path: "/education/classrooms",
-    title: "Auditoriyalar",
-    subtitle: "Auditoriyalar ro'yxati",
+    title: "Xonalar",
+    subtitle: "Xonalar (auditoriyalar) ro'yxati",
     labelField: "name",
     orderBy: { column: "name", ascending: true },
     fields: [
@@ -153,7 +146,6 @@ export const REFERENCES = {
 
   subjects: {
     table: "courses",
-    path: "/education/subjects",
     title: "Fanlar",
     subtitle: "Fanlar ro'yxati",
     labelField: "name",
@@ -166,7 +158,6 @@ export const REFERENCES = {
 
   "lesson-times": {
     table: "lesson_times",
-    path: "/education/lesson-times",
     title: "Dars vaqtlari",
     subtitle: "Dars vaqtlari ro'yxati",
     labelField: "position",
@@ -181,7 +172,6 @@ export const REFERENCES = {
 
   "academic-periods": {
     table: "academic_periods",
-    path: "/education/academic-periods",
     title: "Akademik davrlar",
     subtitle: "Davrlar ro'yxati",
     labelField: "name",
@@ -196,7 +186,6 @@ export const REFERENCES = {
 
   trainings: {
     table: "training_types",
-    path: "/education/trainings",
     title: "Mashg'ulot turlari",
     subtitle: "Turlar ro'yxati",
     labelField: "name",
@@ -210,7 +199,6 @@ export const REFERENCES = {
 
   "contract-types": {
     table: "contract_types",
-    path: "/contracts/types",
     title: "Shartnoma turlari",
     subtitle: "Turlar ro'yxati",
     labelField: "name",
@@ -224,7 +212,6 @@ export const REFERENCES = {
 
   "contract-discounts": {
     table: "contract_discounts",
-    path: "/contracts/discounts",
     title: "Shartnoma chegirmalari",
     subtitle: "Chegirmalar ro'yxati",
     labelField: "name",
@@ -244,7 +231,6 @@ export const REFERENCES = {
 
   "bank-accounts": {
     table: "bank_accounts",
-    path: "/contracts/audits",
     title: "Bank rekvizitlari",
     subtitle: "Rekvizitlar ro'yxati",
     labelField: "bank_name",
@@ -259,9 +245,8 @@ export const REFERENCES = {
 
   "contract-amounts": {
     table: "contract_amounts",
-    path: "/contracts/amounts",
-    title: "Shartnoma summalari",
-    subtitle: "Summalar ro'yxati",
+    title: "Kurs narxlari",
+    subtitle: "O'quv yili va guruh turi bo'yicha narxlar",
     labelField: "name",
     orderBy: { column: "name", ascending: true },
     fields: [
@@ -279,4 +264,8 @@ export function isReferenceKey(key: string): key is ReferenceKey {
 
 export function getReference(key: ReferenceKey): ReferenceConfig {
   return REFERENCES[key];
+}
+
+export function referencePath(key: ReferenceKey): string {
+  return `/settings/references/${key}`;
 }

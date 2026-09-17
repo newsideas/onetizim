@@ -69,7 +69,7 @@ export async function createStudent(input: StudentInput) {
     throw new Error("Saqlashda xatolik: " + error.message);
   }
 
-  revalidatePath("/students/list");
+  revalidatePath("/education/students");
   return data.id as string;
 }
 
@@ -89,8 +89,8 @@ export async function updateStudent(studentId: string, input: StudentInput) {
     throw new Error("Yangilashda xatolik: " + error.message);
   }
 
-  revalidatePath("/students/list");
-  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/education/students");
+  revalidatePath(`/education/students/${studentId}`);
 }
 
 /**
@@ -113,9 +113,9 @@ export async function updateStudentStatus(
     throw new Error("Holatni o'zgartirishda xatolik: " + error.message);
   }
 
-  revalidatePath("/students/list");
-  revalidatePath(`/students/${studentId}`);
-  revalidatePath("/attendances-students");
+  revalidatePath("/education/students");
+  revalidatePath(`/education/students/${studentId}`);
+  revalidatePath("/education/attendance");
 }
 
 /**
@@ -134,8 +134,8 @@ export async function assignStudentGroup(studentId: string, groupId: string) {
 
   if (error) throw new Error("Biriktirishda xatolik: " + error.message);
 
-  revalidatePath("/students/assign");
-  revalidatePath("/students/list");
-  revalidatePath("/students/base");
-  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/education/groups/assign");
+  revalidatePath("/education/students");
+  revalidatePath("/education/students/base");
+  revalidatePath(`/education/students/${studentId}`);
 }
