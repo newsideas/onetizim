@@ -117,3 +117,25 @@ export async function updateStudentStatus(
   revalidatePath(`/students/${studentId}`);
   revalidatePath("/attendances-students");
 }
+
+/**
+ * O'quvchini boshqa sinf/guruhga biriktiradi ("O'quvchini biriktirish"
+ * sahifasi). To'liq formani ochmasdan tez o'zgartirish uchun — asosiy
+ * tahrirlash `updateStudent` orqali ketadi.
+ */
+export async function assignStudentGroup(studentId: string, groupId: string) {
+  if (!groupId) throw new Error("Guruhni tanlang");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("students")
+    .update({ group_id: groupId })
+    .eq("id", studentId);
+
+  if (error) throw new Error("Biriktirishda xatolik: " + error.message);
+
+  revalidatePath("/students/assign");
+  revalidatePath("/students/list");
+  revalidatePath("/students/base");
+  revalidatePath(`/students/${studentId}`);
+}

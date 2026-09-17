@@ -1,22 +1,20 @@
-import { ListPageShell, DataTable } from "@/components/ui/ListPage";
+import { createClient } from "@/lib/supabase/server";
+import { ListPageShell } from "@/components/ui/ListPage";
+import { ReferenceManager } from "@/components/settings/ReferenceManager";
+import { getReference } from "@/lib/references";
 
-export default async function Page() {
+export default async function BankAccountsPage() {
+  const config = getReference("bank-accounts");
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from(config.table)
+    .select("*")
+    .order(config.orderBy.column, { ascending: config.orderBy.ascending });
+
   return (
-    <ListPageShell
-      title={"Bank rekvizitlari"}
-      subtitle={"Rekvizitlar ro'yxati"}
-      notice={"Bu bo\u2019lim qurilmoqda \u2014 hozircha ma\u2019lumot saqlanmaydi."}
-    >
-      <DataTable
-        rows={[]}
-        columns={[
-          { header: "Bank nomi", cell: () => null },
-          { header: "Hisob raqami", cell: () => null },
-          { header: "MFO", cell: () => null },
-          { header: "STIR", cell: () => null },
-          { header: "Yaratilgan sana", cell: () => null },
-        ]}
-      />
+    <ListPageShell title={config.title} subtitle={config.subtitle}>
+      <ReferenceManager refKey="bank-accounts" config={config} rows={data ?? []} />
     </ListPageShell>
   );
 }

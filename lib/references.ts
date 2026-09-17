@@ -30,6 +30,10 @@ export const REFERENCE_KEYS = [
   "lesson-times",
   "academic-periods",
   "trainings",
+  "contract-types",
+  "contract-discounts",
+  "bank-accounts",
+  "contract-amounts",
 ] as const;
 
 export type ReferenceKey = (typeof REFERENCE_KEYS)[number];
@@ -201,6 +205,70 @@ export const REFERENCES = {
       { name: "name", label: "Nomi", type: "text", required: true },
       { name: "code", label: "Kodi", type: "text" },
       { name: "note", label: "Izoh", type: "text" },
+    ],
+  },
+
+  "contract-types": {
+    table: "contract_types",
+    path: "/contracts/types",
+    title: "Shartnoma turlari",
+    subtitle: "Turlar ro'yxati",
+    labelField: "name",
+    orderBy: { column: "name", ascending: true },
+    fields: [
+      { name: "name", label: "Nomi", type: "text", required: true },
+      { name: "code", label: "Kodi", type: "text" },
+      { name: "note", label: "Izoh", type: "text" },
+    ],
+  },
+
+  "contract-discounts": {
+    table: "contract_discounts",
+    path: "/contracts/discounts",
+    title: "Shartnoma chegirmalari",
+    subtitle: "Chegirmalar ro'yxati",
+    labelField: "name",
+    orderBy: { column: "name", ascending: true },
+    fields: [
+      { name: "name", label: "Nomi", type: "text", required: true },
+      {
+        name: "discount_type",
+        label: "Turi",
+        type: "select",
+        options: ["percent", "fixed"],
+      },
+      { name: "amount", label: "Miqdori", type: "number", required: true },
+      { name: "note", label: "Izoh", type: "text" },
+    ],
+  },
+
+  "bank-accounts": {
+    table: "bank_accounts",
+    path: "/contracts/audits",
+    title: "Bank rekvizitlari",
+    subtitle: "Rekvizitlar ro'yxati",
+    labelField: "bank_name",
+    orderBy: { column: "bank_name", ascending: true },
+    fields: [
+      { name: "bank_name", label: "Bank nomi", type: "text", required: true },
+      { name: "account_number", label: "Hisob raqami", type: "text" },
+      { name: "mfo", label: "MFO", type: "text" },
+      { name: "tin", label: "STIR", type: "text" },
+    ],
+  },
+
+  "contract-amounts": {
+    table: "contract_amounts",
+    path: "/contracts/amounts",
+    title: "Shartnoma summalari",
+    subtitle: "Summalar ro'yxati",
+    labelField: "name",
+    orderBy: { column: "name", ascending: true },
+    fields: [
+      { name: "name", label: "Nomi", type: "text", required: true },
+      { name: "academic_year_id", label: "O'quv yili", type: "select", ref: "academic-years" },
+      { name: "class_type_id", label: "Guruh turi", type: "select", ref: "class-types" },
+      { name: "amount", label: "Summa", type: "number", required: true },
     ],
   },
 } satisfies Record<ReferenceKey, ReferenceConfig>;
