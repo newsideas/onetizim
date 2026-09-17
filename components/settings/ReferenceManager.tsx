@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
@@ -54,11 +55,11 @@ export function ReferenceManager({
     return String(value);
   }
 
-  function submit(action: (formData: FormData) => Promise<void>, formData: FormData) {
+  function submit(action: (formData: FormData) => Promise<ActionResult>, formData: FormData) {
     setError(null);
     startTransition(async () => {
       try {
-        await action(formData);
+        unwrap(await action(formData));
         router.refresh();
         setAdding(false);
         setEditingId(null);
@@ -74,7 +75,7 @@ export function ReferenceManager({
     setError(null);
     startTransition(async () => {
       try {
-        await deleteReferenceItem(refKey, id);
+        unwrap(await deleteReferenceItem(refKey, id));
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "O'chirishda xatolik");

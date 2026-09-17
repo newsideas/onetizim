@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateStudentStatus } from "@/lib/actions/students";
@@ -30,7 +31,7 @@ export function StudentStatusActions({
     setPending(true);
 
     try {
-      await updateStudentStatus(studentId, next);
+      unwrap(await updateStudentStatus(studentId, next));
       // router.refresh() ataylab transition tashqarisida — transition
       // ichida chaqirilsa sahifa eski ma'lumot bilan qolib ketadi.
       router.refresh();

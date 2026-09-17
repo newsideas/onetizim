@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, Pencil, RotateCcw, Trash2 } from "lucide-react";
@@ -22,11 +23,11 @@ export function ContractActions({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function run(action: () => Promise<void>) {
+  function run(action: () => Promise<ActionResult>) {
     setError(null);
     startTransition(async () => {
       try {
-        await action();
+        unwrap(await action());
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Xatolik yuz berdi");

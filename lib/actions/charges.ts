@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError, runAction } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { notifyParent } from "@/lib/telegram/notify";
@@ -14,37 +15,39 @@ import { telegramTemplates } from "@/lib/telegram/templates";
  * period) tufayli allaqachon hisoblangan o'quvchi ikkinchi marta
  * hisoblanmaydi. Nechta yangi yozuv qo'shilgani qaytariladi.
  */
-export async function chargeMonthlyFees(period: string): Promise<number> {
-  const { supabase } = await assertPermission("payments.manage");
+export async function chargeMonthlyFees(period: string) {
+  return runAction(async () => {
+    const { supabase } = await assertPermission("payments.manage");
 
-  const { data, error } = await supabase.rpc("charge_monthly_fees", {
-    p_period: period,
-  });
+    const { data, error } = await supabase.rpc("charge_monthly_fees", {
+      p_period: period,
+    });
 
-  if (error) {
-    throw new Error("Oylik hisobni yopishda xatolik: " + error.message);
-  }
-
-  const inserted = (data as number) ?? 0;
-
-  // Yangi hisob yozilgan bo'lsa — qarzdorlarning ota-onasiga xabar.
-  if (inserted > 0) {
-    const { data: debtors } = await supabase
-      .from("students")
-      .select("full_name, balance, parent_telegram_chat_id")
-      .lt("balance", 0)
-      .not("parent_telegram_chat_id", "is", null);
-
-    for (const debtor of debtors ?? []) {
-      await notifyParent(
-        debtor.parent_telegram_chat_id,
-        telegramTemplates.qarzdorlik(debtor.full_name, debtor.balance),
-      );
+    if (error) {
+      throw new ActionError("Oylik hisobni yopishda xatolik: " + error.message);
     }
-  }
 
-  revalidatePath("/finance/payments");
-  revalidatePath("/education/students");
+    const inserted = (data as number) ?? 0;
 
-  return inserted;
+    // Yangi hisob yozilgan bo'lsa — qarzdorlarning ota-onasiga xabar.
+    if (inserted > 0) {
+      const { data: debtors } = await supabase
+        .from("students")
+        .select("full_name, balance, parent_telegram_chat_id")
+        .lt("balance", 0)
+        .not("parent_telegram_chat_id", "is", null);
+
+      for (const debtor of debtors ?? []) {
+        await notifyParent(
+          debtor.parent_telegram_chat_id,
+          telegramTemplates.qarzdorlik(debtor.full_name, debtor.balance),
+        );
+      }
+    }
+
+    revalidatePath("/finance/payments");
+    revalidatePath("/education/students");
+
+    return inserted;
+  });
 }

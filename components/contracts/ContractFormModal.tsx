@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useMemo, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Paperclip, X } from "lucide-react";
@@ -138,8 +139,7 @@ export function ContractFormModal({
           fileName: newFile ? newFile.name : keptPath ? (contract?.file_name ?? null) : null,
         };
 
-        if (contract) await updateContract(contract.id, input);
-        else await createContract(input);
+        unwrap(contract ? await updateContract(contract.id, input) : await createContract(input));
 
         router.refresh();
         onClose();

@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError, runAction } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import {
@@ -41,7 +42,7 @@ function buildRow(key: ReferenceKey, formData: FormData): Record<string, unknown
     const value = coerceValue(field, formData.get(field.name));
 
     if (field.required && (value === null || value === "")) {
-      throw new Error(`"${field.label}" to'ldirilishi shart`);
+      throw new ActionError(`"${field.label}" to'ldirilishi shart`);
     }
 
     row[field.name] = value;
@@ -51,57 +52,63 @@ function buildRow(key: ReferenceKey, formData: FormData): Record<string, unknown
 }
 
 function assertReferenceKey(key: string): asserts key is ReferenceKey {
-  if (!isReferenceKey(key)) throw new Error("Noma'lum ma'lumotnoma: " + key);
+  if (!isReferenceKey(key)) throw new ActionError("Noma'lum ma'lumotnoma: " + key);
 }
 
 export async function createReferenceItem(key: string, formData: FormData) {
-  assertReferenceKey(key);
-  const config = getReference(key);
-  const row = buildRow(key, formData);
+  return runAction(async () => {
+    assertReferenceKey(key);
+    const config = getReference(key);
+    const row = buildRow(key, formData);
 
-  const { supabase, org } = await assertPermission("settings.manage");
-  const orgId = org.id;
+    const { supabase, org } = await assertPermission("settings.manage");
+    const orgId = org.id;
 
-  const { error } = await supabase.from(config.table).insert({ org_id: orgId, ...row });
+    const { error } = await supabase.from(config.table).insert({ org_id: orgId, ...row });
 
-  if (error) {
-    throw new Error(
-      error.code === "23505"
-        ? "Bu yozuv allaqachon mavjud"
-        : "Saqlashda xatolik: " + error.message,
-    );
-  }
+    if (error) {
+      throw new ActionError(
+        error.code === "23505"
+          ? "Bu yozuv allaqachon mavjud"
+          : "Saqlashda xatolik: " + error.message,
+      );
+    }
 
-  revalidatePath(referencePath(key));
+    revalidatePath(referencePath(key));
+  });
 }
 
 export async function updateReferenceItem(key: string, id: string, formData: FormData) {
-  assertReferenceKey(key);
-  const config = getReference(key);
-  const row = buildRow(key, formData);
+  return runAction(async () => {
+    assertReferenceKey(key);
+    const config = getReference(key);
+    const row = buildRow(key, formData);
 
-  const { supabase } = await assertPermission("settings.manage");
-  const { error } = await supabase.from(config.table).update(row).eq("id", id);
+    const { supabase } = await assertPermission("settings.manage");
+    const { error } = await supabase.from(config.table).update(row).eq("id", id);
 
-  if (error) {
-    throw new Error(
-      error.code === "23505"
-        ? "Bu yozuv allaqachon mavjud"
-        : "Yangilashda xatolik: " + error.message,
-    );
-  }
+    if (error) {
+      throw new ActionError(
+        error.code === "23505"
+          ? "Bu yozuv allaqachon mavjud"
+          : "Yangilashda xatolik: " + error.message,
+      );
+    }
 
-  revalidatePath(referencePath(key));
+    revalidatePath(referencePath(key));
+  });
 }
 
 export async function deleteReferenceItem(key: string, id: string) {
-  assertReferenceKey(key);
-  const config = getReference(key);
+  return runAction(async () => {
+    assertReferenceKey(key);
+    const config = getReference(key);
 
-  const { supabase } = await assertPermission("settings.manage");
-  const { error } = await supabase.from(config.table).delete().eq("id", id);
+    const { supabase } = await assertPermission("settings.manage");
+    const { error } = await supabase.from(config.table).delete().eq("id", id);
 
-  if (error) throw new Error("O'chirishda xatolik: " + error.message);
+    if (error) throw new ActionError("O'chirishda xatolik: " + error.message);
 
-  revalidatePath(referencePath(key));
+    revalidatePath(referencePath(key));
+  });
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError, runAction } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { studentSchema, type StudentInput } from "@/lib/validations/student";
@@ -50,46 +51,50 @@ function toStudentRow(values: StudentInput) {
 }
 
 export async function createStudent(input: StudentInput) {
-  const parsed = studentSchema.safeParse(input);
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
-  }
+  return runAction(async () => {
+    const parsed = studentSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+    }
 
-  const { supabase, org } = await assertPermission("students.manage");
-  const orgId = org.id;
+    const { supabase, org } = await assertPermission("students.manage");
+    const orgId = org.id;
 
-  const { data, error } = await supabase
-    .from("students")
-    .insert({ org_id: orgId, ...toStudentRow(parsed.data) })
-    .select("id")
-    .single();
+    const { data, error } = await supabase
+      .from("students")
+      .insert({ org_id: orgId, ...toStudentRow(parsed.data) })
+      .select("id")
+      .single();
 
-  if (error) {
-    throw new Error("Saqlashda xatolik: " + error.message);
-  }
+    if (error) {
+      throw new ActionError("Saqlashda xatolik: " + error.message);
+    }
 
-  revalidatePath("/education/students");
-  return data.id as string;
+    revalidatePath("/education/students");
+    return data.id as string;
+  });
 }
 
 export async function updateStudent(studentId: string, input: StudentInput) {
-  const parsed = studentSchema.safeParse(input);
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
-  }
+  return runAction(async () => {
+    const parsed = studentSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+    }
 
-  const { supabase } = await assertPermission("students.manage");
-  const { error } = await supabase
-    .from("students")
-    .update(toStudentRow(parsed.data))
-    .eq("id", studentId);
+    const { supabase } = await assertPermission("students.manage");
+    const { error } = await supabase
+      .from("students")
+      .update(toStudentRow(parsed.data))
+      .eq("id", studentId);
 
-  if (error) {
-    throw new Error("Yangilashda xatolik: " + error.message);
-  }
+    if (error) {
+      throw new ActionError("Yangilashda xatolik: " + error.message);
+    }
 
-  revalidatePath("/education/students");
-  revalidatePath(`/education/students/${studentId}`);
+    revalidatePath("/education/students");
+    revalidatePath(`/education/students/${studentId}`);
+  });
 }
 
 /**
@@ -101,20 +106,22 @@ export async function updateStudentStatus(
   studentId: string,
   status: StudentStatus,
 ) {
-  const { supabase } = await assertPermission("students.manage");
+  return runAction(async () => {
+    const { supabase } = await assertPermission("students.manage");
 
-  const { error } = await supabase
-    .from("students")
-    .update({ status })
-    .eq("id", studentId);
+    const { error } = await supabase
+      .from("students")
+      .update({ status })
+      .eq("id", studentId);
 
-  if (error) {
-    throw new Error("Holatni o'zgartirishda xatolik: " + error.message);
-  }
+    if (error) {
+      throw new ActionError("Holatni o'zgartirishda xatolik: " + error.message);
+    }
 
-  revalidatePath("/education/students");
-  revalidatePath(`/education/students/${studentId}`);
-  revalidatePath("/education/attendance");
+    revalidatePath("/education/students");
+    revalidatePath(`/education/students/${studentId}`);
+    revalidatePath("/education/attendance");
+  });
 }
 
 /**
@@ -123,18 +130,20 @@ export async function updateStudentStatus(
  * tahrirlash `updateStudent` orqali ketadi.
  */
 export async function assignStudentGroup(studentId: string, groupId: string) {
-  if (!groupId) throw new Error("Guruhni tanlang");
+  return runAction(async () => {
+    if (!groupId) throw new ActionError("Guruhni tanlang");
 
-  const { supabase } = await assertPermission("students.manage");
-  const { error } = await supabase
-    .from("students")
-    .update({ group_id: groupId })
-    .eq("id", studentId);
+    const { supabase } = await assertPermission("students.manage");
+    const { error } = await supabase
+      .from("students")
+      .update({ group_id: groupId })
+      .eq("id", studentId);
 
-  if (error) throw new Error("Biriktirishda xatolik: " + error.message);
+    if (error) throw new ActionError("Biriktirishda xatolik: " + error.message);
 
-  revalidatePath("/education/groups/assign");
-  revalidatePath("/education/students");
-  revalidatePath("/education/students/base");
-  revalidatePath(`/education/students/${studentId}`);
+    revalidatePath("/education/groups/assign");
+    revalidatePath("/education/students");
+    revalidatePath("/education/students/base");
+    revalidatePath(`/education/students/${studentId}`);
+  });
 }

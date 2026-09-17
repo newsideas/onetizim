@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
@@ -46,7 +47,7 @@ export function StudentAssignTable({
     setErrorId(null);
     startTransition(async () => {
       try {
-        await assignStudentGroup(studentId, groupId);
+        unwrap(await assignStudentGroup(studentId, groupId));
         setSavedId(studentId);
         router.refresh();
         setTimeout(() => setSavedId((id) => (id === studentId ? null : id)), 1500);

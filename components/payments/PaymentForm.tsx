@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,7 +49,7 @@ export function PaymentForm({
   async function onSubmit(values: PaymentInput) {
     setServerError(null);
     try {
-      await createPayment(values);
+      unwrap(await createPayment(values));
       router.refresh();
       onSuccess();
     } catch (e) {

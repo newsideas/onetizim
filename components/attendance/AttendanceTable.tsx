@@ -29,13 +29,22 @@ export function AttendanceTable({
 }) {
   const [students, setStudents] = useState(initialStudents);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleMark(studentId: string, status: AttendanceStatus) {
+    const previous = students.find((s) => s.id === studentId)?.status ?? null;
+    setError(null);
     setStudents((prev) =>
       prev.map((s) => (s.id === studentId ? { ...s, status } : s)),
     );
     startTransition(async () => {
-      await markAttendance(studentId, groupId, date, status);
+      const result = await markAttendance(studentId, groupId, date, status);
+      if (!result.ok) {
+        setStudents((prev) =>
+          prev.map((s) => (s.id === studentId ? { ...s, status: previous } : s)),
+        );
+        setError(result.error);
+      }
     });
   }
 
@@ -48,41 +57,48 @@ export function AttendanceTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-line">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-canvas text-ink-muted">
-          <tr>
-            <th className="px-4 py-3 font-medium">Ism familiyasi</th>
-            <th className="px-4 py-3 font-medium">Davomat</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {students.map((student) => (
-            <tr key={student.id} className="hover:bg-canvas">
-              <td className="px-4 py-3 text-ink">{student.full_name}</td>
-              <td className="px-4 py-3">
-                <div className="flex gap-2">
-                  {STATUS_ORDER.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => handleMark(student.id, status)}
-                      disabled={isPending}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
-                        student.status === status
-                          ? STATUS_COLORS[status]
-                          : "bg-canvas text-ink-muted hover:bg-line"
-                      }`}
-                    >
-                      {STATUS_LABELS[status]}
-                    </button>
-                  ))}
-                </div>
-              </td>
+    <div className="space-y-2">
+      {error && (
+        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+      <div className="overflow-x-auto rounded-xl border border-line">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-canvas text-ink-muted">
+            <tr>
+              <th className="px-4 py-3 font-medium">Ism familiyasi</th>
+              <th className="px-4 py-3 font-medium">Davomat</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {students.map((student) => (
+              <tr key={student.id} className="hover:bg-canvas">
+                <td className="px-4 py-3 text-ink">{student.full_name}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    {STATUS_ORDER.map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => handleMark(student.id, status)}
+                        disabled={isPending}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
+                          student.status === status
+                            ? STATUS_COLORS[status]
+                            : "bg-canvas text-ink-muted hover:bg-line"
+                        }`}
+                      >
+                        {STATUS_LABELS[status]}
+                      </button>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

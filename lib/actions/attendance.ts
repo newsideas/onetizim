@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError, runAction } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { notifyParent } from "@/lib/telegram/notify";
@@ -27,7 +28,7 @@ export async function getAttendanceForGroup(
     .eq("status", "active")
     .order("full_name");
 
-  if (studentsError) throw new Error(studentsError.message);
+  if (studentsError) throw new ActionError(studentsError.message);
   if (!students || students.length === 0) return [];
 
   const { data: records } = await supabase
@@ -54,42 +55,44 @@ export async function markAttendance(
   lessonDate: string,
   status: AttendanceStatus,
 ) {
-  const { supabase } = await assertPermission("attendance.mark");
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Avtorizatsiyadan o'tilmagan");
+  return runAction(async () => {
+    const { supabase } = await assertPermission("attendance.mark");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new ActionError("Avtorizatsiyadan o'tilmagan");
 
-  const { error } = await supabase.from("attendance").upsert(
-    {
-      student_id: studentId,
-      group_id: groupId,
-      lesson_date: lessonDate,
-      status,
-      marked_by: user.id,
-    },
-    { onConflict: "student_id,lesson_date" },
-  );
+    const { error } = await supabase.from("attendance").upsert(
+      {
+        student_id: studentId,
+        group_id: groupId,
+        lesson_date: lessonDate,
+        status,
+        marked_by: user.id,
+      },
+      { onConflict: "student_id,lesson_date" },
+    );
 
-  if (error) {
-    throw new Error("Davomatni saqlashda xatolik: " + error.message);
-  }
-
-  // Darsga kelmagan bo'lsa — ota-onaga Telegram orqali xabar.
-  if (status === "absent") {
-    const { data: student } = await supabase
-      .from("students")
-      .select("full_name, parent_telegram_chat_id")
-      .eq("id", studentId)
-      .maybeSingle();
-
-    if (student) {
-      await notifyParent(
-        student.parent_telegram_chat_id,
-        telegramTemplates.absent(student.full_name, formatDate(lessonDate)),
-      );
+    if (error) {
+      throw new ActionError("Davomatni saqlashda xatolik: " + error.message);
     }
-  }
 
-  revalidatePath("/education/attendance");
+    // Darsga kelmagan bo'lsa — ota-onaga Telegram orqali xabar.
+    if (status === "absent") {
+      const { data: student } = await supabase
+        .from("students")
+        .select("full_name, parent_telegram_chat_id")
+        .eq("id", studentId)
+        .maybeSingle();
+
+      if (student) {
+        await notifyParent(
+          student.parent_telegram_chat_id,
+          telegramTemplates.absent(student.full_name, formatDate(lessonDate)),
+        );
+      }
+    }
+
+    revalidatePath("/education/attendance");
+  });
 }

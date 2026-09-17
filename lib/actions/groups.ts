@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError, runAction } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertPermission } from "@/lib/auth/session";
@@ -37,7 +38,7 @@ async function resolveByName(
     .select("id")
     .single();
 
-  if (error) throw new Error(`Saqlashda xatolik (${table}): ` + error.message);
+  if (error) throw new ActionError(`Saqlashda xatolik (${table}): ` + error.message);
   return created.id;
 }
 
@@ -76,46 +77,50 @@ function toGroupRow(
 }
 
 export async function createGroup(input: GroupInput) {
-  const parsed = groupSchema.safeParse(input);
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
-  }
-  const values = parsed.data;
+  return runAction(async () => {
+    const parsed = groupSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+    }
+    const values = parsed.data;
 
-  const { supabase, org } = await assertPermission("groups.manage");
-  const orgId = org.id;
-  const rel = await resolveRelations(supabase, orgId, values);
+    const { supabase, org } = await assertPermission("groups.manage");
+    const orgId = org.id;
+    const rel = await resolveRelations(supabase, orgId, values);
 
-  const { error } = await supabase
-    .from("groups")
-    .insert({ org_id: orgId, ...toGroupRow(values, rel) });
+    const { error } = await supabase
+      .from("groups")
+      .insert({ org_id: orgId, ...toGroupRow(values, rel) });
 
-  if (error) throw new Error("Guruh yaratishda xatolik: " + error.message);
+    if (error) throw new ActionError("Guruh yaratishda xatolik: " + error.message);
 
-  revalidatePath("/education/groups");
-  revalidatePath("/education/schedule");
+    revalidatePath("/education/groups");
+    revalidatePath("/education/schedule");
+  });
 }
 
 export async function updateGroup(groupId: string, input: GroupInput) {
-  const parsed = groupSchema.safeParse(input);
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
-  }
-  const values = parsed.data;
+  return runAction(async () => {
+    const parsed = groupSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+    }
+    const values = parsed.data;
 
-  const { supabase, org } = await assertPermission("groups.manage");
-  const orgId = org.id;
-  const rel = await resolveRelations(supabase, orgId, values);
+    const { supabase, org } = await assertPermission("groups.manage");
+    const orgId = org.id;
+    const rel = await resolveRelations(supabase, orgId, values);
 
-  // RLS guruhni faqat o'z tashkilotida o'zgartirishga ruxsat beradi.
-  const { error } = await supabase
-    .from("groups")
-    .update(toGroupRow(values, rel))
-    .eq("id", groupId);
+    // RLS guruhni faqat o'z tashkilotida o'zgartirishga ruxsat beradi.
+    const { error } = await supabase
+      .from("groups")
+      .update(toGroupRow(values, rel))
+      .eq("id", groupId);
 
-  if (error) throw new Error("Guruhni yangilashda xatolik: " + error.message);
+    if (error) throw new ActionError("Guruhni yangilashda xatolik: " + error.message);
 
-  revalidatePath("/education/groups");
-  revalidatePath(`/education/groups/${groupId}`);
-  revalidatePath("/education/schedule");
+    revalidatePath("/education/groups");
+    revalidatePath(`/education/groups/${groupId}`);
+    revalidatePath("/education/schedule");
+  });
 }

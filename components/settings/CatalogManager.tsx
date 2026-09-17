@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Check, X, Pencil } from "lucide-react";
@@ -42,11 +43,12 @@ export function CatalogManager({
    * transition ichida chaqirilganda React uni kechiktirib yuboradi va
    * ro'yxat eski holatda qolib ketadi.
    */
-  async function run(action: () => Promise<void>) {
+  async function run(action: () => Promise<ActionResult | void>) {
     setError(null);
     setPending(true);
     try {
-      await action();
+      const result = await action();
+      if (result) unwrap(result);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
@@ -58,14 +60,14 @@ export function CatalogManager({
   function handleAdd() {
     if (!newName.trim()) return;
     run(async () => {
-      await createCatalogItem(table, newName);
+      unwrap(await createCatalogItem(table, newName));
       setNewName("");
     });
   }
 
   function handleRename(id: string) {
     run(async () => {
-      await renameCatalogItem(table, id, editingName);
+      unwrap(await renameCatalogItem(table, id, editingName));
       setEditingId(null);
     });
   }

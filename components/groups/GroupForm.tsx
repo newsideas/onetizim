@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,9 +70,9 @@ export function GroupForm({
     setServerError(null);
     try {
       if (groupId) {
-        await updateGroup(groupId, values);
+        unwrap(await updateGroup(groupId, values));
       } else {
-        await createGroup(values);
+        unwrap(await createGroup(values));
       }
       router.refresh();
       onSuccess();

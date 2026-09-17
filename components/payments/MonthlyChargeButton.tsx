@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useState } from "react";
 import { CalendarClock } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -27,7 +28,7 @@ export function MonthlyChargeButton() {
     setError(null);
     setResult(null);
     try {
-      const count = await chargeMonthlyFees(`${month}-01`);
+      const count = unwrap(await chargeMonthlyFees(`${month}-01`));
       setResult(count);
       router.refresh();
     } catch (e) {

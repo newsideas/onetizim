@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrap } from "@/lib/actions/result";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,9 +54,9 @@ export function StudentForm({
     setServerError(null);
     try {
       if (studentId) {
-        await updateStudent(studentId, values);
+        unwrap(await updateStudent(studentId, values));
       } else {
-        await createStudent(values);
+        unwrap(await createStudent(values));
       }
       router.push("/education/students");
       router.refresh();
