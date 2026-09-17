@@ -62,3 +62,19 @@ export function daysUntil(date: string | null | undefined): number | null {
   const diffMs = startOfDay(target) - startOfDay(new Date());
   return Math.round(diffMs / 86_400_000);
 }
+
+/** "bugun", "kecha", "5 kun oldin" — kartalarda yozuv qancha turib qolganini ko'rsatish uchun. */
+export function formatDaysAgo(date: string | null | undefined): string {
+  const diff = daysUntil(date);
+  if (diff === null) return "";
+  const ago = -diff;
+  if (ago <= 0) return "bugun";
+  if (ago === 1) return "kecha";
+  return `${ago} kun oldin`;
+}
+
+/** Oyning birinchi kuni, YYYY-MM-DD (mahalliy vaqt bo'yicha). */
+export function monthStartIso(date = new Date()): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-01`;
+}
