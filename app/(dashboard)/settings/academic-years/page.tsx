@@ -1,23 +1,20 @@
-import { ListPageShell, DataTable } from "@/components/ui/ListPage";
+import { createClient } from "@/lib/supabase/server";
+import { ListPageShell } from "@/components/ui/ListPage";
+import { ReferenceManager } from "@/components/settings/ReferenceManager";
+import { getReference } from "@/lib/references";
 
-export default async function Page() {
+export default async function AcademicYearsPage() {
+  const config = getReference("academic-years");
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from(config.table)
+    .select("*")
+    .order(config.orderBy.column, { ascending: config.orderBy.ascending });
+
   return (
-    <ListPageShell
-      title={"O'quv yillari"}
-      subtitle={"O'quv yillari ro'yxati"}
-      notice={"Bu bo\u2019lim qurilmoqda \u2014 hozircha ma\u2019lumot saqlanmaydi."}
-    >
-      <DataTable
-        rows={[]}
-        columns={[
-          { header: "O'quv yili", cell: () => null },
-          { header: "Ta'lim turi", cell: () => null },
-          { header: "Boshlanish sanasi", cell: () => null },
-          { header: "Tugash sanasi", cell: () => null },
-          { header: "Joriy o'quv yili", cell: () => null },
-          { header: "Yaratilgan sana", cell: () => null },
-        ]}
-      />
+    <ListPageShell title={config.title} subtitle={config.subtitle}>
+      <ReferenceManager refKey="academic-years" config={config} rows={data ?? []} />
     </ListPageShell>
   );
 }

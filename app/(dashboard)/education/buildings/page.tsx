@@ -1,21 +1,20 @@
-import { ListPageShell, DataTable } from "@/components/ui/ListPage";
+import { createClient } from "@/lib/supabase/server";
+import { ListPageShell } from "@/components/ui/ListPage";
+import { ReferenceManager } from "@/components/settings/ReferenceManager";
+import { getReference } from "@/lib/references";
 
-export default async function Page() {
+export default async function BuildingsPage() {
+  const config = getReference("buildings");
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from(config.table)
+    .select("*")
+    .order(config.orderBy.column, { ascending: config.orderBy.ascending });
+
   return (
-    <ListPageShell
-      title={"Binolar"}
-      subtitle={"Binolar ro'yxati"}
-      notice={"Bu bo\u2019lim qurilmoqda \u2014 hozircha ma\u2019lumot saqlanmaydi."}
-    >
-      <DataTable
-        rows={[]}
-        columns={[
-          { header: "Nomi", cell: () => null },
-          { header: "Kodi", cell: () => null },
-          { header: "Manzil", cell: () => null },
-          { header: "Yaratilgan sana", cell: () => null },
-        ]}
-      />
+    <ListPageShell title={config.title} subtitle={config.subtitle}>
+      <ReferenceManager refKey="buildings" config={config} rows={data ?? []} />
     </ListPageShell>
   );
 }

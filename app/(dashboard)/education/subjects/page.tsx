@@ -1,24 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { ListPageShell } from "@/components/ui/ListPage";
-import { CatalogManager, type CatalogItem } from "@/components/settings/CatalogManager";
+import { ReferenceManager } from "@/components/settings/ReferenceManager";
+import { getReference } from "@/lib/references";
 
 export default async function SubjectsPage() {
+  const config = getReference("subjects");
   const supabase = await createClient();
-  const { data: courses } = await supabase
-    .from("courses")
-    .select("id, name")
-    .order("name");
+
+  const { data } = await supabase
+    .from(config.table)
+    .select("*")
+    .order(config.orderBy.column, { ascending: config.orderBy.ascending });
 
   return (
-    <ListPageShell title="Fanlar" subtitle="Fanlar ro&apos;yxati">
-      <div className="max-w-xl">
-        <CatalogManager
-          table="courses"
-          title="Fanlar"
-          placeholder="Fan nomi"
-          items={(courses ?? []) as CatalogItem[]}
-        />
-      </div>
+    <ListPageShell title={config.title} subtitle={config.subtitle}>
+      <ReferenceManager refKey="subjects" config={config} rows={data ?? []} />
     </ListPageShell>
   );
 }
