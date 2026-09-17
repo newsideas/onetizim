@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/*
+ * `dark:` varianti ham mavzu tokenlari bilan bir xil qoidaga bo'ysunadi:
+ * foydalanuvchi tanlovi (data-theme) tizim sozlamasidan ustun. Aks holda
+ * tizim to'q, ilova yorug' bo'lganda `dark:` ranglari yorug' fonga tushardi.
+ */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) & {
+      @slot;
+    }
+  }
+  :root[data-theme="dark"] & {
+    @slot;
+  }
+}
+
 /**
  * EduGram dizayn tizimi — yorug' mavzu, yashil-turkuaz aksent.
  *
