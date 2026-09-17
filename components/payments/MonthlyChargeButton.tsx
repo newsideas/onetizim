@@ -4,6 +4,7 @@ import { unwrap } from "@/lib/actions/result";
 import { useState } from "react";
 import { CalendarClock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { todayIso } from "@/lib/utils/date";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -12,7 +13,7 @@ import { FormError } from "@/components/ui/FormError";
 import { chargeMonthlyFees } from "@/lib/actions/charges";
 
 function currentMonth() {
-  return new Date().toISOString().slice(0, 7); // YYYY-MM
+  return todayIso().slice(0, 7); // YYYY-MM
 }
 
 export function MonthlyChargeButton() {

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { bugungiKun } from "@/lib/utils/date";
+import { MONTH_NAMES, bugungiKun, monthStartIso, todayIso } from "@/lib/utils/date";
 
 /**
  * Bosh sahifa uchun barcha ko'rsatkichlar bitta joyda yig'iladi.
@@ -56,41 +56,18 @@ export interface DashboardData {
   groupCounts: GroupCount[];
 }
 
-const MONTH_NAMES = [
-  "Yanvar",
-  "Fevral",
-  "Mart",
-  "Aprel",
-  "May",
-  "Iyun",
-  "Iyul",
-  "Avgust",
-  "Sentabr",
-  "Oktabr",
-  "Noyabr",
-  "Dekabr",
-];
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** Joriy o'quv yili: sentabrdan avgustgacha. */
-function academicYearStart(): Date {
-  const now = new Date();
-  const year = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
-  return new Date(year, 8, 1); // 1-sentabr
+/** Joriy o'quv yili boshi (1-sentabr), YYYY-MM-DD. */
+function academicYearStart(today: string): string {
+  const [year, month] = today.split("-").map(Number);
+  return `${month >= 9 ? year : year - 1}-09-01`;
 }
 
 export async function getDashboardData(
   supabase: SupabaseClient,
 ): Promise<DashboardData> {
   const today = todayIso();
-  const yearStart = academicYearStart().toISOString().slice(0, 10);
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .slice(0, 10);
+  const yearStart = academicYearStart(today);
+  const monthStart = monthStartIso();
 
   const [
     studentsRes,

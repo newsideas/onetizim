@@ -2,10 +2,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { getAttendanceForGroup } from "@/lib/actions/attendance";
 import { AttendanceFilters } from "@/components/attendance/AttendanceFilters";
 import { AttendanceTable } from "@/components/attendance/AttendanceTable";
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { todayIso } from "@/lib/utils/date";
 
 export default async function AttendancePage({
   searchParams,

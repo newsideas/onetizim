@@ -1,11 +1,40 @@
 /**
+ * Barcha "bugun", "shu oy" hisoblari Toshkent vaqti bo'yicha. Server (Vercel)
+ * UTC'da ishlaydi: toISOString() soat 00:00–05:00 oralig'ida kechagi sanani
+ * berardi va server bilan brauzer render'i farq qilardi.
+ */
+export const APP_TIME_ZONE = "Asia/Tashkent";
+
+const isoDayFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: APP_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const PLAIN_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Vaqt belgisini Toshkent bo'yicha YYYY-MM-DD ga aylantiradi. */
+export function toIsoDay(date: Date | string): string {
+  if (typeof date === "string" && PLAIN_DATE.test(date)) return date;
+  return isoDayFormatter.format(typeof date === "string" ? new Date(date) : date);
+}
+
+/** Bugungi sana (Toshkent), YYYY-MM-DD. */
+export function todayIso(): string {
+  return toIsoDay(new Date());
+}
+
+function dayNumber(isoDay: string): number {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  return Date.UTC(y, m - 1, d) / 86_400_000;
+}
+
+/**
  * Sana formati: kun.oy.yil (masalan 11.09.2026).
  */
 export function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
+  const [year, month, day] = toIsoDay(date).split("-");
   return `${day}.${month}.${year}`;
 }
 
@@ -42,7 +71,7 @@ export function minutesToTime(total: number): string {
 
 /** Bugungi kunning o'zbekcha nomi. */
 export function bugungiKun(): string {
-  const jsDay = new Date().getDay(); // 0 = Yakshanba
+  const jsDay = new Date(dayNumber(todayIso()) * 86_400_000).getUTCDay(); // 0 = Yakshanba
   return HAFTA_KUNLARI[(jsDay + 6) % 7];
 }
 
@@ -53,14 +82,8 @@ export function bugungiKun(): string {
 export function daysUntil(date: string | null | undefined): number | null {
   if (!date) return null;
 
-  const target = new Date(date);
-  if (Number.isNaN(target.getTime())) return null;
-
-  const startOfDay = (d: Date) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-
-  const diffMs = startOfDay(target) - startOfDay(new Date());
-  return Math.round(diffMs / 86_400_000);
+  if (!PLAIN_DATE.test(date) && Number.isNaN(new Date(date).getTime())) return null;
+  return dayNumber(toIsoDay(date)) - dayNumber(todayIso());
 }
 
 /** "bugun", "kecha", "5 kun oldin" — kartalarda yozuv qancha turib qolganini ko'rsatish uchun. */
@@ -73,8 +96,31 @@ export function formatDaysAgo(date: string | null | undefined): string {
   return `${ago} kun oldin`;
 }
 
-/** Oyning birinchi kuni, YYYY-MM-DD (mahalliy vaqt bo'yicha). */
-export function monthStartIso(date = new Date()): string {
+/** Oyning birinchi kuni, YYYY-MM-DD. Sana berilmasa — joriy oy (Toshkent). */
+export function monthStartIso(date?: Date): string {
+  if (!date) return `${todayIso().slice(0, 7)}-01`;
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${date.getFullYear()}-${month}-01`;
+}
+
+/** "2026-09" (input type=month) → "2026-09-01"; noto'g'ri bo'lsa joriy oy. */
+export function parseMonth(value: string | undefined): string {
+  if (value && /^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return `${value}-01`;
+  return monthStartIso();
+}
+
+export function nextMonth(periodStart: string): string {
+  const [y, m] = periodStart.split("-").map(Number);
+  return monthStartIso(new Date(y, m, 1));
+}
+
+export const MONTH_NAMES = [
+  "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+  "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr",
+];
+
+/** "2026-09-01" → "Sentabr 2026". */
+export function formatMonth(periodStart: string): string {
+  const [y, m] = periodStart.split("-").map(Number);
+  return `${MONTH_NAMES[m - 1] ?? ""} ${y}`;
 }

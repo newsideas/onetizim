@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { todayIso } from "@/lib/utils/date";
 import {
   paymentSchema,
   METHOD_LABELS,
@@ -22,10 +23,6 @@ export interface StudentOption {
   full_name: string;
 }
 
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function PaymentForm({
   students,
