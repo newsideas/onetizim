@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { DebtorsList } from "@/components/payments/DebtorsList";
 import {
   PaymentsJournal,
@@ -8,7 +8,7 @@ import { NewPaymentButton } from "@/components/payments/NewPaymentButton";
 import { MonthlyChargeButton } from "@/components/payments/MonthlyChargeButton";
 
 export default async function PaymentsPage() {
-  const supabase = await createClient();
+  const { supabase } = await requirePermission("payments.manage");
 
   const [{ data: students }, { data: debtors }, { data: payments }] = await Promise.all([
     supabase.from("students").select("id, full_name").order("full_name"),

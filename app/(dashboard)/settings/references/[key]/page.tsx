@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { ReferenceManager, type RefOption } from "@/components/settings/ReferenceManager";
 import {
@@ -20,7 +20,7 @@ export default async function ReferencePage({
   if (!isReferenceKey(key)) notFound();
 
   const config = getReference(key);
-  const supabase = await createClient();
+  const { supabase } = await requirePermission("settings.manage");
 
   const linkedKeys = [
     ...new Set(config.fields.flatMap((f) => (f.ref ? [f.ref] : []))),

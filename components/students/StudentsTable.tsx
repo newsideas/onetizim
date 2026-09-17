@@ -10,12 +10,17 @@ export function StudentsTable({
   showStatus = true,
   emptyText = "Hali o'quvchilar yo'q.",
   groupLabel = "Guruh",
+  linkToProfile = true,
+  showBalance = true,
 }: {
   students: StudentTableRow[];
   showStatus?: boolean;
   emptyText?: string;
   /** Muassasa turiga qarab "Sinf" yoki "Guruh". */
   groupLabel?: string;
+  /** O'qituvchi o'quvchi kartasini ochmaydi va balansni ko'rmaydi. */
+  linkToProfile?: boolean;
+  showBalance?: boolean;
 }) {
   if (students.length === 0) {
     return (
@@ -33,7 +38,7 @@ export function StudentsTable({
             <th className="px-4 py-3 font-medium">Ism familiyasi</th>
             <th className="px-4 py-3 font-medium">{groupLabel}</th>
             <th className="px-4 py-3 font-medium">Telefon</th>
-            <th className="px-4 py-3 font-medium">Balans</th>
+            {showBalance && <th className="px-4 py-3 font-medium">Balans</th>}
             {showStatus && <th className="px-4 py-3 font-medium">Holati</th>}
           </tr>
         </thead>
@@ -41,18 +46,24 @@ export function StudentsTable({
           {students.map((student) => (
             <tr key={student.id} className="hover:bg-canvas">
               <td className="px-4 py-3">
-                <Link
-                  href={`/education/students/${student.id}`}
-                  className="font-medium text-ink hover:text-brand-600"
-                >
-                  {student.full_name}
-                </Link>
+                {linkToProfile ? (
+                  <Link
+                    href={`/education/students/${student.id}`}
+                    className="font-medium text-ink hover:text-brand-600"
+                  >
+                    {student.full_name}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-ink">{student.full_name}</span>
+                )}
               </td>
               <td className="px-4 py-3 text-ink-muted">{student.group?.name || "—"}</td>
               <td className="px-4 py-3 text-ink-muted">{student.phone || "—"}</td>
-              <td className="px-4 py-3">
-                <BalanceBadge balance={student.balance} />
-              </td>
+              {showBalance && (
+                <td className="px-4 py-3">
+                  <BalanceBadge balance={student.balance} />
+                </td>
+              )}
               {showStatus && (
                 <td className="px-4 py-3">
                   <StudentStatusBadge status={student.status} />

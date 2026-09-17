@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { buildNavSections, filterNavSections } from "@/lib/navigation";
-import type { Permission } from "@/lib/auth/permissions";
 import { useSegment } from "@/components/layout/SegmentProvider";
+import { usePermissions } from "@/components/auth/PermissionsProvider";
 import { Logo } from "@/components/ui/Logo";
 
 function matches(pathname: string, href: string) {
@@ -25,15 +25,10 @@ function findActiveHref(pathname: string, hrefs: string[]) {
     .sort((a, b) => b.length - a.length)[0];
 }
 
-export function Sidebar({
-  permissions,
-  onNavigate,
-}: {
-  permissions: readonly Permission[];
-  onNavigate?: () => void;
-}) {
+export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { terms } = useSegment();
+  const { permissions, displayName, roleLabel } = usePermissions();
 
   const sections = useMemo(
     () => filterNavSections(buildNavSections(terms), permissions),
@@ -154,8 +149,14 @@ export function Sidebar({
         })}
       </div>
 
-      <div className="mx-4 border-t border-white/10 pt-3 pb-4">
-        <div className="text-center text-xs tracking-wide text-white/40">EduGram system</div>
+      <div className="mx-3 border-t border-white/10 px-2 pt-3 pb-4">
+        <div className="truncate text-sm font-medium text-white" title={displayName}>
+          {displayName}
+        </div>
+        <div className="mt-0.5 flex items-center justify-between gap-2 text-xs">
+          <span className="rounded-full bg-white/15 px-2 py-0.5 text-white/90">{roleLabel}</span>
+          <span className="tracking-wide text-white/40">EduGram</span>
+        </div>
       </div>
     </nav>
   );

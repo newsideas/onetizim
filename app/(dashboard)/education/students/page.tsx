@@ -1,9 +1,8 @@
 import { StudentsTabs } from "@/components/education/SectionTabs";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
 import { NewStudentButton } from "@/components/students/NewStudentButton";
 import { StudentsFilter } from "@/components/students/StudentsFilter";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { termsFor } from "@/lib/segment";
 
 const VALID_STATUSES = ["active", "frozen", "archived", "all"];
@@ -17,9 +16,9 @@ export default async function StudentsPage({
   const status =
     params.status && VALID_STATUSES.includes(params.status) ? params.status : "active";
 
-  const supabase = await createClient();
+  const { supabase, org } = await requirePermission("students.view");
 
-  const terms = termsFor((await getCurrentOrg(supabase)).type);
+  const terms = termsFor(org.type);
 
   let studentsQuery = supabase
     .from("students")

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { FormError } from "@/components/ui/FormError";
 import { AuthShowcase } from "@/components/auth/AuthShowcase";
+import { safeNextPath } from "@/lib/utils/safeNextPath";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
+    router.push(safeNextPath(new URLSearchParams(window.location.search).get("next")));
     router.refresh();
   }
 

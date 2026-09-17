@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { TelegramLinkRow } from "@/components/settings/TelegramLinkRow";
 
 export default async function TelegramSettingsPage() {
-  const supabase = await createClient();
+  const { supabase } = await requirePermission("notifications.manage");
   const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
 
   const { data: students } = await supabase

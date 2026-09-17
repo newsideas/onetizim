@@ -1,10 +1,9 @@
 import { StudentsTabs } from "@/components/education/SectionTabs";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { ListPageShell, DataTable, type Column } from "@/components/ui/ListPage";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { NewStudentButton } from "@/components/students/NewStudentButton";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { termsFor } from "@/lib/segment";
 import { formatDate } from "@/lib/utils/date";
 import { GENDER_LABELS } from "@/lib/validations/student";
@@ -40,8 +39,8 @@ export default async function StudentsBasePage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const terms = termsFor((await getCurrentOrg(supabase)).type);
+  const { supabase, org } = await requirePermission("students.view");
+  const terms = termsFor(org.type);
 
   let query = supabase
     .from("students")

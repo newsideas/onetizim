@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { requirePermission } from "@/lib/auth/session";
 import { termsFor } from "@/lib/segment";
 import { formatDate } from "@/lib/utils/date";
 import { formatSom } from "@/lib/utils/currency";
@@ -43,8 +42,7 @@ export default async function ContractAssignPage({
   const params = await searchParams;
   const status: ContractStatus = params.status === "cancelled" ? "cancelled" : "active";
 
-  const supabase = await createClient();
-  const org = await getCurrentOrg(supabase);
+  const { supabase, org } = await requirePermission("contracts.manage");
   const terms = termsFor(org.type);
 
   let query = supabase

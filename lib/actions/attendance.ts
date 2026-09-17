@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { assertPermission } from "@/lib/auth/session";
 import { notifyParent } from "@/lib/telegram/notify";
 import { telegramTemplates } from "@/lib/telegram/templates";
 import { formatDate } from "@/lib/utils/date";
@@ -18,7 +18,7 @@ export async function getAttendanceForGroup(
   groupId: string,
   lessonDate: string,
 ): Promise<AttendanceStudent[]> {
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("attendance.mark");
 
   const { data: students, error: studentsError } = await supabase
     .from("students")
@@ -54,7 +54,7 @@ export async function markAttendance(
   lessonDate: string,
   status: AttendanceStatus,
 ) {
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("attendance.mark");
   const {
     data: { user },
   } = await supabase.auth.getUser();

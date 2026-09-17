@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
+import { assertPermission } from "@/lib/auth/session";
 import { studentSchema, type StudentInput } from "@/lib/validations/student";
 import type { StudentStatus } from "@/types/database";
 
@@ -56,8 +55,8 @@ export async function createStudent(input: StudentInput) {
     throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
   }
 
-  const supabase = await createClient();
-  const orgId = await getCurrentOrgId(supabase);
+  const { supabase, org } = await assertPermission("students.manage");
+  const orgId = org.id;
 
   const { data, error } = await supabase
     .from("students")
@@ -79,7 +78,7 @@ export async function updateStudent(studentId: string, input: StudentInput) {
     throw new Error(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
   }
 
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("students.manage");
   const { error } = await supabase
     .from("students")
     .update(toStudentRow(parsed.data))
@@ -102,7 +101,7 @@ export async function updateStudentStatus(
   studentId: string,
   status: StudentStatus,
 ) {
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("students.manage");
 
   const { error } = await supabase
     .from("students")
@@ -126,7 +125,7 @@ export async function updateStudentStatus(
 export async function assignStudentGroup(studentId: string, groupId: string) {
   if (!groupId) throw new Error("Guruhni tanlang");
 
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("students.manage");
   const { error } = await supabase
     .from("students")
     .update({ group_id: groupId })

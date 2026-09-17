@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { BalanceBadge } from "@/components/payments/BalanceBadge";
 import { StudentStatusActions } from "@/components/students/StudentStatusActions";
 import { formatDate } from "@/lib/utils/date";
@@ -23,7 +23,7 @@ export default async function StudentDetailPage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  const supabase = await createClient();
+  const { supabase } = await requirePermission("students.view");
 
   const [{ data: student }, { data: payments }] = await Promise.all([
     supabase

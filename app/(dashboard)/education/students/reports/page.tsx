@@ -1,7 +1,6 @@
 import { StudentsTabs } from "@/components/education/SectionTabs";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { ListPageShell, DataTable, type Column } from "@/components/ui/ListPage";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { termsFor } from "@/lib/segment";
 
 interface GroupReportRow {
@@ -18,8 +17,8 @@ interface GroupReportRow {
  * Jami qator har doim eng oxirida.
  */
 export default async function StudentsReportsPage() {
-  const supabase = await createClient();
-  const terms = termsFor((await getCurrentOrg(supabase)).type);
+  const { supabase, org } = await requirePermission("students.view");
+  const terms = termsFor(org.type);
 
   const [{ data: groups }, { data: students }] = await Promise.all([
     supabase.from("groups").select("id, name").order("name"),

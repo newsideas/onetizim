@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Send } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { requirePermission } from "@/lib/auth/session";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { termsFor } from "@/lib/segment";
 import { formatDate } from "@/lib/utils/date";
@@ -16,8 +15,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default async function ClientBrandingPage() {
-  const supabase = await createClient();
-  const org = await getCurrentOrg(supabase);
+  const { org } = await requirePermission("settings.manage");
 
   const director = [org.director_last_name, org.director_first_name]
     .filter(Boolean)

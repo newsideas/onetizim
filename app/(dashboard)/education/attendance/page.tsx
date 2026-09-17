@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { getAttendanceForGroup } from "@/lib/actions/attendance";
 import { AttendanceFilters } from "@/components/attendance/AttendanceFilters";
 import { AttendanceTable } from "@/components/attendance/AttendanceTable";
@@ -13,7 +13,7 @@ export default async function AttendancePage({
   searchParams: Promise<{ group?: string; date?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
+  const { supabase } = await requirePermission("attendance.mark");
   const { data: groups } = await supabase.from("groups").select("id, name").order("name");
 
   if (!groups || groups.length === 0) {

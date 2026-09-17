@@ -1,13 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { requirePermission } from "@/lib/auth/session";
 import { termsFor } from "@/lib/segment";
 import { StudentForm } from "@/components/students/StudentForm";
 import { FormPageHeader } from "@/components/ui/FormLayout";
 import { Card, EmptyState } from "@/components/ui/Card";
 
 export default async function NewStudentPage() {
-  const supabase = await createClient();
-  const terms = termsFor((await getCurrentOrg(supabase)).type);
+  const { supabase, org } = await requirePermission("students.manage");
+  const terms = termsFor(org.type);
 
   const { data: groups } = await supabase
     .from("groups")

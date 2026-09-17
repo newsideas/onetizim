@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
+import { assertPermission } from "@/lib/auth/session";
 import { groupSchema, type GroupInput } from "@/lib/validations/group";
 
 /**
@@ -83,8 +82,8 @@ export async function createGroup(input: GroupInput) {
   }
   const values = parsed.data;
 
-  const supabase = await createClient();
-  const orgId = await getCurrentOrgId(supabase);
+  const { supabase, org } = await assertPermission("groups.manage");
+  const orgId = org.id;
   const rel = await resolveRelations(supabase, orgId, values);
 
   const { error } = await supabase
@@ -104,8 +103,8 @@ export async function updateGroup(groupId: string, input: GroupInput) {
   }
   const values = parsed.data;
 
-  const supabase = await createClient();
-  const orgId = await getCurrentOrgId(supabase);
+  const { supabase, org } = await assertPermission("groups.manage");
+  const orgId = org.id;
   const rel = await resolveRelations(supabase, orgId, values);
 
   // RLS guruhni faqat o'z tashkilotida o'zgartirishga ruxsat beradi.

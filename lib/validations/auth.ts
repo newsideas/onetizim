@@ -36,3 +36,18 @@ export const registerSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const inviteSignupSchema = z.object({
+  fullName: z.string().trim().min(3, "Familiya va ismingizni kiriting"),
+  email: z.string().email("Email noto'g'ri kiritildi"),
+  password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak"),
+});
+
+export type InviteSignupInput = z.infer<typeof inviteSignupSchema>;
+
+export const createOrganizationSchema = z.object({
+  orgName: z.string().trim().min(2, "Muassasa nomini kiriting"),
+  orgType: z.enum(["maktab", "bogcha", "markaz"], { message: "Muassasa turini tanlang" }),
+});
+
+export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;

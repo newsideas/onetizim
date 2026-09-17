@@ -1,51 +1,39 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { ensureOrganization } from "@/lib/supabase/ensureOrganization";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { getSession } from "@/lib/auth/session";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { SegmentProvider } from "@/components/layout/SegmentProvider";
+import { PermissionsProvider } from "@/components/auth/PermissionsProvider";
 import { daysUntil } from "@/lib/utils/date";
-import { permissionsFor } from "@/lib/auth/permissions";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user, org, role, permissions, displayName } = await getSession();
 
-  // proxy.ts allaqachon /login'ga yo'naltiradi, bu shunchaki qo'shimcha himoya.
-  if (!user) {
-    redirect("/login");
+  // Qarzdorlar soni faqat to'lovlarni ko'ra oladiganlar uchun.
+  let debtorCount = 0;
+  if (permissions.includes("payments.manage")) {
+    const { count } = await supabase
+      .from("students")
+      .select("id", { count: "exact", head: true })
+      .lt("balance", 0)
+      .neq("status", "archived");
+    debtorCount = count ?? 0;
   }
-
-  await ensureOrganization(supabase, user);
-
-  // Muassasa turi butun interfeysni belgilaydi (atamalar, bo'limlar).
-  const org = await getCurrentOrg(supabase);
-
-  // Header'dagi obuna belgisi va bildirishnomalar uchun.
-  const { count: debtorCount } = await supabase
-    .from("students")
-    .select("id", { count: "exact", head: true })
-    .lt("balance", 0)
-    .neq("status", "archived");
 
   return (
     <SegmentProvider segment={org.type}>
-      <DashboardShell
-        orgName={org.name}
-        userEmail={user.email}
-        trialDaysLeft={daysUntil(org.trial_ends_at)}
-        debtorCount={debtorCount ?? 0}
-        /* Rollar bazada hali yo'q: hozircha har bir kirgan foydalanuvchi tashkilot egasi. */
-        permissions={permissionsFor("owner")}
-      >
-        {children}
-      </DashboardShell>
+      <PermissionsProvider role={role} displayName={displayName} permissions={permissions}>
+        <DashboardShell
+          orgName={org.name}
+          userEmail={user.email}
+          trialDaysLeft={daysUntil(org.trial_ends_at)}
+          debtorCount={debtorCount}
+        >
+          {children}
+        </DashboardShell>
+      </PermissionsProvider>
     </SegmentProvider>
   );
 }

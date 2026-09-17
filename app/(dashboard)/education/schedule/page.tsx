@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { ScheduleGrid, type ScheduleGroup } from "@/components/schedule/ScheduleGrid";
 import { DayScheduleGrid } from "@/components/schedule/DayScheduleGrid";
 import {
@@ -24,7 +24,7 @@ export default async function SchedulePage({
       ? params.day
       : bugungiKun();
 
-  const supabase = await createClient();
+  const { supabase } = await requirePermission("schedule.view");
   const { data: groups } = await supabase
     .from("groups")
     .select(SCHEDULE_SELECT)

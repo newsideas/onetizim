@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Bell,
   Building2,
@@ -15,7 +14,9 @@ import {
 } from "lucide-react";
 import { Popover, PopoverItem } from "@/components/ui/Popover";
 import { useSegment } from "@/components/layout/SegmentProvider";
-import { createClient } from "@/lib/supabase/client";
+import { usePermissions } from "@/components/auth/PermissionsProvider";
+import type { Permission } from "@/lib/auth/permissions";
+import { useSignOut } from "@/components/auth/useSignOut";
 
 export const ICON_BUTTON =
   "rounded-lg p-2 text-ink-muted transition-colors hover:bg-canvas hover:text-ink";
@@ -30,6 +31,7 @@ export const ICON_BUTTON =
  */
 export function OrgSwitcher({ orgName }: { orgName?: string }) {
   const { terms } = useSegment();
+  const { can } = usePermissions();
 
   return (
     <Popover
@@ -52,13 +54,17 @@ export function OrgSwitcher({ orgName }: { orgName?: string }) {
             </div>
             <div className="text-xs text-ink-faint">{terms.label}</div>
           </div>
-          <div className="my-1 border-t border-line" />
-          <Link href="/settings" onClick={close}>
-            <PopoverItem>
-              <Settings size={15} className="text-ink-muted" />
-              Muassasa sozlamalari
-            </PopoverItem>
-          </Link>
+          {can("settings.manage") && (
+            <>
+              <div className="my-1 border-t border-line" />
+              <Link href="/settings" onClick={close}>
+                <PopoverItem>
+                  <Settings size={15} className="text-ink-muted" />
+                  Muassasa sozlamalari
+                </PopoverItem>
+              </Link>
+            </>
+          )}
         </>
       )}
     </Popover>
@@ -150,12 +156,31 @@ export function LanguageMenu() {
 
 export function QuickAddMenu() {
   const { terms } = useSegment();
+  const { can } = usePermissions();
 
-  const items = [
-    { href: "/education/students/new", label: terms.newStudent, icon: Users },
-    { href: "/education/groups?new=1", label: terms.newGroup, icon: Building2 },
-    { href: "/finance/payments", label: "To'lov qabul qilish", icon: Wallet },
+  const allItems: { href: string; label: string; icon: typeof Users; permission: Permission }[] = [
+    {
+      href: "/education/students/new",
+      label: terms.newStudent,
+      icon: Users,
+      permission: "students.manage",
+    },
+    {
+      href: "/education/groups?new=1",
+      label: terms.newGroup,
+      icon: Building2,
+      permission: "groups.manage",
+    },
+    {
+      href: "/finance/payments",
+      label: "To'lov qabul qilish",
+      icon: Wallet,
+      permission: "payments.manage",
+    },
   ];
+  const items = allItems.filter((item) => can(item.permission));
+
+  if (items.length === 0) return null;
 
   return (
     <Popover
@@ -197,6 +222,7 @@ export function NotificationsMenu({
   trialDaysLeft: number | null;
 }) {
   const { terms } = useSegment();
+  const { can } = usePermissions();
 
   const notices: { href: string; text: string; urgent: boolean }[] = [];
 
@@ -207,7 +233,7 @@ export function NotificationsMenu({
       urgent: true,
     });
   }
-  if (trialDaysLeft !== null && trialDaysLeft <= 7) {
+  if (can("settings.manage") && trialDaysLeft !== null && trialDaysLeft <= 7) {
     notices.push({
       href: "/settings",
       text:
@@ -272,16 +298,10 @@ export function UserMenu({
   userEmail?: string;
   orgName?: string;
 }) {
-  const router = useRouter();
+  const signOut = useSignOut();
   const { terms } = useSegment();
-  const initial = (userEmail?.[0] ?? "F").toUpperCase();
-
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
+  const { can, displayName, roleLabel } = usePermissions();
+  const initial = (displayName[0] ?? userEmail?.[0] ?? "F").toUpperCase();
 
   return (
     <Popover
@@ -294,19 +314,24 @@ export function UserMenu({
         <>
           <div className="px-3 py-2">
             <div className="truncate text-sm font-medium text-ink">
-              {userEmail || "Foydalanuvchi"}
+              {displayName}
             </div>
+            {userEmail && userEmail !== displayName && (
+              <div className="truncate text-xs text-ink-faint">{userEmail}</div>
+            )}
             <div className="truncate text-xs text-ink-faint">
-              Direktor · {orgName || terms.label}
+              {roleLabel} · {orgName || terms.label}
             </div>
           </div>
           <div className="my-1 border-t border-line" />
-          <Link href="/settings" onClick={close}>
-            <PopoverItem>
-              <Settings size={15} className="text-ink-muted" />
-              Sozlamalar
-            </PopoverItem>
-          </Link>
+          {can("settings.manage") && (
+            <Link href="/settings" onClick={close}>
+              <PopoverItem>
+                <Settings size={15} className="text-ink-muted" />
+                Sozlamalar
+              </PopoverItem>
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => {

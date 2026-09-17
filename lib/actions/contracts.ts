@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
+import { assertPermission } from "@/lib/auth/session";
 import {
   CONTRACT_FILES_BUCKET,
   calculateDiscount,
@@ -76,8 +75,8 @@ async function removeFile(supabase: SupabaseClient, path: string | null) {
 }
 
 export async function createContract(input: ContractInput) {
-  const supabase = await createClient();
-  const orgId = await getCurrentOrgId(supabase);
+  const { supabase, org } = await assertPermission("contracts.manage");
+  const orgId = org.id;
   const row = await buildContractRow(supabase, orgId, input);
 
   const { error } = await supabase.from("contracts").insert({ org_id: orgId, ...row });
@@ -87,8 +86,8 @@ export async function createContract(input: ContractInput) {
 }
 
 export async function updateContract(contractId: string, input: ContractInput) {
-  const supabase = await createClient();
-  const orgId = await getCurrentOrgId(supabase);
+  const { supabase, org } = await assertPermission("contracts.manage");
+  const orgId = org.id;
 
   const { data: existing } = await supabase
     .from("contracts")
@@ -112,7 +111,7 @@ export async function updateContract(contractId: string, input: ContractInput) {
 export async function setContractStatus(contractId: string, status: ContractStatus) {
   if (status !== "active" && status !== "cancelled") throw new Error("Noto'g'ri holat");
 
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("contracts.manage");
   const { error } = await supabase.from("contracts").update({ status }).eq("id", contractId);
   if (error) throw new Error("Holatni o'zgartirishda xatolik: " + error.message);
 
@@ -120,7 +119,7 @@ export async function setContractStatus(contractId: string, status: ContractStat
 }
 
 export async function deleteContract(contractId: string) {
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("contracts.manage");
 
   const { data: existing } = await supabase
     .from("contracts")

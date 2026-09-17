@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { GroupInfoCard } from "@/components/groups/GroupInfoCard";
 import { EditGroupButton } from "@/components/groups/EditGroupButton";
 import { GROUP_SELECT, type GroupRow } from "@/components/groups/GroupsTable";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { termsFor, type Segment } from "@/lib/segment";
 
 export default async function GroupDetailPage({
@@ -15,9 +14,9 @@ export default async function GroupDetailPage({
   params: Promise<{ groupId: string }>;
 }) {
   const { groupId } = await params;
-  const supabase = await createClient();
+  const { supabase, org, permissions } = await requirePermission("groups.view");
 
-  const [{ data: groupData }, { data: students }, org] = await Promise.all([
+  const [{ data: groupData }, { data: students }] = await Promise.all([
     supabase.from("groups").select(GROUP_SELECT).eq("id", groupId).maybeSingle(),
     supabase
       .from("students")
@@ -25,7 +24,6 @@ export default async function GroupDetailPage({
       .eq("group_id", groupId)
       .neq("status", "archived")
       .order("full_name"),
-    getCurrentOrg(supabase),
   ]);
 
   if (!groupData) notFound();
@@ -33,7 +31,7 @@ export default async function GroupDetailPage({
   // Supabase inferi to-one join'ni massiv deb hisoblaydi (0008 izohiga qarang).
   const group = groupData as unknown as GroupRow;
   const studentRows = (students ?? []) as unknown as StudentTableRow[];
-  const segment = (org.type ?? "markaz") as Segment;
+  const segment: Segment = org.type;
   const terms = termsFor(segment);
 
   return (
@@ -49,23 +47,25 @@ export default async function GroupDetailPage({
           </Link>
           <h1 className="text-xl font-semibold text-ink">{group.name}</h1>
         </div>
-        <EditGroupButton
-          groupId={groupId}
-          defaultValues={{
-            name: group.name,
-            subject: group.course?.name ?? undefined,
-            teacherName: group.teacher?.full_name ?? undefined,
-            room: group.room?.name ?? undefined,
-            scheduleDays: group.schedule_days ?? [],
-            startTime: group.start_time ?? undefined,
-            endTime: group.end_time ?? undefined,
-            monthlyPrice: Number(group.monthly_price),
-            educationType: group.education_type ?? "offline",
-            startDate: group.start_date ?? undefined,
-            endDate: group.end_date ?? undefined,
-            lessonDurationMinutes: group.lesson_duration_minutes ?? undefined,
-          }}
-        />
+        {permissions.includes("groups.manage") && (
+          <EditGroupButton
+            groupId={groupId}
+            defaultValues={{
+              name: group.name,
+              subject: group.course?.name ?? undefined,
+              teacherName: group.teacher?.full_name ?? undefined,
+              room: group.room?.name ?? undefined,
+              scheduleDays: group.schedule_days ?? [],
+              startTime: group.start_time ?? undefined,
+              endTime: group.end_time ?? undefined,
+              monthlyPrice: Number(group.monthly_price),
+              educationType: group.education_type ?? "offline",
+              startDate: group.start_date ?? undefined,
+              endDate: group.end_date ?? undefined,
+              lessonDurationMinutes: group.lesson_duration_minutes ?? undefined,
+            }}
+          />
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -85,6 +85,8 @@ export default async function GroupDetailPage({
             students={studentRows}
             emptyText={`Bu ${terms.group.toLowerCase()}da hali ${terms.student.toLowerCase()} yo'q.`}
             groupLabel={terms.group}
+            linkToProfile={permissions.includes("students.view")}
+            showBalance={permissions.includes("payments.manage")}
           />
         </div>
       </div>

@@ -1,18 +1,17 @@
 import { GroupsTabs } from "@/components/education/SectionTabs";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import {
   GroupsTable,
   GROUP_SELECT,
   type GroupRow,
 } from "@/components/groups/GroupsTable";
 import { NewGroupButton } from "@/components/groups/NewGroupButton";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { termsFor, type Segment } from "@/lib/segment";
 
 export default async function GroupsPage() {
-  const supabase = await createClient();
+  const { supabase, org, permissions } = await requirePermission("groups.view");
 
-  const segment = ((await getCurrentOrg(supabase)).type ?? "markaz") as Segment;
+  const segment: Segment = org.type;
   const terms = termsFor(segment);
 
   const { data: groups } = await supabase
@@ -24,9 +23,9 @@ export default async function GroupsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{terms.groupPlural}</h1>
-        <NewGroupButton />
+        {permissions.includes("groups.manage") && <NewGroupButton />}
       </div>
-      <GroupsTabs current="list" />
+      {permissions.includes("students.manage") && <GroupsTabs current="list" />}
       <GroupsTable
         groups={(groups ?? []) as unknown as GroupRow[]}
         segment={segment}

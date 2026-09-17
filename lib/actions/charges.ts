@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { assertPermission } from "@/lib/auth/session";
 import { notifyParent } from "@/lib/telegram/notify";
 import { telegramTemplates } from "@/lib/telegram/templates";
 
@@ -15,7 +15,7 @@ import { telegramTemplates } from "@/lib/telegram/templates";
  * hisoblanmaydi. Nechta yangi yozuv qo'shilgani qaytariladi.
  */
 export async function chargeMonthlyFees(period: string): Promise<number> {
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("payments.manage");
 
   const { data, error } = await supabase.rpc("charge_monthly_fees", {
     p_period: period,

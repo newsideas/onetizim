@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrgId } from "@/lib/supabase/getCurrentOrg";
+import { assertPermission } from "@/lib/auth/session";
 
 type CatalogTable = "rooms" | "courses";
 
@@ -11,8 +10,8 @@ export async function createCatalogItem(table: CatalogTable, name: string) {
   const trimmed = name.trim();
   if (trimmed.length < 1) throw new Error("Nom bo'sh bo'lishi mumkin emas");
 
-  const supabase = await createClient();
-  const orgId = await getCurrentOrgId(supabase);
+  const { supabase, org } = await assertPermission("settings.manage");
+  const orgId = org.id;
 
   const { error } = await supabase
     .from(table)
@@ -37,7 +36,7 @@ export async function renameCatalogItem(
   const trimmed = name.trim();
   if (trimmed.length < 1) throw new Error("Nom bo'sh bo'lishi mumkin emas");
 
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("settings.manage");
   const { error } = await supabase
     .from(table)
     .update({ name: trimmed })
@@ -61,7 +60,7 @@ export async function renameCatalogItem(
  * guruh o'chmaydi — faqat xona/kursi bo'sh qoladi.
  */
 export async function deleteCatalogItem(table: CatalogTable, id: string) {
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("settings.manage");
   const { error } = await supabase.from(table).delete().eq("id", id);
 
   if (error) throw new Error("O'chirishda xatolik: " + error.message);

@@ -1,10 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isRole, permissionForPath, roleCan } from "@/lib/auth/permissions";
+
+const AUTH_ROUTES = new Set(["/login", "/register"]);
+
+/** Kirmasdan ochiladigan yo'llar. */
+function isPublicPath(pathname: string) {
+  return (
+    AUTH_ROUTES.has(pathname) ||
+    pathname.startsWith("/invite/") ||
+    pathname.startsWith("/api/telegram/webhook") ||
+    pathname.startsWith("/api/cron/")
+  );
+}
 
 /**
- * Har bir so'rovda Supabase sessiyasini yangilaydi va autentifikatsiya
- * qilinmagan foydalanuvchini /login'ga, kirgan foydalanuvchini esa
- * /login yoki /register'dan bosh sahifaga yo'naltiradi.
+ * Har so'rovda Supabase sessiyasini yangilaydi va tezkor (optimistik)
+ * tekshiruv qiladi: kirmagan foydalanuvchi /login'ga, ruxsati yo'q
+ * bo'limga kirgan xodim /403'ga yo'naltiriladi.
+ *
+ * Rol JWT'dagi "org_role" claim'idan olinadi (0022 hook) — bazaga
+ * murojaat qilinmaydi. Hook yoqilmagan bo'lsa bu tekshiruv o'tkazib
+ * yuboriladi; haqiqiy himoya baribir sahifadagi requirePermission va RLS.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -18,9 +35,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
@@ -30,24 +45,39 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  const { pathname, search } = request.nextUrl;
 
-  const { pathname } = request.nextUrl;
-  const isAuthRoute = pathname === "/login" || pathname === "/register";
-  const isPublicApi = pathname.startsWith("/api/telegram/webhook");
-
-  if (!user && !isAuthRoute && !isPublicApi) {
+  // Yangilangan sessiya cookie'lari yo'naltirishda ham saqlanishi shart,
+  // aks holda foydalanuvchi tasodifan tizimdan chiqib ketadi.
+  function redirectTo(target: string, next?: string) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    url.pathname = target;
+    url.search = "";
+    if (next) url.searchParams.set("next", next);
+    const response = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+    return response;
   }
 
-  if (user && isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
+  if (!claims) {
+    if (isPublicPath(pathname)) return supabaseResponse;
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Avtorizatsiyadan o'tilmagan" }, { status: 401 });
+    }
+    return redirectTo("/login", pathname === "/" ? undefined : pathname + search);
+  }
+
+  if (AUTH_ROUTES.has(pathname)) return redirectTo("/");
+
+  const role = claims.org_role;
+  const permission = permissionForPath(pathname);
+  if (permission && isRole(role) && !roleCan(role, permission)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    }
+    return redirectTo("/403");
   }
 
   return supabaseResponse;

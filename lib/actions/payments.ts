@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { assertPermission } from "@/lib/auth/session";
 import { notifyParent } from "@/lib/telegram/notify";
 import { telegramTemplates } from "@/lib/telegram/templates";
 import { paymentSchema, type PaymentInput } from "@/lib/validations/payment";
@@ -13,7 +13,7 @@ export async function createPayment(input: PaymentInput) {
   }
   const values = parsed.data;
 
-  const supabase = await createClient();
+  const { supabase } = await assertPermission("payments.manage");
 
   const { error } = await supabase.from("payments").insert({
     student_id: values.studentId,

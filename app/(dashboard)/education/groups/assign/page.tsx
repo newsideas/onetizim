@@ -1,13 +1,12 @@
 import { GroupsTabs } from "@/components/education/SectionTabs";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/auth/session";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { StudentAssignTable, type AssignRow } from "@/components/students/StudentAssignTable";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
 import { termsFor } from "@/lib/segment";
 
 export default async function StudentAssignPage() {
-  const supabase = await createClient();
-  const terms = termsFor((await getCurrentOrg(supabase)).type);
+  const { supabase, org } = await requirePermission("students.manage");
+  const terms = termsFor(org.type);
 
   const [{ data: students }, { data: groups }] = await Promise.all([
     supabase

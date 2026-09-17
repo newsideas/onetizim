@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import type { Permission } from "@/lib/auth/permissions";
 
 export function DashboardShell({
   children,
@@ -11,14 +10,12 @@ export function DashboardShell({
   userEmail,
   trialDaysLeft,
   debtorCount,
-  permissions,
 }: {
   children: React.ReactNode;
   orgName?: string;
   userEmail?: string;
   trialDaysLeft: number | null;
   debtorCount: number;
-  permissions: readonly Permission[];
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -26,7 +23,7 @@ export function DashboardShell({
     <div className="min-h-screen bg-canvas text-ink">
       {/* Desktop: doim ko'rinadigan sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
-        <Sidebar permissions={permissions} />
+        <Sidebar />
       </aside>
 
       {/* Mobil: ustidan chiqadigan sidebar (drawer) */}
@@ -38,7 +35,7 @@ export function DashboardShell({
             aria-hidden="true"
           />
           <aside className="absolute inset-y-0 left-0 w-64">
-            <Sidebar permissions={permissions} onNavigate={() => setSidebarOpen(false)} />
+            <Sidebar onNavigate={() => setSidebarOpen(false)} />
           </aside>
         </div>
       )}

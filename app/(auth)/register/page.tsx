@@ -43,8 +43,8 @@ export default function RegisterPage() {
       email: values.email,
       password: values.password,
       options: {
-        // Muassasa email tasdiqlangach ensureOrganization() shu
-        // ma'lumotlar asosida yaratadi.
+        // Muassasa birinchi kirishda (lib/auth/session.ts) shu
+        // ma'lumotlar asosida yaratiladi.
         data: {
           org_name: values.orgName,
           org_type: values.orgType,

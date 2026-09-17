@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarCheck, CalendarDays, Menu, Undo2 } from "lucide-react";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { usePermissions } from "@/components/auth/PermissionsProvider";
 import {
   ICON_BUTTON,
   LanguageMenu,
@@ -31,6 +32,7 @@ export function Header({
   debtorCount: number;
 }) {
   const router = useRouter();
+  const { can } = usePermissions();
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-surface px-3 py-2.5 md:gap-3 md:px-6">
@@ -61,7 +63,7 @@ export function Header({
         <GlobalSearch />
       </div>
 
-      <TrialBadge daysLeft={trialDaysLeft} />
+      {can("settings.manage") && <TrialBadge daysLeft={trialDaysLeft} />}
 
       <div className="flex items-center gap-0.5 md:gap-1">
         <div className="hidden sm:block">

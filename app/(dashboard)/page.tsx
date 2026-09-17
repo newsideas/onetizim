@@ -1,6 +1,5 @@
 import { Users, AlertTriangle, CalendarCheck, Wallet, Coins } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrg } from "@/lib/supabase/getCurrentOrg";
+import { requirePermission } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/dashboard";
 import { termsFor } from "@/lib/segment";
 import { StatCard } from "@/components/ui/StatCard";
@@ -17,8 +16,7 @@ import {
 } from "@/components/dashboard/DashboardBlocks";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const org = await getCurrentOrg(supabase);
+  const { supabase, org } = await requirePermission("dashboard.view");
   const terms = termsFor(org.type);
   const data = await getDashboardData(supabase);
 
