@@ -63,7 +63,10 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
     {
       label: "Xodimlar",
       icon: Briefcase,
-      items: [{ label: "Xodimlar ro'yxati", href: "/staff", permission: "staff.manage" }],
+      items: [
+        { label: "Xodimlar ro'yxati", href: "/staff", permission: "staff.manage" },
+        { label: "Kirish va rollar", href: "/staff/access", permission: "staff.manage" },
+      ],
     },
 
     {

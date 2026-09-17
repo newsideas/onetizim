@@ -1,22 +1,33 @@
-import { ListPageShell, DataTable } from "@/components/ui/ListPage";
+import { requirePermission } from "@/lib/auth/session";
+import { ListPageShell } from "@/components/ui/ListPage";
+import { StaffTabs } from "@/components/staff/StaffTabs";
+import { TeachersProvider, NewTeacherButton, type TeacherRow } from "@/components/staff/TeachersProvider";
+import { TeachersTable } from "@/components/staff/TeachersTable";
 
-export default async function Page() {
+export default async function StaffPage() {
+  const { supabase } = await requirePermission("staff.manage");
+
+  const { data, error } = await supabase
+    .from("teachers")
+    .select("id, full_name, phone, position, kind, salary_type, rate, is_active")
+    .order("is_active", { ascending: false })
+    .order("full_name");
+
   return (
-    <ListPageShell
-      title={"Xodimlar"}
-      subtitle={"Xodimlar ro'yxati"}
-      notice={"Bu bo\u2019lim qurilmoqda \u2014 hozircha ma\u2019lumot saqlanmaydi."}
-    >
-      <DataTable
-        rows={[]}
-        columns={[
-          { header: "FISH", cell: () => null },
-          { header: "Foydalanuvchi roli", cell: () => null },
-          { header: "Lavozim", cell: () => null },
-          { header: "Telefon", cell: () => null },
-          { header: "Holati", cell: () => null },
-        ]}
-      />
-    </ListPageShell>
+    <TeachersProvider>
+      <ListPageShell
+        title="Xodimlar"
+        subtitle="O'qituvchi, menejer va ma'muriyat ro'yxati"
+        actions={<NewTeacherButton />}
+        tabs={<StaffTabs current="list" />}
+        notice={
+          error
+            ? "Xodim kartasi ustunlari bazada topilmadi — 0016_org_members.sql migratsiyasini Supabase SQL Editor'da ishga tushiring."
+            : undefined
+        }
+      >
+        <TeachersTable teachers={(data ?? []) as TeacherRow[]} />
+      </ListPageShell>
+    </TeachersProvider>
   );
 }
