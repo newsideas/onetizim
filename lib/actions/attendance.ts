@@ -56,7 +56,7 @@ export async function markAttendance(
   status: AttendanceStatus,
 ) {
   return runAction(async () => {
-    const { supabase } = await assertPermission("attendance.mark");
+    const { supabase, org } = await assertPermission("attendance.mark");
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -86,10 +86,13 @@ export async function markAttendance(
         .maybeSingle();
 
       if (student) {
-        await notifyParent(
-          student.parent_telegram_chat_id,
-          telegramTemplates.absent(student.full_name, formatDate(lessonDate)),
-        );
+        await notifyParent(supabase, {
+          chatId: student.parent_telegram_chat_id,
+          text: telegramTemplates.absent(student.full_name, formatDate(lessonDate)),
+          orgId: org.id,
+          studentId,
+          kind: "absent",
+        });
       }
     }
 

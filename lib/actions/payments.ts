@@ -15,7 +15,7 @@ export async function createPayment(input: PaymentInput) {
     }
     const values = parsed.data;
 
-    const { supabase } = await assertPermission("payments.manage");
+    const { supabase, org } = await assertPermission("payments.manage");
 
     const { error } = await supabase.from("payments").insert({
       student_id: values.studentId,
@@ -40,10 +40,13 @@ export async function createPayment(input: PaymentInput) {
       .maybeSingle();
 
     if (student) {
-      await notifyParent(
-        student.parent_telegram_chat_id,
-        telegramTemplates.tolovQabulQilindi(student.full_name, values.amount),
-      );
+      await notifyParent(supabase, {
+        chatId: student.parent_telegram_chat_id,
+        text: telegramTemplates.tolovQabulQilindi(student.full_name, values.amount),
+        orgId: org.id,
+        studentId: values.studentId,
+        kind: "payment",
+      });
     }
 
     revalidatePath("/finance/payments");

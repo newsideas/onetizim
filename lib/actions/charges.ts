@@ -17,7 +17,7 @@ import { telegramTemplates } from "@/lib/telegram/templates";
  */
 export async function chargeMonthlyFees(period: string) {
   return runAction(async () => {
-    const { supabase } = await assertPermission("payments.manage");
+    const { supabase, org } = await assertPermission("payments.manage");
 
     const { data, error } = await supabase.rpc("charge_monthly_fees", {
       p_period: period,
@@ -33,15 +33,18 @@ export async function chargeMonthlyFees(period: string) {
     if (inserted > 0) {
       const { data: debtors } = await supabase
         .from("students")
-        .select("full_name, balance, parent_telegram_chat_id")
+        .select("id, full_name, balance, parent_telegram_chat_id")
         .lt("balance", 0)
         .not("parent_telegram_chat_id", "is", null);
 
       for (const debtor of debtors ?? []) {
-        await notifyParent(
-          debtor.parent_telegram_chat_id,
-          telegramTemplates.qarzdorlik(debtor.full_name, debtor.balance),
-        );
+        await notifyParent(supabase, {
+          chatId: debtor.parent_telegram_chat_id,
+          text: telegramTemplates.qarzdorlik(debtor.full_name, debtor.balance),
+          orgId: org.id,
+          studentId: debtor.id,
+          kind: "debt",
+        });
       }
     }
 
