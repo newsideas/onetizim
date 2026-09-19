@@ -36,8 +36,8 @@ export function GroupForm({
   const { segment, terms } = useSegment();
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Dars vaqti, kunlari va kurs faqat o'quv markazlarda ma'noga ega:
-  // maktabda jadval fan bo'yicha quriladi, bog'chada esa kun tartibi bor.
+  // Kurs/fan va ta'lim turi faqat o'quv markazlarda; dars kunlari va vaqti
+  // esa Dars jadvali sahifasini to'ldirgani uchun barcha turlarda kerak.
   const isCourseBased = segment === "markaz";
   const isEdit = Boolean(groupId);
 
@@ -134,54 +134,50 @@ export function GroupForm({
         </div>
       </div>
 
-      {isCourseBased && (
-        <div>
-          <Label>Dars kunlari</Label>
-          <div className="flex flex-wrap gap-2">
-            {HAFTA_KUNLARI.map((day) => (
-              <button
-                key={day}
-                type="button"
-                onClick={() => toggleDay(day)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedDays.includes(day)
-                    ? "bg-brand-600 text-white"
-                    : "bg-canvas text-ink-muted hover:bg-line"
-                }`}
-              >
-                {day.slice(0, 3)}
-              </button>
-            ))}
-          </div>
-          <FormError message={errors.scheduleDays?.message} />
+      <div>
+        <Label>Dars kunlari</Label>
+        <div className="flex flex-wrap gap-2">
+          {HAFTA_KUNLARI.map((day) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => toggleDay(day)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                selectedDays.includes(day)
+                  ? "bg-brand-600 text-white"
+                  : "bg-canvas text-ink-muted hover:bg-line"
+              }`}
+            >
+              {day.slice(0, 3)}
+            </button>
+          ))}
         </div>
-      )}
+        <FormError message={errors.scheduleDays?.message} />
+      </div>
 
-      {isCourseBased && (
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <Label htmlFor="startTime">Boshlanishi</Label>
-            <Input id="startTime" type="time" {...register("startTime")} />
-          </div>
-          <div>
-            <Label htmlFor="endTime">Tugashi</Label>
-            <Input id="endTime" type="time" {...register("endTime")} />
-          </div>
-          <div>
-            <Label htmlFor="lessonDurationMinutes">Davomiyligi (daq)</Label>
-            <Input
-              id="lessonDurationMinutes"
-              type="number"
-              min={1}
-              step={5}
-              placeholder="90"
-              {...register("lessonDurationMinutes", {
-                setValueAs: (v) => (v === "" ? undefined : Number(v)),
-              })}
-            />
-          </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <Label htmlFor="startTime">Boshlanishi</Label>
+          <Input id="startTime" type="time" {...register("startTime")} />
         </div>
-      )}
+        <div>
+          <Label htmlFor="endTime">Tugashi</Label>
+          <Input id="endTime" type="time" {...register("endTime")} />
+        </div>
+        <div>
+          <Label htmlFor="lessonDurationMinutes">Davomiyligi (daq)</Label>
+          <Input
+            id="lessonDurationMinutes"
+            type="number"
+            min={1}
+            step={5}
+            placeholder="90"
+            {...register("lessonDurationMinutes", {
+              setValueAs: (v) => (v === "" ? undefined : Number(v)),
+            })}
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
