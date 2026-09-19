@@ -1,12 +1,14 @@
 import "server-only";
 
 import { cache } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Segment } from "@/lib/segment";
 import { isRole, permissionsFor, type Permission, type Role } from "@/lib/auth/permissions";
 import { ActionError } from "@/lib/actions/result";
+import { resolveHost } from "@/lib/tenant";
 import { effectiveStatus, type OrgPlan } from "@/lib/platform";
 
 export interface CurrentOrg {
@@ -50,6 +52,7 @@ interface SignupMetadata {
   full_name?: string;
   org_name?: string;
   org_type?: Segment;
+  org_slug?: string;
   tin?: string;
   region?: string;
   district?: string;
@@ -61,12 +64,14 @@ interface SignupMetadata {
 
 const MISSING_TABLE_CODES = new Set(["PGRST205", "42P01"]);
 
-async function loadMember(supabase: SupabaseClient, userId: string) {
-  const { data, error } = await supabase
+/** slug berilsa faqat shu subdomen maktabidagi a'zolik olinadi. */
+async function loadMember(supabase: SupabaseClient, userId: string, slug?: string) {
+  let query = supabase
     .from("org_members")
-    .select("role, employee_id, full_name, org:organizations(*)")
-    .eq("user_id", userId)
-    .maybeSingle();
+    .select("role, employee_id, full_name, org:organizations!inner(*)")
+    .eq("user_id", userId);
+  if (slug) query = query.eq("org.slug", slug);
+  const { data, error } = await query.limit(1).maybeSingle();
 
   if (error && MISSING_TABLE_CODES.has(error.code)) {
     // 0016 migratsiyasi hali qo'llanmagan baza: eski model — faqat egasi.
@@ -90,7 +95,7 @@ async function loadMember(supabase: SupabaseClient, userId: string) {
  * yaratadi. "Confirm email" yoqilgan bo'lsa signUp paytida sessiya yo'q,
  * shuning uchun bu birinchi kirishda bajariladi.
  */
-async function ensureMembership(supabase: SupabaseClient, user: User) {
+async function ensureMembership(supabase: SupabaseClient, user: User, slug?: string) {
   const meta = (user.user_metadata ?? {}) as SignupMetadata;
 
   if (meta.invite_token) {
@@ -99,12 +104,15 @@ async function ensureMembership(supabase: SupabaseClient, user: User) {
   }
 
   if (!meta.org_name) return;
+  // Maktab faqat ro'yxatdan o'tishda tanlangan o'z subdomenida yaratiladi.
+  if (slug && meta.org_slug !== slug) return;
 
   await supabase.from("organizations").upsert(
     {
       owner_id: user.id,
       name: meta.org_name,
       type: meta.org_type || "markaz",
+      slug: meta.org_slug || null,
       tin: meta.tin || null,
       region: meta.region || null,
       district: meta.district || null,
@@ -125,12 +133,15 @@ export const getSession = cache(async (): Promise<Session> => {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  let member = await loadMember(supabase, user.id);
+  const host = resolveHost((await headers()).get("host"));
+  const slug = host.kind === "tenant" ? host.slug : undefined;
+
+  let member = await loadMember(supabase, user.id, slug);
   if (!member) {
-    await ensureMembership(supabase, user);
-    member = await loadMember(supabase, user.id);
+    await ensureMembership(supabase, user, slug);
+    member = await loadMember(supabase, user.id, slug);
   }
-  if (!member?.org || !isRole(member.role)) redirect("/onboarding");
+  if (!member?.org || !isRole(member.role)) redirect(slug ? "/no-access" : "/onboarding");
 
   const meta = (user.user_metadata ?? {}) as SignupMetadata;
 

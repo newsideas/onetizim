@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidSlug } from "@/lib/tenant";
 
 export const loginSchema = z.object({
   email: z.string().email("Email noto'g'ri kiritildi"),
@@ -15,6 +16,11 @@ export const registerSchema = z.object({
   orgType: z.enum(["maktab", "bogcha", "markaz"], {
     message: "Muassasa turini tanlang",
   }),
+  orgSlug: z
+    .string()
+    .trim()
+    .transform((v) => v.toLowerCase())
+    .refine(isValidSlug, "Manzil 3–32 ta harf, raqam yoki chiziqchadan iborat bo'lsin"),
   tin: optionalText,
   region: z.string().trim().min(1, "Viloyatni tanlang"),
   district: z.string().trim().min(2, "Tuman yoki shaharni kiriting"),

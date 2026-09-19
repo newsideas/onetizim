@@ -1,11 +1,54 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isRole, permissionForPath, roleCan } from "@/lib/auth/permissions";
+import { resolveHost, type HostInfo } from "@/lib/tenant";
 
 const AUTH_ROUTES = new Set(["/login", "/register"]);
 
+/** Mavjud bo'lmagan yo'l: Next.js 404 sahifasini ko'rsatadi. */
+const NOT_FOUND_PATH = "/404-not-found";
+
+type Gate = { action: "allow"; rewrite?: string } | { action: "notfound" };
+
+/**
+ * Manzil (host) turiga qarab qaysi yo'llar ochiqligini belgilaydi:
+ * - asosiy sayt (edugram.uz): tanishtiruv, ro'yxatdan o'tish, maktab qidirish;
+ * - admin.edugram.uz: faqat Super Admin;
+ * - <slug>.edugram.uz: faqat maktab ilovasi.
+ */
+function gateByHost(host: HostInfo, pathname: string): Gate {
+  const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
+
+  if (host.kind === "root") {
+    if (pathname === "/") return { action: "allow", rewrite: "/site" };
+    if (pathname === "/login") return { action: "allow", rewrite: "/site/find-school" };
+    if (pathname === "/register" || under("/site") || pathname.startsWith("/api/telegram/webhook")) {
+      return { action: "allow" };
+    }
+    return { action: "notfound" };
+  }
+
+  if (host.kind === "admin") {
+    if (pathname === "/") return { action: "allow", rewrite: "/admin" };
+    if (pathname === "/login" || under("/admin")) return { action: "allow" };
+    return { action: "notfound" };
+  }
+
+  if (under("/admin") || under("/site") || pathname === "/register") return { action: "notfound" };
+  return { action: "allow" };
+}
+
+function rewriteTo(request: NextRequest, pathname: string, cookiesFrom?: NextResponse) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const response = NextResponse.rewrite(url, { request });
+  cookiesFrom?.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+  return response;
+}
+
 /** Kirmasdan ochiladigan yo'llar. */
-function isPublicPath(pathname: string) {
+function isPublicPath(pathname: string, host: HostInfo) {
+  if (host.kind === "admin") return pathname === "/login";
   return (
     AUTH_ROUTES.has(pathname) ||
     pathname.startsWith("/invite/") ||
@@ -24,6 +67,14 @@ function isPublicPath(pathname: string) {
  * yuboriladi; haqiqiy himoya baribir sahifadagi requirePermission va RLS.
  */
 export async function updateSession(request: NextRequest) {
+  const host = resolveHost(request.headers.get("host"));
+  const gate = gateByHost(host, request.nextUrl.pathname);
+  if (gate.action === "notfound") return rewriteTo(request, NOT_FOUND_PATH);
+  // Asosiy sayt kirishni talab qilmaydi — maktab sessiyasi faqat o'z subdomenida.
+  if (host.kind === "root") {
+    return gate.rewrite ? rewriteTo(request, gate.rewrite) : NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -62,7 +113,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!claims) {
-    if (isPublicPath(pathname)) return supabaseResponse;
+    if (isPublicPath(pathname, host)) return supabaseResponse;
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Avtorizatsiyadan o'tilmagan" }, { status: 401 });
     }
@@ -80,5 +131,6 @@ export async function updateSession(request: NextRequest) {
     return redirectTo("/403");
   }
 
+  if (gate.rewrite) return rewriteTo(request, gate.rewrite, supabaseResponse);
   return supabaseResponse;
 }

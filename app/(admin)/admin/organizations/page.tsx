@@ -8,6 +8,7 @@ import {
   type EffectiveStatus,
 } from "@/lib/platform";
 import { termsFor } from "@/lib/segment";
+import { ROOT_DOMAIN } from "@/lib/tenant";
 import { daysUntil, formatDate } from "@/lib/utils/date";
 import type { Segment } from "@/lib/segment";
 
@@ -50,6 +51,11 @@ export default async function PlatformOrganizationsPage() {
                     <td className="px-4 py-3">
                       <div className="font-medium text-ink">{org.name}</div>
                       <div className="text-xs text-ink-faint">{termsFor(org.type as Segment).label}</div>
+                      {org.slug && (
+                        <div className="text-xs text-brand-600">
+                          {org.slug}.{ROOT_DOMAIN}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-ink-muted">{org.owner_email ?? "—"}</td>
                     <td className="px-4 py-3 text-ink">{org.students}</td>

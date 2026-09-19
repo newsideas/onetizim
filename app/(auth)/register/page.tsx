@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/ui/Logo";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -16,11 +15,27 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { FormError } from "@/components/ui/FormError";
 import { Field } from "@/components/ui/FormLayout";
+import { ROOT_DOMAIN, isValidSlug, tenantUrl } from "@/lib/tenant";
+
+type SlugStatus = "idle" | "checking" | "ok" | "taken" | "invalid";
+
+/** "Renessans Maktabi" -> "renessans-maktabi" (taklif sifatida). */
+function suggestSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[ʻ'`’‘]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 30);
+}
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [confirmEmailSent, setConfirmEmailSent] = useState(false);
+  const [loginUrl, setLoginUrl] = useState("/login");
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [slugTouched, setSlugTouched] = useState(false);
 
   const {
     register,
@@ -34,20 +49,60 @@ export default function RegisterPage() {
   });
 
   const selectedType = watch("orgType");
+  const orgName = watch("orgName");
+  const orgSlug = watch("orgSlug");
+
+  // Manzil taklifi: nomdan avtomatik, foydalanuvchi o'zgartirmaguncha.
+  useEffect(() => {
+    if (!slugTouched) setValue("orgSlug", suggestSlug(orgName ?? ""), { shouldValidate: false });
+  }, [orgName, slugTouched, setValue]);
+
+  // Manzil bandligini tekshirish (kechiktirib, har harfda emas).
+  useEffect(() => {
+    const value = (orgSlug ?? "").trim().toLowerCase();
+    if (!value) {
+      setSlugStatus("idle");
+      return;
+    }
+    if (!isValidSlug(value)) {
+      setSlugStatus("invalid");
+      return;
+    }
+    setSlugStatus("checking");
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const { data } = await createClient().rpc("slug_available", { p_slug: value });
+      if (!cancelled) setSlugStatus(data === true ? "ok" : "taken");
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [orgSlug]);
 
   async function onSubmit(values: RegisterInput) {
     setServerError(null);
     const supabase = createClient();
 
+    const { data: available } = await supabase.rpc("slug_available", { p_slug: values.orgSlug });
+    if (available !== true) {
+      setSlugStatus("taken");
+      setServerError("Bu manzil band yoki noto'g'ri — boshqa manzil tanlang");
+      return;
+    }
+    const schoolLogin = tenantUrl(values.orgSlug, "/login?registered=1", window.location);
+
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
+        emailRedirectTo: schoolLogin,
         // Muassasa birinchi kirishda (lib/auth/session.ts) shu
         // ma'lumotlar asosida yaratiladi.
         data: {
           org_name: values.orgName,
           org_type: values.orgType,
+          org_slug: values.orgSlug,
           tin: values.tin,
           region: values.region,
           district: values.district,
@@ -72,13 +127,16 @@ export default function RegisterPage() {
       return;
     }
 
+    // Sessiya asosiy saytda emas, maktabning o'z manzilida ochiladi.
+    if (data.session) await supabase.auth.signOut();
+
     if (!data.session) {
+      setLoginUrl(schoolLogin);
       setConfirmEmailSent(true);
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    window.location.href = schoolLogin;
   }
 
   if (confirmEmailSent) {
@@ -91,9 +149,9 @@ export default function RegisterPage() {
           </h1>
           <p className="text-sm text-ink-muted">
             Emailingizga tasdiqlash havolasi yuborildi. Tasdiqlagach,{" "}
-            <Link href="/login" className="font-medium text-brand-600 hover:underline">
-              tizimga kiring
-            </Link>{" "}
+            <a href={loginUrl} className="font-medium text-brand-600 hover:underline">
+              maktabingiz manzilida kiring
+            </a>{" "}
             — muassasangiz avtomatik yaratiladi.
           </p>
         </div>
@@ -177,6 +235,42 @@ export default function RegisterPage() {
                     error={errors.orgName?.message}
                     {...register("orgName")}
                   />
+                </Field>
+
+                <Field
+                  label="Maktab manzili"
+                  htmlFor="orgSlug"
+                  required
+                  error={errors.orgSlug?.message}
+                >
+                  <div className="flex items-center overflow-hidden rounded-lg border border-line bg-surface focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
+                    <input
+                      id="orgSlug"
+                      autoCapitalize="none"
+                      autoComplete="off"
+                      placeholder="renessans"
+                      className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-ink outline-none"
+                      {...register("orgSlug", { onChange: () => setSlugTouched(true) })}
+                    />
+                    <span className="border-l border-line bg-canvas px-3 py-2.5 text-sm text-ink-muted">
+                      .{ROOT_DOMAIN}
+                    </span>
+                  </div>
+                  <p
+                    className={`mt-1 text-xs ${
+                      slugStatus === "ok"
+                        ? "text-emerald-600"
+                        : slugStatus === "taken" || slugStatus === "invalid"
+                          ? "text-red-600"
+                          : "text-ink-faint"
+                    }`}
+                  >
+                    {slugStatus === "checking" && "Tekshirilmoqda..."}
+                    {slugStatus === "ok" && "Bu manzil bo'sh"}
+                    {slugStatus === "taken" && "Bu manzil band yoki ishlatib bo'lmaydi"}
+                    {slugStatus === "invalid" && "3–32 ta kichik harf, raqam yoki chiziqcha"}
+                    {slugStatus === "idle" && "Maktabingiz shu manzilda ochiladi"}
+                  </p>
                 </Field>
 
                 <Field label="STIR" htmlFor="tin">
