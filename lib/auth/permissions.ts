@@ -79,6 +79,7 @@ export const ROUTE_PERMISSIONS: [prefix: string, permission: Permission][] = [
   ["/leads", "leads.manage"],
   ["/education/students/new", "students.manage"],
   ["/education/students", "students.view"],
+  ["/education/parents", "students.view"],
   ["/education/groups/assign", "students.manage"],
   ["/education/groups", "groups.view"],
   ["/education/schedule", "schedule.view"],

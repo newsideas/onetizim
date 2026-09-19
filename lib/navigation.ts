@@ -43,6 +43,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
       icon: GraduationCap,
       items: [
         { label: terms.studentPlural, href: "/education/students", permission: "students.view" },
+        { label: "Ota-onalar", href: "/education/parents", permission: "students.view" },
         { label: terms.groupPlural, href: "/education/groups", permission: "groups.view" },
         { label: terms.schedule, href: "/education/schedule", permission: "schedule.view" },
         { label: "Davomat", href: "/education/attendance", permission: "attendance.mark" },
