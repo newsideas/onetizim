@@ -6,6 +6,7 @@ import { BalanceBadge } from "@/components/payments/BalanceBadge";
 import { StudentStatusActions } from "@/components/students/StudentStatusActions";
 import { formatDate } from "@/lib/utils/date";
 import { formatSom } from "@/lib/utils/currency";
+import { averageScore } from "@/lib/validations/grade";
 import { METHOD_LABELS } from "@/lib/validations/payment";
 import type { PaymentMethod } from "@/types/database";
 
@@ -25,7 +26,8 @@ export default async function StudentDetailPage({
   const { studentId } = await params;
   const { supabase } = await requirePermission("students.view");
 
-  const [{ data: student }, { data: payments }] = await Promise.all([
+  const [{ data: student }, { data: payments }, { data: attendance }, { data: grades }] =
+    await Promise.all([
     supabase
       .from("students")
       .select("*, group:groups(name)")
@@ -36,11 +38,25 @@ export default async function StudentDetailPage({
       .select("id, amount, method, paid_at, note")
       .eq("student_id", studentId)
       .order("paid_at", { ascending: false }),
+    supabase.from("attendance").select("status").eq("student_id", studentId),
+    supabase.from("grades").select("subject, score").eq("student_id", studentId),
   ]);
 
   if (!student) notFound();
 
   const paymentRows = (payments ?? []) as PaymentRow[];
+
+  const lessonsTotal = attendance?.length ?? 0;
+  const attended = (attendance ?? []).filter((a) => a.status !== "absent").length;
+  const attendancePercent = lessonsTotal > 0 ? Math.round((attended / lessonsTotal) * 100) : null;
+
+  const scoresBySubject = new Map<string, number[]>();
+  for (const g of grades ?? []) {
+    const list = scoresBySubject.get(g.subject as string) ?? [];
+    list.push(g.score as number);
+    scoresBySubject.set(g.subject as string, list);
+  }
+  const overallAverage = averageScore((grades ?? []).map((g) => g.score as number));
 
   return (
     <div className="space-y-4">
@@ -80,6 +96,30 @@ export default async function StudentDetailPage({
                 {student.parent_telegram_chat_id ? "Ulangan" : "Ulanmagan"}
               </span>
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-line p-4 text-sm">
+            <h2 className="text-xs font-semibold tracking-wide text-ink-faint uppercase">
+              O&apos;quv natijasi
+            </h2>
+            <div className="flex justify-between">
+              <span className="text-ink-faint">Davomat</span>
+              <span className="text-ink">
+                {attendancePercent === null
+                  ? "—"
+                  : `${attendancePercent}% (${attended}/${lessonsTotal})`}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-ink-faint">O&apos;rtacha baho</span>
+              <span className="font-semibold text-ink">{overallAverage ?? "—"}</span>
+            </div>
+            {[...scoresBySubject.entries()].map(([subject, scores]) => (
+              <div key={subject} className="flex justify-between">
+                <span className="text-ink-faint">{subject}</span>
+                <span className="text-ink">{averageScore(scores)}</span>
+              </div>
+            ))}
           </div>
 
           <div className="space-y-2 rounded-xl border border-line p-4">
