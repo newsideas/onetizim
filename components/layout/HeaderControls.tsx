@@ -37,7 +37,7 @@ export function OrgSwitcher({ orgName }: { orgName?: string }) {
     <Popover
       align="left"
       panelClassName="w-64"
-      triggerClassName="flex max-w-[220px] items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-canvas"
+      triggerClassName="flex h-9 max-w-[220px] items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-ink transition-colors hover:bg-canvas"
       label={
         <>
           <Building2 size={16} className="shrink-0 text-ink-muted" />
@@ -85,7 +85,7 @@ export function TrialBadge({ daysLeft }: { daysLeft: number | null }) {
   return (
     <Link
       href="/settings"
-      className={`hidden shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white transition-colors lg:inline-flex ${
+      className={`hidden shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white transition-colors duration-300 lg:inline-flex ${
         expired
           ? "bg-red-600 hover:bg-red-700"
           : urgent

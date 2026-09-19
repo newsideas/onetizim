@@ -113,7 +113,7 @@ export function GlobalSearch() {
         onFocus={() => query.trim().length >= 2 && setOpen(true)}
         placeholder="Qidirish..."
         aria-label="Qidirish"
-        className="w-full rounded-lg border border-line bg-canvas py-2 pr-16 pl-9 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:bg-surface focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
+        className="h-9 w-full rounded-lg border border-line bg-surface py-0 pr-16 pl-9 text-sm transition-shadow duration-200 text-ink placeholder:text-ink-faint focus:border-brand-500 focus:bg-surface focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
       />
 
       {query ? (
@@ -126,7 +126,7 @@ export function GlobalSearch() {
           <X size={14} />
         </button>
       ) : (
-        <kbd className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-faint">
+        <kbd className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded border whitespace-nowrap border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-faint">
           Ctrl K
         </kbd>
       )}

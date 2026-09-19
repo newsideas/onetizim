@@ -35,7 +35,7 @@ export function Header({
   const { can } = usePermissions();
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-surface px-3 py-2.5 md:gap-3 md:px-6">
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 bg-surface px-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:gap-3 md:px-6">
       <button
         type="button"
         onClick={onMenuClick}

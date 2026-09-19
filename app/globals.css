@@ -17,7 +17,8 @@
 }
 
 /**
- * EduGram dizayn tizimi — yorug' mavzu, yashil-turkuaz aksent.
+ * EduGram dizayn tizimi — Edu tizim bilan bir xil: ko'k aksent (#3D68FF),
+ * kulrang sahifa foni, Nunito shrifti.
  *
  * Ranglarni shu yerda o'zgartirsangiz butun ilova bo'ylab qo'llanadi.
  * Komponentlarda `bg-canvas`, `text-brand-600`, `border-line` kabi
@@ -25,27 +26,30 @@
  */
 @theme {
   /* Brend rangi (asosiy aksent) */
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-200: #99f6e4;
-  --color-brand-400: #2dd4bf;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e56;
-  --color-brand-900: #0c4a43;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #dde6ff;
+  --color-brand-200: #bccdff;
+  --color-brand-400: #7b9bff;
+  --color-brand-500: #5580ff;
+  --color-brand-600: #3d68ff;
+  --color-brand-700: #2f54db;
+  --color-brand-800: #2743ad;
+  --color-brand-900: #1f3585;
 
   /* Yuzalar */
-  --color-canvas: #f4f7f8; /* sahifa foni */
+  --color-canvas: #f0f2f2; /* sahifa foni */
   --color-surface: #ffffff; /* kartalar */
-  --color-line: #e6eaee; /* chegaralar */
+  --color-line: #dbe0e6; /* chegaralar */
+
+  /* Animatsiya: Edu tizimdagi standart egri chiziq */
+  --ease-edu: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Matn */
-  --color-ink: #16202e; /* asosiy */
+  --color-ink: #212529; /* asosiy */
   --color-ink-muted: #64748b; /* ikkilamchi */
   --color-ink-faint: #94a3b8; /* uchinchi darajali */
 
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -120,4 +124,16 @@
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
+}
+
+/* Yon menyudagi ichki bandlar oynasi va shu kabi ochiluvchi bloklar */
+@keyframes edu-pop {
+  from {
+    opacity: 0;
+    transform: translateX(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
