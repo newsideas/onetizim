@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { MONTH_NAMES, bugungiKun, monthStartIso, todayIso } from "@/lib/utils/date";
+import {
+  HAFTA_KUNLARI,
+  MONTH_NAMES,
+  bugungiKun,
+  monthStartIso,
+  toIsoDay,
+  todayIso,
+} from "@/lib/utils/date";
+import { CLOSED_LEAD_STAGES, type LeadStage } from "@/lib/validations/lead";
 
 /**
  * Bosh sahifa uchun barcha ko'rsatkichlar bitta joyda yig'iladi.
@@ -36,6 +44,16 @@ export interface GroupCount {
   count: number;
 }
 
+export interface FrequentAbsentee {
+  id: string;
+  full_name: string;
+  count: number;
+}
+
+/** Shu davrda (kun) necha marta dars qoldirilsa ogohlantirish chiqadi. */
+export const ABSENCE_ALERT_THRESHOLD = 3;
+const ABSENCE_WINDOW_DAYS = 30;
+
 export interface DashboardData {
   activeStudents: number;
   totalStudents: number;
@@ -54,6 +72,9 @@ export interface DashboardData {
   recentPayments: RecentPayment[];
   months: MonthRow[];
   groupCounts: GroupCount[];
+  newLeadsMonth: number;
+  callsDue: number;
+  frequentAbsentees: FrequentAbsentee[];
 }
 
 /** Joriy o'quv yili boshi (1-sentabr), YYYY-MM-DD. */
@@ -68,6 +89,7 @@ export async function getDashboardData(
   const today = todayIso();
   const yearStart = academicYearStart(today);
   const monthStart = monthStartIso();
+  const absenceFrom = toIsoDay(new Date(Date.now() - ABSENCE_WINDOW_DAYS * 86_400_000));
 
   const [
     studentsRes,
@@ -76,6 +98,9 @@ export async function getDashboardData(
     chargesRes,
     attendanceRes,
     groupsRes,
+    lessonsRes,
+    leadsRes,
+    absencesRes,
   ] = await Promise.all([
     supabase.from("students").select("id, status"),
     supabase
@@ -94,6 +119,13 @@ export async function getDashboardData(
       .from("groups")
       .select("id, name, schedule_days, students(id)")
       .order("name"),
+    supabase.from("lessons").select("group_id, weekday"),
+    supabase.from("leads").select("stage, created_at, next_contact_on"),
+    supabase
+      .from("attendance")
+      .select("student_id, student:students(full_name)")
+      .eq("status", "absent")
+      .gte("lesson_date", absenceFrom),
   ]);
 
   const students = studentsRes.data ?? [];
@@ -187,10 +219,44 @@ export async function getDashboardData(
     name: g.name,
     count: g.students?.length ?? 0,
   }));
+  // Bugungi darslar: dars jadvali (lessons) + jadvali kiritilmagan sinflarning eski kun/vaqti.
   const kun = bugungiKun();
-  const todayGroups = groupsRaw.filter((g) =>
-    g.schedule_days?.includes(kun),
+  const weekday = (HAFTA_KUNLARI as readonly string[]).indexOf(kun) + 1;
+  const lessonRows = (lessonsRes.data ?? []) as { group_id: string; weekday: number }[];
+  const groupsWithLessons = new Set(lessonRows.map((l) => l.group_id));
+  const todayGroups =
+    lessonRows.filter((l) => l.weekday === weekday).length +
+    groupsRaw.filter((g) => !groupsWithLessons.has(g.id) && g.schedule_days?.includes(kun)).length;
+
+  // Qabul: shu oy yangi arizalar va bugun bog'lanish kerak bo'lganlar
+  const leadRows = (leadsRes.data ?? []) as {
+    stage: LeadStage;
+    created_at: string;
+    next_contact_on: string | null;
+  }[];
+  const newLeadsMonth = leadRows.filter((l) => l.created_at.slice(0, 10) >= monthStart).length;
+  const callsDue = leadRows.filter(
+    (l) => l.next_contact_on && l.next_contact_on <= today && !CLOSED_LEAD_STAGES.includes(l.stage),
   ).length;
+
+  // So'nggi 30 kunda 3+ marta dars qoldirganlar
+  const absenceRows = (absencesRes.data ?? []) as unknown as {
+    student_id: string;
+    student: { full_name: string } | null;
+  }[];
+  const absenceCounts = new Map<string, FrequentAbsentee>();
+  for (const a of absenceRows) {
+    const row = absenceCounts.get(a.student_id) ?? {
+      id: a.student_id,
+      full_name: a.student?.full_name ?? "—",
+      count: 0,
+    };
+    row.count += 1;
+    absenceCounts.set(a.student_id, row);
+  }
+  const frequentAbsentees = [...absenceCounts.values()]
+    .filter((r) => r.count >= ABSENCE_ALERT_THRESHOLD)
+    .sort((a, b) => b.count - a.count);
 
   return {
     activeStudents,
@@ -210,5 +276,8 @@ export async function getDashboardData(
     recentPayments,
     months,
     groupCounts,
+    newLeadsMonth,
+    callsDue,
+    frequentAbsentees,
   };
 }

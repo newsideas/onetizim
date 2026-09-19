@@ -436,3 +436,51 @@ export function QuickActions({ terms }: { terms: SegmentTerms }) {
     </div>
   );
 }
+
+export interface DashboardAlert {
+  tone: "red" | "amber" | "green";
+  text: string;
+  detail?: string;
+  href: string;
+}
+
+const ALERT_DOT = { red: "bg-red-500", amber: "bg-amber-500", green: "bg-green-500" } as const;
+
+/** Direktor darhol e'tibor berishi kerak bo'lgan holatlar. */
+export function ImportantAlerts({ alerts }: { alerts: DashboardAlert[] }) {
+  return (
+    <Card>
+      <CardHeader title="Muhim ogohlantirishlar" />
+      <div className="p-2">
+        {alerts.length === 0 ? (
+          <p className="px-2 py-6 text-center text-sm text-ink-faint">
+            Hozircha muhim ogohlantirish yo&apos;q
+          </p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {alerts.map((a) => (
+              <li key={a.text}>
+                <Link
+                  href={a.href}
+                  className="flex items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-canvas"
+                >
+                  <span
+                    className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${ALERT_DOT[a.tone]}`}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium text-ink">{a.text}</span>
+                    {a.detail && (
+                      <span className="mt-0.5 block truncate text-xs text-ink-faint">{a.detail}</span>
+                    )}
+                  </span>
+                  <ArrowRight size={14} className="mt-1 shrink-0 text-ink-faint" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Card>
+  );
+}

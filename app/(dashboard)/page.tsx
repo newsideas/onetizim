@@ -1,6 +1,6 @@
-import { Users, AlertTriangle, CalendarCheck, Wallet, Coins } from "lucide-react";
+import { Users, AlertTriangle, CalendarCheck, Wallet, Coins, Target } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
-import { getDashboardData } from "@/lib/dashboard";
+import { ABSENCE_ALERT_THRESHOLD, getDashboardData } from "@/lib/dashboard";
 import { termsFor } from "@/lib/segment";
 import { StatCard } from "@/components/ui/StatCard";
 import { formatSom } from "@/lib/utils/currency";
@@ -8,6 +8,8 @@ import { bugungiKun, formatDate } from "@/lib/utils/date";
 import {
   FinancialActivity,
   FinanceChart,
+  ImportantAlerts,
+  type DashboardAlert,
   MonthlyTable,
   OrgCard,
   GroupDistribution,
@@ -19,6 +21,41 @@ export default async function DashboardPage() {
   const { supabase, org } = await requirePermission("dashboard.view");
   const terms = termsFor(org.type);
   const data = await getDashboardData(supabase);
+
+  const alerts: DashboardAlert[] = [];
+  if (data.debtorCount > 0) {
+    alerts.push({
+      tone: "red",
+      text: `${data.debtorCount} ta ${terms.student.toLowerCase()}ning to'lovi kechikkan`,
+      detail: `Jami qarz: ${formatSom(data.totalDebt)}`,
+      href: "/finance/payments",
+    });
+  }
+  if (data.frequentAbsentees.length > 0) {
+    alerts.push({
+      tone: "amber",
+      text: `${data.frequentAbsentees.length} ta ${terms.student.toLowerCase()} so'nggi 30 kunda ${ABSENCE_ALERT_THRESHOLD}+ marta dars qoldirgan`,
+      detail: data.frequentAbsentees
+        .slice(0, 3)
+        .map((a) => `${a.full_name} (${a.count})`)
+        .join(", "),
+      href: "/education/attendance",
+    });
+  }
+  if (data.callsDue > 0) {
+    alerts.push({
+      tone: "amber",
+      text: `${data.callsDue} ta arizada bugun bog'lanish kerak`,
+      href: "/leads",
+    });
+  }
+  if (data.todayPaid > 0) {
+    alerts.push({
+      tone: "green",
+      text: `Bugungi tushum: ${formatSom(data.todayPaid)}`,
+      href: "/finance/payments",
+    });
+  }
 
   const director =
     [org.director_last_name, org.director_first_name]
@@ -39,7 +76,7 @@ export default async function DashboardPage() {
         <h2 className="text-xs font-semibold tracking-wide text-ink-muted uppercase">
           Umumiy ko&apos;rsatkichlar
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <StatCard
             label={`Aktiv ${terms.studentPlural.toLowerCase()}`}
             value={data.activeStudents}
@@ -73,8 +110,18 @@ export default async function DashboardPage() {
             accent="amber"
             hint={bugungiKun()}
           />
+          <StatCard
+            label="Yangi arizalar"
+            value={data.newLeadsMonth}
+            icon={Target}
+            accent="brand"
+            hint={data.callsDue > 0 ? `Bugun bog'lanish: ${data.callsDue}` : "Bu oy"}
+          />
         </div>
       </section>
+
+      {/* Muhim ogohlantirishlar */}
+      <ImportantAlerts alerts={alerts} />
 
       {/* Moliyaviy faollik va tahlil */}
       <section className="grid gap-4 xl:grid-cols-2">
