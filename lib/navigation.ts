@@ -86,7 +86,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
         { label: "Markaz ma'lumotlari", href: "/settings", permission: "settings.manage" },
         { label: "Xonalar", href: referencePath("classrooms"), permission: "settings.manage" },
         { label: "Fanlar", href: referencePath("subjects"), permission: "settings.manage" },
-        { label: "Kurs narxlari", href: referencePath("contract-amounts"), permission: "settings.manage" },
+        { label: "Sinf narxlari", href: referencePath("contract-amounts"), permission: "settings.manage" },
         { label: "Ma'lumotnomalar", href: "/settings/references", permission: "settings.manage" },
       ],
     },

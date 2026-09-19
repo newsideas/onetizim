@@ -52,15 +52,17 @@ export default async function SchedulePage({
 
   let options: LessonOptions | null = null;
   if (canManage) {
-    const [{ data: groupOptions }, { data: teachers }, { data: rooms }] = await Promise.all([
+    const [{ data: groupOptions }, { data: teachers }, { data: rooms }, { data: subjects }] = await Promise.all([
       supabase.from("groups").select("id, name").order("name"),
       supabase.from("teachers").select("id, full_name").order("full_name"),
       supabase.from("rooms").select("id, name").order("name"),
+      supabase.from("courses").select("name").order("name"),
     ]);
     options = {
       groups: groupOptions ?? [],
       teachers: teachers ?? [],
       rooms: rooms ?? [],
+      subjects: (subjects ?? []).map((s) => s.name as string),
     };
   }
 

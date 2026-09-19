@@ -29,10 +29,10 @@ export default async function LeadsPage({
   if (params.assigned) query = query.eq("assigned_to", params.assigned);
   if (params.source) query = query.eq("source", params.source);
 
-  const [leadsResult, members, { data: courses }] = await Promise.all([
+  const [leadsResult, members, { data: classes }] = await Promise.all([
     query,
     getOrgMembers(supabase, org.id),
-    supabase.from("courses").select("name").order("name"),
+    supabase.from("groups").select("name").order("name"),
   ]);
 
   const leads = (leadsResult.data ?? []) as LeadRow[];
@@ -51,7 +51,7 @@ export default async function LeadsPage({
       options={{
         members: managers,
         sources: LEAD_SOURCES,
-        interests: (courses ?? []).map((c) => c.name as string),
+        interests: (classes ?? []).map((c) => c.name as string),
       }}
     >
       <ListPageShell

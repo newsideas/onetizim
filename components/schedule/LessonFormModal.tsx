@@ -14,6 +14,8 @@ export interface LessonOptions {
   groups: { id: string; name: string }[];
   teachers: { id: string; full_name: string }[];
   rooms: { id: string; name: string }[];
+  /** "Fanlar" ma'lumotnomasidagi nomlar — tavsiya sifatida (narxsiz). */
+  subjects: string[];
 }
 
 const labelClass = "mb-1.5 block text-xs font-medium text-ink-muted";
@@ -94,10 +96,16 @@ export function LessonFormModal({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               maxLength={80}
+              list="lesson-subjects"
               placeholder="Matematika"
               disabled={isPending}
               className={financeInputClass}
             />
+            <datalist id="lesson-subjects">
+              {options.subjects.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
           </div>
         </div>
 

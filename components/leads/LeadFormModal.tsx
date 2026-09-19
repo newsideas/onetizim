@@ -158,7 +158,7 @@ export function LeadFormModal({
               ))}
             </datalist>
           </Field>
-          <Field label="Qiziqqan kurs" htmlFor="lead-interest">
+          <Field label="Qaysi sinfga qiziqadi" htmlFor="lead-interest">
             <input
               id="lead-interest"
               list="lead-interests"

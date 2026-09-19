@@ -245,14 +245,14 @@ export const REFERENCES = {
 
   "contract-amounts": {
     table: "contract_amounts",
-    title: "Kurs narxlari",
-    subtitle: "O'quv yili va guruh turi bo'yicha narxlar",
+    title: "Sinf narxlari",
+    subtitle: "O'quv yili va sinf turi bo'yicha narxlar (fanlarga narx qo'yilmaydi)",
     labelField: "name",
     orderBy: { column: "name", ascending: true },
     fields: [
       { name: "name", label: "Nomi", type: "text", required: true },
       { name: "academic_year_id", label: "O'quv yili", type: "select", ref: "academic-years" },
-      { name: "class_type_id", label: "Guruh turi", type: "select", ref: "class-types" },
+      { name: "class_type_id", label: "Sinf turi", type: "select", ref: "class-types" },
       { name: "amount", label: "Summa", type: "number", required: true },
     ],
   },
