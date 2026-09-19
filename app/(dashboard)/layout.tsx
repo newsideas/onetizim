@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { SegmentProvider } from "@/components/layout/SegmentProvider";
@@ -9,7 +10,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { supabase, user, org, role, permissions, displayName } = await getSession();
+  const { supabase, user, org, role, permissions, displayName, expired } = await getSession();
+  if (expired) redirect("/subscription-expired");
 
   // Qarzdorlar soni faqat to'lovlarni ko'ra oladiganlar uchun.
   let debtorCount = 0;

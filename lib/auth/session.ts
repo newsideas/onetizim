@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Segment } from "@/lib/segment";
 import { isRole, permissionsFor, type Permission, type Role } from "@/lib/auth/permissions";
 import { ActionError } from "@/lib/actions/result";
+import { effectiveStatus, type OrgPlan } from "@/lib/platform";
 
 export interface CurrentOrg {
   id: string;
@@ -32,6 +33,8 @@ export interface Session {
   /** Xodim kartasi (teachers.id) — o'qituvchining guruhlarini topish uchun. */
   employeeId: string | null;
   displayName: string;
+  /** Obuna (sinov) muddati tugagan yoki to'xtatilgan — maktab bloklanadi. */
+  expired: boolean;
 }
 
 interface MemberRow {
@@ -139,12 +142,18 @@ export const getSession = cache(async (): Promise<Session> => {
     permissions: permissionsFor(member.role),
     employeeId: member.employee_id,
     displayName: member.full_name || meta.full_name || user.email || "Foydalanuvchi",
+    expired:
+      effectiveStatus({
+        plan: (member.org.plan ?? "trial") as OrgPlan,
+        trial_ends_at: member.org.trial_ends_at,
+      }) === "expired",
   };
 });
 
 /** Sahifalar uchun: ruxsat bo'lmasa /403 sahifasiga yo'naltiradi. */
 export async function requirePermission(permission: Permission): Promise<Session> {
   const session = await getSession();
+  if (session.expired) redirect("/subscription-expired");
   if (!session.permissions.includes(permission)) redirect("/403");
   return session;
 }
@@ -152,6 +161,9 @@ export async function requirePermission(permission: Permission): Promise<Session
 /** Server action'lar uchun: ruxsat bo'lmasa xatolik tashlaydi. */
 export async function assertPermission(permission: Permission): Promise<Session> {
   const session = await getSession();
+  if (session.expired) {
+    throw new ActionError("Obuna muddati tugagan. Administrator bilan bog'laning.");
+  }
   if (!session.permissions.includes(permission)) {
     throw new ActionError("Bu amal uchun ruxsatingiz yo'q");
   }

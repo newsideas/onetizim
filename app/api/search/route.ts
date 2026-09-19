@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ students: [], groups: [] });
   }
 
-  const { supabase, permissions } = await getSession();
+  const { supabase, permissions, expired } = await getSession();
+  if (expired) {
+    return NextResponse.json({ error: "Obuna muddati tugagan" }, { status: 402 });
+  }
   const pattern = `%${q}%`;
 
   const studentsQuery = permissions.includes("students.view")
