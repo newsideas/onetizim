@@ -122,7 +122,12 @@ export const getSession = cache(async (): Promise<Session> => {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  let member = await loadMember(supabase, user.id);
+  // Platforma administratorligi a'zolikka bog'liq emas — parallel so'raladi.
+  const [initialMember, { data: isPlatformAdmin }] = await Promise.all([
+    loadMember(supabase, user.id),
+    supabase.rpc("is_platform_admin"),
+  ]);
+  let member = initialMember;
   if (!member) {
     await ensureMembership(supabase, user);
     member = await loadMember(supabase, user.id);
@@ -136,7 +141,10 @@ export const getSession = cache(async (): Promise<Session> => {
     user,
     org: member.org,
     role: member.role,
-    permissions: permissionsFor(member.role),
+    permissions: [
+      ...permissionsFor(member.role),
+      ...(isPlatformAdmin === true ? (["platform.admin"] as const) : []),
+    ],
     employeeId: member.employee_id,
     displayName: member.full_name || meta.full_name || user.email || "Foydalanuvchi",
   };

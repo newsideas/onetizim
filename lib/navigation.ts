@@ -4,6 +4,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Settings,
+  ShieldCheck,
   Target,
   Wallet,
   type LucideIcon,
@@ -78,6 +79,15 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
         { label: "Eslatmalar", href: "/notifications", permission: "notifications.manage" },
         { label: "Telegram bot", href: "/notifications/telegram", permission: "notifications.manage" },
         { label: "SMS", href: "/notifications/sms", permission: "notifications.manage" },
+      ],
+    },
+
+    {
+      label: "Platforma",
+      icon: ShieldCheck,
+      items: [
+        { label: "Umumiy ko'rsatkichlar", href: "/platform", permission: "platform.admin" },
+        { label: "Maktablar", href: "/platform/organizations", permission: "platform.admin" },
       ],
     },
 

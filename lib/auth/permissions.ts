@@ -36,7 +36,12 @@ export const PERMISSION_LABELS = {
   "settings.manage": "Sozlamalar",
 } as const;
 
-export type Permission = keyof typeof PERMISSION_LABELS;
+/**
+ * "platform.admin" rollarga bog'lanmagan: u faqat bazadagi platform_admins
+ * jadvalidan (is_platform_admin) keladi va PERMISSION_LABELS/ALL_PERMISSIONS
+ * ga kirmaydi — direktor ham bu ruxsatni olmaydi.
+ */
+export type Permission = keyof typeof PERMISSION_LABELS | "platform.admin";
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[];
 
