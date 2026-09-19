@@ -45,8 +45,15 @@ export async function moveLead(leadId: string, stage: LeadStage) {
   return runAction(async () => {
     if (!isLeadStage(stage)) throw new ActionError("Noto'g'ri bosqich");
     const { supabase } = await assertPermission("leads.manage");
-    const { error } = await supabase.from("leads").update({ stage }).eq("id", leadId);
+    // RLS satrni yashirsa PostgREST xato bermaydi — 0 ta satr qaytadi. Shuning
+    // uchun yangilangan satrni so'raymiz, aks holda o'zgarish jimgina yo'qoladi.
+    const { data, error } = await supabase
+      .from("leads")
+      .update({ stage })
+      .eq("id", leadId)
+      .select("id");
     if (error) throw new ActionError("Bosqichni o'zgartirib bo'lmadi");
+    if (!data?.length) throw new ActionError("Lid topilmadi yoki ruxsat yo'q");
     revalidatePath("/leads");
   });
 }

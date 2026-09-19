@@ -66,7 +66,16 @@ export function StudentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+    <form
+      onSubmit={handleSubmit(onSubmit, (invalidErrors) => {
+        // Ayrim maydonlar xatosi ekranda ko'rsatilmaydi — shunda forma jimgina
+        // to'xtab qolmasligi uchun birinchi xatoni yuqorida chiqaramiz.
+        const first = Object.values(invalidErrors).find((e) => e?.message)?.message;
+        setServerError(first ?? "Formada xatolik bor — maydonlarni tekshiring");
+      })}
+      className="space-y-6"
+      noValidate
+    >
       <FormSection title={`${terms.student}ning shaxsiy ma'lumotlari`}>
         <Field label="Familiyasi" htmlFor="lastName" required error={errors.lastName?.message}>
           <Input id="lastName" placeholder="Kiriting" error={errors.lastName?.message} {...register("lastName")} />

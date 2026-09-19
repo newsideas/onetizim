@@ -19,7 +19,7 @@ function toStudentRow(values: StudentInput) {
     first_name: values.firstName.trim(),
     middle_name: nullable(values.middleName),
     birth_date: nullable(values.birthDate),
-    gender: values.gender ?? null,
+    gender: values.gender || null,
     nationality: nullable(values.nationality),
 
     birth_cert_series: nullable(values.birthCertSeries),

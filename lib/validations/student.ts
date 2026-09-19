@@ -9,7 +9,8 @@ export const studentSchema = z.object({
   firstName: z.string().trim().min(2, "Ismni kiriting"),
   middleName: optionalText,
   birthDate: optionalText,
-  gender: z.enum(["erkak", "ayol"]).optional(),
+  // <select> tanlanmaganda "" yuboradi — uni "ko'rsatilmagan" deb qabul qilamiz
+  gender: z.union([z.enum(["erkak", "ayol"]), z.literal("")]).optional(),
   nationality: optionalText,
 
   // Tug'ilganlik haqida guvohnoma

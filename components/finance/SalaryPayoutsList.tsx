@@ -1,3 +1,5 @@
+"use client";
+
 import { ConfirmActionButton } from "@/components/ui/ConfirmActionButton";
 import { deleteSalaryPayout } from "@/lib/actions/finance";
 import { formatDate } from "@/lib/utils/date";
