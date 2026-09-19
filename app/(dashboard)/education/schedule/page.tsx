@@ -6,7 +6,8 @@ import {
   type LessonRow,
   type ScheduleGroup,
 } from "@/components/schedule/schedule-entries";
-import { NewLessonButton, type LessonOptions } from "@/components/schedule/NewLessonButton";
+import { NewLessonButton } from "@/components/schedule/NewLessonButton";
+import type { LessonOptions } from "@/components/schedule/LessonFormModal";
 import {
   ScheduleViewToggle,
   DayPicker,
@@ -19,7 +20,7 @@ const SCHEDULE_SELECT =
   "teacher:teachers(full_name), room:rooms(id, name), course:courses(name)";
 
 const LESSON_SELECT =
-  "id, group_id, subject, weekday, start_time, end_time, " +
+  "id, group_id, teacher_id, room_id, subject, weekday, start_time, end_time, " +
   "group:groups(name), teacher:teachers(full_name), room:rooms(id, name)";
 
 export default async function SchedulePage({
@@ -83,10 +84,10 @@ export default async function SchedulePage({
       {view === "day" ? (
         <>
           <DayPicker current={day} />
-          <DayScheduleGrid entries={entries} day={day} canManage={canManage} />
+          <DayScheduleGrid entries={entries} day={day} options={options} />
         </>
       ) : (
-        <ScheduleGrid entries={entries} canManage={canManage} />
+        <ScheduleGrid entries={entries} options={options} />
       )}
     </div>
   );

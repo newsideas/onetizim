@@ -15,6 +15,8 @@ export interface ScheduleGroup {
 export interface LessonRow {
   id: string;
   group_id: string;
+  teacher_id: string | null;
+  room_id: string | null;
   subject: string;
   weekday: number;
   start_time: string;
@@ -22,6 +24,18 @@ export interface LessonRow {
   group: { name: string } | null;
   teacher: { full_name: string } | null;
   room: { id: string; name: string } | null;
+}
+
+/** Tahrirlash oynasini to'ldirish uchun lessons qatori. */
+export interface EditableLesson {
+  id: string;
+  groupId: string;
+  subject: string;
+  teacherId: string | null;
+  roomId: string | null;
+  weekday: number;
+  startTime: string;
+  endTime: string;
 }
 
 /** Jadval kataklarida ko'rsatiladigan bitta dars (guruhdan yoki lessons jadvalidan). */
@@ -36,8 +50,8 @@ export interface ScheduleEntry {
   teacher: string | null;
   roomId: string | null;
   roomName: string | null;
-  /** Faqat lessons jadvalidagi yozuvlarni o'chirish mumkin. */
-  lessonId: string | null;
+  /** Faqat lessons jadvalidagi yozuvlarni tahrirlash/o'chirish mumkin. */
+  lesson: EditableLesson | null;
 }
 
 /**
@@ -59,7 +73,16 @@ export function buildEntries(groups: ScheduleGroup[], lessons: LessonRow[]): Sch
     teacher: l.teacher?.full_name ?? null,
     roomId: l.room?.id ?? null,
     roomName: l.room?.name ?? null,
-    lessonId: l.id,
+    lesson: {
+      id: l.id,
+      groupId: l.group_id,
+      subject: l.subject,
+      teacherId: l.teacher_id,
+      roomId: l.room_id,
+      weekday: l.weekday,
+      startTime: l.start_time,
+      endTime: l.end_time,
+    },
   }));
 
   const fromGroups: ScheduleEntry[] = groups
@@ -76,7 +99,7 @@ export function buildEntries(groups: ScheduleGroup[], lessons: LessonRow[]): Sch
         teacher: g.teacher?.full_name ?? null,
         roomId: g.room?.id ?? null,
         roomName: g.room?.name ?? null,
-        lessonId: null,
+        lesson: null,
       })),
     );
 

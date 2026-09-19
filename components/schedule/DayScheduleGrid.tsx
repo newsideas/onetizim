@@ -1,6 +1,7 @@
 import { timeToMinutes, minutesToTime, formatTime } from "@/lib/utils/date";
 import type { ScheduleEntry } from "@/components/schedule/schedule-entries";
-import { LessonDeleteButton } from "@/components/schedule/LessonDeleteButton";
+import { LessonActions } from "@/components/schedule/LessonActions";
+import type { LessonOptions } from "@/components/schedule/LessonFormModal";
 
 /** Bitta qator = 30 daqiqa (Edu tizimdagi kabi). */
 const SLOT_MINUTES = 30;
@@ -29,11 +30,11 @@ function entryEndMinutes(entry: ScheduleEntry): number {
 export function DayScheduleGrid({
   entries,
   day,
-  canManage,
+  options,
 }: {
   entries: ScheduleEntry[];
   day: string;
-  canManage: boolean;
+  options: LessonOptions | null;
 }) {
   const dayEntries = entries.filter((e) => e.day === day);
   const timed = dayEntries.filter((e) => e.startTime);
@@ -141,8 +142,8 @@ export function DayScheduleGrid({
               >
                 <div className="flex items-start justify-between gap-1">
                   <div className="text-xs font-medium text-ink">{e.title}</div>
-                  {canManage && e.lessonId && (
-                    <LessonDeleteButton lessonId={e.lessonId} title={e.title} />
+                  {options && e.lesson && (
+                    <LessonActions lesson={e.lesson} title={e.title} options={options} />
                   )}
                 </div>
                 <div className="text-[11px] text-ink-muted">

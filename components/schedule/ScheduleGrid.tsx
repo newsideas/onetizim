@@ -1,22 +1,24 @@
 import { HAFTA_KUNLARI, formatTime } from "@/lib/utils/date";
 import type { ScheduleEntry } from "@/components/schedule/schedule-entries";
-import { LessonDeleteButton } from "@/components/schedule/LessonDeleteButton";
+import { LessonActions } from "@/components/schedule/LessonActions";
+import type { LessonOptions } from "@/components/schedule/LessonFormModal";
 
 /** Vaqti belgilanmagan darslar uchun alohida qator kaliti. */
 const NO_TIME = "__no_time__";
 
 export function ScheduleGrid({
   entries,
-  canManage,
+  options,
 }: {
   entries: ScheduleEntry[];
-  canManage: boolean;
+  /** Bo'sh bo'lmasa (direktor/menejer) darsni tahrirlash va o'chirish mumkin. */
+  options: LessonOptions | null;
 }) {
   if (entries.length === 0) {
     return (
       <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
         Hali darslar yo&apos;q.{" "}
-        {canManage
+        {options
           ? "«Dars qo'shish» tugmasi orqali sinf, fan, kun va vaqtni kiriting."
           : "Dars jadvali direktor yoki administrator tomonidan kiritiladi."}
       </div>
@@ -69,8 +71,8 @@ export function ScheduleGrid({
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="font-medium whitespace-nowrap text-ink">{e.title}</div>
-                          {canManage && e.lessonId && (
-                            <LessonDeleteButton lessonId={e.lessonId} title={e.title} />
+                          {options && e.lesson && (
+                            <LessonActions lesson={e.lesson} title={e.title} options={options} />
                           )}
                         </div>
                         {e.startTime && e.endTime && (
