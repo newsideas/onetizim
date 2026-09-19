@@ -1,4 +1,4 @@
-import { requirePermission } from "@/lib/auth/session";
+import { requirePlatformAdmin } from "@/lib/auth/platform-admin";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { OrgPlanControls } from "@/components/platform/OrgPlanControls";
 import {
@@ -18,7 +18,7 @@ const STATUS_CLASS: Record<EffectiveStatus, string> = {
 };
 
 export default async function PlatformOrganizationsPage() {
-  const { supabase } = await requirePermission("platform.admin");
+  const { supabase } = await requirePlatformAdmin();
   const orgs = await fetchPlatformOrgs(supabase);
 
   return (

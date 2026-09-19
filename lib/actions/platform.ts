@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { assertPermission } from "@/lib/auth/session";
+import { assertPlatformAdmin } from "@/lib/auth/platform-admin";
 import { ActionError, runAction } from "@/lib/actions/result";
 import { fetchPlatformOrgs } from "@/lib/platform";
 
@@ -26,7 +26,7 @@ export async function setOrgPlan(orgId: string, change: PlanChange) {
     const parsed = planChangeSchema.safeParse(change);
     if (!id.success || !parsed.success) throw new ActionError("Ma'lumotlar noto'g'ri");
 
-    const { supabase } = await assertPermission("platform.admin");
+    const { supabase } = await assertPlatformAdmin();
     const orgs = await fetchPlatformOrgs(supabase);
     const org = orgs.find((o) => o.id === id.data);
     if (!org) throw new ActionError("Maktab topilmadi");
@@ -53,7 +53,7 @@ export async function setOrgPlan(orgId: string, change: PlanChange) {
     });
     if (error) throw new ActionError("Obunani o'zgartirib bo'lmadi: " + error.message);
 
-    revalidatePath("/platform");
-    revalidatePath("/platform/organizations");
+    revalidatePath("/admin");
+    revalidatePath("/admin/organizations");
   });
 }

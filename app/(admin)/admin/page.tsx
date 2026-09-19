@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, Building2, CheckCircle2, Clock, GraduationCap, PlusCircle } from "lucide-react";
-import { requirePermission } from "@/lib/auth/session";
+import { requirePlatformAdmin } from "@/lib/auth/platform-admin";
 import { effectiveStatus, fetchPlatformOrgs } from "@/lib/platform";
 import { StatCard } from "@/components/ui/StatCard";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -10,7 +10,7 @@ import { daysUntil, formatDate, monthStartIso } from "@/lib/utils/date";
 const EXPIRING_SOON_DAYS = 7;
 
 export default async function PlatformPage() {
-  const { supabase } = await requirePermission("platform.admin");
+  const { supabase } = await requirePlatformAdmin();
   const orgs = await fetchPlatformOrgs(supabase);
 
   const withStatus = orgs.map((o) => ({ ...o, status: effectiveStatus(o) }));
@@ -48,7 +48,7 @@ export default async function PlatformPage() {
           title="Sinov muddati tugayotganlar"
           action={
             <Link
-              href="/platform/organizations"
+              href="/admin/organizations"
               className="text-xs font-medium text-brand-600 hover:underline"
             >
               Barcha maktablar
