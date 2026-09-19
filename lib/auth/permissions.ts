@@ -27,6 +27,7 @@ export const PERMISSION_LABELS = {
   "schedule.view": "Dars jadvali",
   "attendance.mark": "Davomat belgilash",
   "grades.manage": "Baholar",
+  "homework.manage": "Uy vazifalari",
   "payments.manage": "To'lovlar va kassa",
   "contracts.manage": "Shartnomalar",
   "salaries.manage": "Oyliklar",
@@ -52,11 +53,12 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "schedule.view",
     "attendance.mark",
     "grades.manage",
+    "homework.manage",
     "payments.manage",
     "contracts.manage",
     "notifications.manage",
   ],
-  teacher: ["dashboard.view", "groups.view", "schedule.view", "attendance.mark", "grades.manage"],
+  teacher: ["dashboard.view", "groups.view", "schedule.view", "attendance.mark", "grades.manage", "homework.manage"],
 };
 
 export function isRole(value: unknown): value is Role {
@@ -85,6 +87,8 @@ export const ROUTE_PERMISSIONS: [prefix: string, permission: Permission][] = [
   ["/education/schedule", "schedule.view"],
   ["/education/attendance", "attendance.mark"],
   ["/education/grades", "grades.manage"],
+  ["/education/homework", "homework.manage"],
+  ["/cabinet", "dashboard.view"],
   ["/finance/payments", "payments.manage"],
   ["/finance/contracts", "contracts.manage"],
   ["/finance/salaries", "salaries.manage"],

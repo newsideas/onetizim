@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Users, AlertTriangle, CalendarCheck, Wallet, Coins, Target } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { ABSENCE_ALERT_THRESHOLD, getDashboardData } from "@/lib/dashboard";
@@ -18,7 +19,9 @@ import {
 } from "@/components/dashboard/DashboardBlocks";
 
 export default async function DashboardPage() {
-  const { supabase, org } = await requirePermission("dashboard.view");
+  const { supabase, org, role } = await requirePermission("dashboard.view");
+  // O'qituvchi maktabning moliyaviy ko'rsatkichlarini emas, o'z kabinetini ko'radi.
+  if (role === "teacher") redirect("/cabinet");
   const terms = termsFor(org.type);
   const data = await getDashboardData(supabase);
 

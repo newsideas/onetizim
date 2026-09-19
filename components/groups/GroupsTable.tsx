@@ -17,9 +17,12 @@ export const GROUP_SELECT =
 export function GroupsTable({
   groups,
   segment,
+  showPrice = true,
 }: {
   groups: GroupRow[];
   segment: Segment;
+  /** Narx moliyaviy ma'lumot: o'qituvchiga ko'rsatilmaydi. */
+  showPrice?: boolean;
 }) {
   const terms = termsFor(segment);
 
@@ -48,7 +51,7 @@ export function GroupsTable({
             {isCourseBased && (
               <th className="px-4 py-3 font-medium">Dars kunlari</th>
             )}
-            <th className="px-4 py-3 font-medium">Narxi</th>
+            {showPrice && <th className="px-4 py-3 font-medium">Narxi</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -76,9 +79,11 @@ export function GroupsTable({
                   {group.schedule_days?.map((d) => d.slice(0, 3)).join(", ") || "—"}
                 </td>
               )}
-              <td className="px-4 py-3 text-ink-muted">
-                {formatSom(group.monthly_price)}
-              </td>
+              {showPrice && (
+                <td className="px-4 py-3 text-ink-muted">
+                  {formatSom(group.monthly_price)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

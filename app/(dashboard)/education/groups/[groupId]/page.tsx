@@ -74,6 +74,7 @@ export default async function GroupDetailPage({
             group={group}
             studentCount={studentRows.length}
             segment={segment}
+            showFinance={permissions.includes("payments.manage")}
           />
         </div>
 

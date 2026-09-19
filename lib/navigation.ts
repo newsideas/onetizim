@@ -48,6 +48,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
         { label: terms.schedule, href: "/education/schedule", permission: "schedule.view" },
         { label: "Davomat", href: "/education/attendance", permission: "attendance.mark" },
         { label: "Baholar", href: "/education/grades", permission: "grades.manage" },
+        { label: "Uy vazifalari", href: "/education/homework", permission: "homework.manage" },
       ],
     },
 

@@ -10,11 +10,16 @@ export function GradeFilters({
   groupId,
   subject,
   subjects,
+  basePath = "/education/grades",
+  hideSubject = false,
 }: {
   groups: { id: string; name: string }[];
   groupId: string;
   subject: string;
   subjects: string[];
+  /** Filtr qaysi sahifada ishlatilsa, o'sha yo'lga o'tadi. */
+  basePath?: string;
+  hideSubject?: boolean;
 }) {
   const router = useRouter();
 
@@ -22,7 +27,7 @@ export function GradeFilters({
     const params = new URLSearchParams({ group: next.group ?? groupId });
     const s = next.subject ?? subject;
     if (s) params.set("subject", s);
-    router.push(`/education/grades?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   return (
@@ -41,27 +46,31 @@ export function GradeFilters({
           ))}
         </Select>
       </div>
-      <div className="w-56">
-        <Label htmlFor="grade-subject">Fan</Label>
-        <Input
-          id="grade-subject"
-          key={`${groupId}-${subject}`}
-          list="grade-subject-options"
-          placeholder="Barcha fanlar"
-          defaultValue={subject}
-          onBlur={(e) => {
-            if (e.target.value.trim() !== subject) go({ subject: e.target.value.trim() });
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") go({ subject: e.currentTarget.value.trim() });
-          }}
-        />
-        <datalist id="grade-subject-options">
-          {subjects.map((s) => (
-            <option key={s} value={s} />
-          ))}
-        </datalist>
-      </div>
+      {!hideSubject && (
+        <div className="w-56">
+          <Label htmlFor="grade-subject">Fan</Label>
+          <Input
+            id="grade-subject"
+            key={`${groupId}-${subject}`}
+            list="grade-subject-options"
+            placeholder="Barcha fanlar"
+            defaultValue={subject}
+            onBlur={(e) => {
+              if (e.target.value.trim() !== subject)
+                go({ subject: e.target.value.trim() });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter")
+                go({ subject: e.currentTarget.value.trim() });
+            }}
+          />
+          <datalist id="grade-subject-options">
+            {subjects.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+        </div>
+      )}
     </div>
   );
 }

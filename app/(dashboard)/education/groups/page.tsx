@@ -29,6 +29,7 @@ export default async function GroupsPage() {
       <GroupsTable
         groups={(groups ?? []) as unknown as GroupRow[]}
         segment={segment}
+        showPrice={permissions.includes("payments.manage")}
       />
     </div>
   );

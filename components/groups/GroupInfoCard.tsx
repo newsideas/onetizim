@@ -17,10 +17,13 @@ export function GroupInfoCard({
   group,
   studentCount,
   segment,
+  showFinance = true,
 }: {
   group: GroupRow;
   studentCount: number;
   segment: Segment;
+  /** Narx va muddat moliyaviy ma'lumot: o'qituvchiga ko'rsatilmaydi. */
+  showFinance?: boolean;
 }) {
   const terms = termsFor(segment);
 
@@ -88,15 +91,17 @@ export function GroupInfoCard({
         </div>
       )}
 
-      <div className="border-t border-line pt-4">
-        <h2 className="mb-3 text-xs font-semibold tracking-wide text-ink-faint uppercase">
-          Moliyaviy
-        </h2>
-        <div className="space-y-2.5">
-          <Row label="Oylik narxi" value={formatSom(group.monthly_price)} />
-          <Row label="Faoliyat muddati" value={muddat} />
+      {showFinance && (
+        <div className="border-t border-line pt-4">
+          <h2 className="mb-3 text-xs font-semibold tracking-wide text-ink-faint uppercase">
+            Moliyaviy
+          </h2>
+          <div className="space-y-2.5">
+            <Row label="Oylik narxi" value={formatSom(group.monthly_price)} />
+            <Row label="Faoliyat muddati" value={muddat} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
