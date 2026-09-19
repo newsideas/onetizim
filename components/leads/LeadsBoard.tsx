@@ -5,17 +5,33 @@ import { useRouter } from "next/navigation";
 import { CalendarClock, Phone, Plus } from "lucide-react";
 import { useLeads, type LeadRow } from "@/components/leads/LeadsProvider";
 import { moveLead } from "@/lib/actions/leads";
-import { formatDate, formatDaysAgo } from "@/lib/utils/date";
+import { formatDate, formatDaysAgo, todayIso } from "@/lib/utils/date";
 import { initials } from "@/lib/staff";
-import { LEAD_STAGES, LEAD_STAGE_LABELS, type LeadStage } from "@/lib/validations/lead";
+import {
+  CLOSED_LEAD_STAGES,
+  INTEREST_LEVEL_LABELS,
+  LEAD_STAGES,
+  LEAD_STAGE_LABELS,
+  type LeadStage,
+} from "@/lib/validations/lead";
 
 const STAGE_DOT: Record<LeadStage, string> = {
   new: "bg-sky-500",
-  trial: "bg-amber-500",
-  thinking: "bg-violet-500",
-  contract: "bg-emerald-500",
+  contacted: "bg-cyan-500",
+  visit: "bg-amber-500",
+  test: "bg-orange-500",
+  accepted: "bg-violet-500",
+  contract: "bg-indigo-500",
+  paid: "bg-lime-500",
+  enrolled: "bg-emerald-500",
   lost: "bg-slate-400",
 };
+
+const LEVEL_CLASS = {
+  cold: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
+  warm: "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200",
+  hot: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300",
+} as const;
 
 export function LeadsBoard({ leads }: { leads: LeadRow[] }) {
   const router = useRouter();
@@ -32,6 +48,7 @@ export function LeadsBoard({ leads }: { leads: LeadRow[] }) {
     setItems(leads);
   }
 
+  const today = todayIso();
   const memberName = new Map(options.members.map((m) => [m.id, m.name]));
 
   function move(leadId: string, stage: LeadStage) {
@@ -69,7 +86,7 @@ export function LeadsBoard({ leads }: { leads: LeadRow[] }) {
       )}
 
       <div className="-mx-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
-        <div className="grid min-w-[1100px] grid-cols-5 gap-3">
+        <div className="flex gap-3">
           {LEAD_STAGES.map((stage) => {
             const column = items.filter((l) => l.stage === stage);
             return (
@@ -82,7 +99,7 @@ export function LeadsBoard({ leads }: { leads: LeadRow[] }) {
                 }}
                 onDragLeave={() => setDragOver((current) => (current === stage ? null : current))}
                 onDrop={(e) => handleDrop(e, stage)}
-                className={`flex min-h-[420px] flex-col rounded-xl border bg-canvas transition-colors ${
+                className={`flex min-h-[420px] w-[240px] shrink-0 flex-col rounded-xl border bg-canvas transition-colors ${
                   dragOver === stage ? "border-brand-500 bg-brand-500/5" : "border-line"
                 } ${stage === "lost" ? "opacity-80" : ""}`}
               >
@@ -122,6 +139,11 @@ export function LeadsBoard({ leads }: { leads: LeadRow[] }) {
                         className="block w-full text-left"
                       >
                         <div className="font-medium text-ink">{lead.full_name}</div>
+                        {lead.parent_name && (
+                          <div className="mt-0.5 truncate text-xs text-ink-muted">
+                            Ota-ona: {lead.parent_name}
+                          </div>
+                        )}
                         {lead.interest && (
                           <div className="mt-0.5 truncate text-xs text-ink-muted">{lead.interest}</div>
                         )}
@@ -143,7 +165,27 @@ export function LeadsBoard({ leads }: { leads: LeadRow[] }) {
                             {lead.source}
                           </span>
                         )}
-                        {lead.trial_date && stage !== "contract" && stage !== "lost" && (
+                        {lead.interest_level && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] ${LEVEL_CLASS[lead.interest_level]}`}
+                          >
+                            {INTEREST_LEVEL_LABELS[lead.interest_level]}
+                          </span>
+                        )}
+                        {lead.next_contact_on && !CLOSED_LEAD_STAGES.includes(stage) && (
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${
+                              lead.next_contact_on <= today
+                                ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                                : "bg-canvas text-ink-muted"
+                            }`}
+                            title="Keyingi qo'ng'iroq sanasi"
+                          >
+                            <Phone size={11} aria-hidden="true" />
+                            {formatDate(lead.next_contact_on)}
+                          </span>
+                        )}
+                        {lead.trial_date && !CLOSED_LEAD_STAGES.includes(stage) && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
                             <CalendarClock size={11} aria-hidden="true" />
                             {formatDate(lead.trial_date)}

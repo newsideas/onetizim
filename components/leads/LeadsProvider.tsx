@@ -3,17 +3,20 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { LeadFormModal } from "@/components/leads/LeadFormModal";
-import type { LeadStage } from "@/lib/validations/lead";
+import type { InterestLevel, LeadStage } from "@/lib/validations/lead";
 
 export interface LeadRow {
   id: string;
   full_name: string;
+  parent_name: string | null;
   phone: string | null;
   source: string | null;
   interest: string | null;
   stage: LeadStage;
   assigned_to: string | null;
   trial_date: string | null;
+  interest_level: InterestLevel | null;
+  next_contact_on: string | null;
   note: string | null;
   student_id: string | null;
   created_at: string;
@@ -72,7 +75,7 @@ export function NewLeadButton() {
       className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
     >
       <Plus size={16} aria-hidden="true" />
-      Yangi lid
+      Yangi ariza
     </button>
   );
 }

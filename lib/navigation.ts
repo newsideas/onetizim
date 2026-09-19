@@ -36,7 +36,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
   return [
     { label: "Bosh sahifa", href: "/", icon: LayoutDashboard, permission: "dashboard.view" },
 
-    { label: "Lidlar", href: "/leads", icon: Target, permission: "leads.manage" },
+    { label: "Qabul", href: "/leads", icon: Target, permission: "leads.manage" },
 
     {
       label: "O'quv jarayoni",

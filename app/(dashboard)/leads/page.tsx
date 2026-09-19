@@ -1,8 +1,8 @@
-import { CalendarClock, Percent, Target, UserPlus } from "lucide-react";
+import { PhoneCall, Percent, Target, UserPlus } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { getOrgMembers } from "@/lib/staff";
-import { monthStartIso } from "@/lib/utils/date";
-import { LEAD_SOURCES } from "@/lib/validations/lead";
+import { monthStartIso, todayIso } from "@/lib/utils/date";
+import { CLOSED_LEAD_STAGES, LEAD_SOURCES } from "@/lib/validations/lead";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { StatCard } from "@/components/ui/StatCard";
@@ -20,7 +20,7 @@ export default async function LeadsPage({
   let query = supabase
     .from("leads")
     .select(
-      "id, full_name, phone, source, interest, stage, assigned_to, trial_date, note, student_id, created_at, updated_at",
+      "id, full_name, parent_name, phone, source, interest, stage, assigned_to, trial_date, interest_level, next_contact_on, note, student_id, created_at, updated_at",
     )
     .order("updated_at", { ascending: false });
 
@@ -42,8 +42,11 @@ export default async function LeadsPage({
 
   const monthStart = monthStartIso();
   const newThisMonth = leads.filter((l) => l.created_at.slice(0, 10) >= monthStart).length;
-  const inTrial = leads.filter((l) => l.stage === "trial").length;
-  const won = leads.filter((l) => l.stage === "contract").length;
+  const today = todayIso();
+  const callsDue = leads.filter(
+    (l) => l.next_contact_on && l.next_contact_on <= today && !CLOSED_LEAD_STAGES.includes(l.stage),
+  ).length;
+  const won = leads.filter((l) => l.stage === "enrolled").length;
   const closed = won + leads.filter((l) => l.stage === "lost").length;
 
   return (
@@ -55,12 +58,12 @@ export default async function LeadsPage({
       }}
     >
       <ListPageShell
-        title="Lidlar"
-        subtitle="Savdo voronkasi"
+        title="Qabul"
+        subtitle="Yangi o'quvchilarni qabul qilish voronkasi"
         actions={<NewLeadButton />}
         notice={
           leadsResult.error
-            ? "Lidlar jadvali bazada topilmadi — 0023_leads.sql migratsiyasini Supabase SQL Editor'da ishga tushiring."
+            ? "Arizalar jadvali yoki yangi ustunlar bazada topilmadi — 0023_leads.sql va 0031_admission.sql migratsiyalarini Supabase SQL Editor'da ishga tushiring."
             : undefined
         }
         filters={
@@ -84,15 +87,15 @@ export default async function LeadsPage({
         }
       >
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Jami lidlar" value={leads.length} icon={Target} accent="brand" />
+          <StatCard label="Jami arizalar" value={leads.length} icon={Target} accent="brand" />
           <StatCard label="Bu oy yangi" value={newThisMonth} icon={UserPlus} accent="blue" />
-          <StatCard label="Sinov darsida" value={inTrial} icon={CalendarClock} accent="amber" />
+          <StatCard label="Bugun bog'lanish kerak" value={callsDue} icon={PhoneCall} accent="amber" />
           <StatCard
             label="Konversiya"
             value={closed > 0 ? `${Math.round((won / closed) * 100)}%` : "—"}
             icon={Percent}
             accent="green"
-            hint="Yopilgan lidlar ichida shartnoma"
+            hint="Yopilgan arizalar ichida o'quvchi bo'lganlar"
           />
         </div>
 

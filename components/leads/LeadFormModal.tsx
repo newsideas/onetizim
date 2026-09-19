@@ -14,7 +14,14 @@ import {
   deleteLead,
   updateLead,
 } from "@/lib/actions/leads";
-import { LEAD_STAGES, LEAD_STAGE_LABELS, type LeadStage } from "@/lib/validations/lead";
+import {
+  INTEREST_LEVELS,
+  INTEREST_LEVEL_LABELS,
+  LEAD_STAGES,
+  LEAD_STAGE_LABELS,
+  type InterestLevel,
+  type LeadStage,
+} from "@/lib/validations/lead";
 
 const inputClass =
   "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none disabled:opacity-60";
@@ -49,12 +56,15 @@ export function LeadFormModal({
 
   const [values, setValues] = useState({
     fullName: lead?.full_name ?? "",
+    parentName: lead?.parent_name ?? "",
     phone: lead?.phone ?? "",
     source: lead?.source ?? "",
     interest: lead?.interest ?? "",
     stage: lead?.stage ?? defaultStage,
     assignedTo: lead?.assigned_to ?? "",
     trialDate: lead?.trial_date ?? "",
+    interestLevel: (lead?.interest_level ?? "") as InterestLevel | "",
+    nextContactOn: lead?.next_contact_on ?? "",
     note: lead?.note ?? "",
   });
 
@@ -74,7 +84,7 @@ export function LeadFormModal({
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (values.fullName.trim().length < 2) return setError("Ism familiyani kiriting");
+    if (values.fullName.trim().length < 2) return setError("Bolaning ism familiyasini kiriting");
     run(() => (lead ? updateLead(lead.id, values) : createLead(values)));
   }
 
@@ -90,28 +100,40 @@ export function LeadFormModal({
       const result = await convertLeadToStudent(lead.id);
       if (!result.ok) return setError(result.error);
       setStudentId(result.data);
-      set("stage", "contract");
+      set("stage", "enrolled");
       router.refresh();
     });
   }
 
   return (
-    <Modal open onClose={isPending ? () => {} : onClose} title={lead ? "Lidni tahrirlash" : "Yangi lid"}>
+    <Modal open onClose={isPending ? () => {} : onClose} title={lead ? "Arizani tahrirlash" : "Yangi ariza"}>
       <form onSubmit={submit} className="space-y-3">
-        <Field label="Ism familiya" htmlFor="lead-name" required>
-          <input
-            id="lead-name"
-            value={values.fullName}
-            onChange={(e) => set("fullName", e.target.value)}
-            maxLength={120}
-            autoFocus
-            disabled={isPending}
-            className={inputClass}
-          />
-        </Field>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Bola F.I.Sh." htmlFor="lead-name" required>
+            <input
+              id="lead-name"
+              value={values.fullName}
+              onChange={(e) => set("fullName", e.target.value)}
+              maxLength={120}
+              autoFocus
+              disabled={isPending}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Ota-ona F.I.Sh." htmlFor="lead-parent">
+            <input
+              id="lead-parent"
+              value={values.parentName}
+              onChange={(e) => set("parentName", e.target.value)}
+              maxLength={120}
+              disabled={isPending}
+              className={inputClass}
+            />
+          </Field>
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Telefon" htmlFor="lead-phone">
+          <Field label="Ota-ona telefoni" htmlFor="lead-phone">
             <input
               id="lead-phone"
               type="tel"
@@ -193,12 +215,41 @@ export function LeadFormModal({
               ))}
             </select>
           </Field>
-          <Field label="Sinov darsi sanasi" htmlFor="lead-trial">
+          <Field label="Tashrif / test sanasi" htmlFor="lead-trial">
             <input
               id="lead-trial"
               type="date"
               value={values.trialDate}
               onChange={(e) => set("trialDate", e.target.value)}
+              disabled={isPending}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Qiziqish darajasi" htmlFor="lead-level">
+            <select
+              id="lead-level"
+              value={values.interestLevel}
+              onChange={(e) => set("interestLevel", e.target.value as InterestLevel | "")}
+              disabled={isPending}
+              className={inputClass}
+            >
+              <option value="">Belgilanmagan</option>
+              {INTEREST_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {INTEREST_LEVEL_LABELS[level]}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Keyingi qo'ng'iroq sanasi" htmlFor="lead-next">
+            <input
+              id="lead-next"
+              type="date"
+              value={values.nextContactOn}
+              onChange={(e) => set("nextContactOn", e.target.value)}
               disabled={isPending}
               className={inputClass}
             />

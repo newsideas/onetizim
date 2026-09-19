@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { studentSchema, type StudentInput } from "@/lib/validations/student";
 import type { StudentStatus } from "@/types/database";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { linkParentToStudent } from "@/lib/parents";
 
 /** Bo'sh satrni null'ga aylantiradi (bazada bo'sh matn saqlamaslik uchun). */
 function nullable(value: string | undefined): string | null {
@@ -51,45 +51,6 @@ function toStudentRow(values: StudentInput) {
   };
 }
 
-/**
- * Formada ota-ona ko'rsatilgan bo'lsa, uni ota-onalar ro'yxatiga bog'laydi
- * (bir xil F.I.Sh. + telefon bo'lsa mavjudini ishlatadi — akasi-ukasi bitta
- * ota-onaga tushadi). Bu qo'shimcha amal: o'quvchi allaqachon saqlangan, shuning
- * uchun bu yerdagi xato o'quvchini saqlashni bekor qilmaydi.
- */
-async function linkParentFromForm(
-  supabase: SupabaseClient,
-  orgId: string,
-  studentId: string,
-  values: StudentInput,
-) {
-  const fullName = nullable(values.parentFullName);
-  if (!fullName) return;
-  const phone = nullable(values.parentPhone);
-
-  let lookup = supabase
-    .from("parents")
-    .select("id")
-    .eq("org_id", orgId)
-    .eq("full_name", fullName);
-  lookup = phone ? lookup.eq("phone", phone) : lookup.is("phone", null);
-  const { data: existing } = await lookup.limit(1).maybeSingle();
-
-  let parentId = existing?.id as string | undefined;
-  if (!parentId) {
-    const { data: created, error } = await supabase
-      .from("parents")
-      .insert({ org_id: orgId, full_name: fullName, relation: nullable(values.parentRelation), phone })
-      .select("id")
-      .single();
-    if (error) return;
-    parentId = created.id as string;
-  }
-  await supabase
-    .from("student_parents")
-    .upsert({ student_id: studentId, parent_id: parentId }, { onConflict: "student_id,parent_id" });
-}
-
 export async function createStudent(input: StudentInput) {
   return runAction(async () => {
     const parsed = studentSchema.safeParse(input);
@@ -110,7 +71,11 @@ export async function createStudent(input: StudentInput) {
       throw new ActionError("Saqlashda xatolik: " + error.message);
     }
 
-    await linkParentFromForm(supabase, orgId, data.id as string, parsed.data);
+    await linkParentToStudent(supabase, orgId, data.id as string, {
+      fullName: nullable(parsed.data.parentFullName),
+      phone: nullable(parsed.data.parentPhone),
+      relation: nullable(parsed.data.parentRelation),
+    });
 
     revalidatePath("/education/students");
     revalidatePath("/education/parents");

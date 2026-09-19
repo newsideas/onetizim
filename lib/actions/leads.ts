@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { ActionError, runAction } from "@/lib/actions/result";
+import { linkParentToStudent } from "@/lib/parents";
 import { isLeadStage, leadSchema, type LeadInput, type LeadStage } from "@/lib/validations/lead";
 
 function toLeadRow(input: LeadInput) {
@@ -13,12 +14,15 @@ function toLeadRow(input: LeadInput) {
   const v = parsed.data;
   return {
     full_name: v.fullName,
+    parent_name: v.parentName,
     phone: v.phone,
     source: v.source,
     interest: v.interest,
     stage: v.stage,
     assigned_to: v.assignedTo,
     trial_date: v.trialDate,
+    interest_level: v.interestLevel,
+    next_contact_on: v.nextContactOn,
     note: v.note,
   };
 }
@@ -68,8 +72,9 @@ export async function deleteLead(leadId: string) {
 }
 
 /**
- * Lidni o'quvchilar bazasiga qo'shadi va "Shartnoma" bosqichiga o'tkazadi.
- * Qolgan hujjat ma'lumotlari o'quvchi kartasida to'ldiriladi.
+ * Lidni o'quvchilar bazasiga qo'shadi va "O'quvchi" bosqichiga o'tkazadi;
+ * ota-ona ma'lumoti ota-onalar ro'yxatiga ham yoziladi. Qolgan hujjat
+ * ma'lumotlari o'quvchi kartasida to'ldiriladi.
  */
 export async function convertLeadToStudent(leadId: string) {
   return runAction(async () => {
@@ -78,7 +83,7 @@ export async function convertLeadToStudent(leadId: string) {
 
     const { data: lead } = await supabase
       .from("leads")
-      .select("full_name, phone, student_id")
+      .select("full_name, parent_name, phone, student_id")
       .eq("id", leadId)
       .maybeSingle();
     if (!lead) throw new ActionError("Lid topilmadi");
@@ -92,7 +97,8 @@ export async function convertLeadToStudent(leadId: string) {
         full_name: lead.full_name,
         last_name: lastName,
         first_name: rest.join(" ") || null,
-        phone: lead.phone,
+        parent_full_name: lead.parent_name,
+        parent_phone: lead.phone,
       })
       .select("id")
       .single();
@@ -100,11 +106,17 @@ export async function convertLeadToStudent(leadId: string) {
 
     await supabase
       .from("leads")
-      .update({ student_id: student.id, stage: "contract" })
+      .update({ student_id: student.id, stage: "enrolled", next_contact_on: null })
       .eq("id", leadId);
+
+    await linkParentToStudent(supabase, org.id, student.id as string, {
+      fullName: lead.parent_name,
+      phone: lead.phone,
+    });
 
     revalidatePath("/leads");
     revalidatePath("/education/students");
+    revalidatePath("/education/parents");
     return student.id as string;
   });
 }

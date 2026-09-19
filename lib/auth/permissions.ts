@@ -19,7 +19,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const PERMISSION_LABELS = {
   "dashboard.view": "Bosh sahifa",
-  "leads.manage": "Lidlar",
+  "leads.manage": "Qabul (arizalar)",
   "students.view": "O'quvchilarni ko'rish",
   "students.manage": "O'quvchilarni qo'shish va tahrirlash",
   "groups.view": "Guruhlarni ko'rish",
