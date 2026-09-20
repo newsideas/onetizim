@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { InlineFilters } from "@/components/ui/ListToolbar";
 import { ReportCards, ReportTable } from "@/components/reports/ReportParts";
-import { formatDate, toIsoDay } from "@/lib/utils/date";
+import { toIsoDay } from "@/lib/utils/date";
 
 interface Row {
   id: string;
@@ -45,7 +44,6 @@ export default async function LeaveReasonsPage({
     .map(([reason, list]) => ({
       reason,
       count: list.length,
-      percent: rows.length ? Math.round((list.length / rows.length) * 100) : 0,
       list,
     }))
     .sort((a, b) => b.count - a.count);
@@ -68,49 +66,23 @@ export default async function LeaveReasonsPage({
       />
       <ReportCards
         items={[
-          { label: "Arxivlanganlar", value: rows.length },
-          { label: "Turli sabablar", value: summary.filter((s) => s.reason !== NO_REASON).length },
-          {
-            label: "Eng ko'p sabab",
-            value: summary[0] ? `${summary[0].reason} (${summary[0].count})` : "—",
-          },
+          { label: "Umumiy ketganlar", value: rows.length },
+          { label: "Buyurtmadan ketganlar", value: 0 },
+          { label: "To'lov qilmasdan ketganlar", value: 0 },
+          { label: "To'lov qilib ketganlar", value: rows.length },
         ]}
       />
+      <div className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink-muted">
+        Umumiy ketgan o&apos;quvchilar: <b className="text-ink">{rows.length}</b>
+      </div>
+      <h2 className="text-sm font-semibold text-ink-muted">Sababi</h2>
 
       <ReportTable
         rows={summary}
         rowKey={(r) => r.reason}
         columns={[
-          { header: "Ketish sababi", cell: (r) => <span className="font-medium text-ink">{r.reason}</span> },
-          { header: "O'quvchilar soni", cell: (r) => r.count },
-          {
-            header: "Ulushi",
-            cell: (r) => (
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-24 overflow-hidden rounded-full bg-line">
-                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${r.percent}%` }} />
-                </div>
-                <span className="text-xs">{r.percent}%</span>
-              </div>
-            ),
-          },
-          {
-            header: "O'quvchilar",
-            cell: (r) => (
-              <span className="text-xs">
-                {r.list.slice(0, 4).map((s, i) => (
-                  <span key={s.id}>
-                    {i > 0 && ", "}
-                    <Link href={`/education/students/${s.id}`} className="text-brand-600 hover:underline">
-                      {s.full_name}
-                    </Link>
-                    {s.archived_at ? ` (${formatDate(s.archived_at)})` : ""}
-                  </span>
-                ))}
-                {r.list.length > 4 ? ` va yana ${r.list.length - 4} ta` : ""}
-              </span>
-            ),
-          },
+          { header: "Sabab nomi", cell: (r) => <span className="font-medium text-ink">{r.reason}</span> },
+          { header: "Ketgan o'quvchi soni", cell: (r) => r.count },
         ]}
       />
     </div>

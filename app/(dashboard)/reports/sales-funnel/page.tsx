@@ -1,37 +1,71 @@
 import { requirePermission } from "@/lib/auth/session";
 import { InlineFilters } from "@/components/ui/ListToolbar";
-import { ReportCards } from "@/components/reports/ReportParts";
+import { ReportTable } from "@/components/reports/ReportParts";
+import { getOrgMembers } from "@/lib/staff";
 import { toIsoDay } from "@/lib/utils/date";
-import { LEAD_STAGES, LEAD_STAGE_LABELS, type LeadStage } from "@/lib/validations/lead";
+import { LEAD_SOURCES, type LeadStage } from "@/lib/validations/lead";
 
-/** Sotuv voronkasi: buyurtmalar bosqichlar bo'yicha va bosqichdan bosqichga o'tish foizi. */
+interface LeadRow {
+  stage: LeadStage;
+  created_at: string;
+  interest: string | null;
+  source: string | null;
+  assigned_to: string | null;
+  teacher_id: string | null;
+  trial_date: string | null;
+}
+
+const VISITED: LeadStage[] = ["visit", "test", "accepted", "contract", "paid", "enrolled"];
+
+/** Sotuv voronkasi (Edu tizimdagi "Hisobot turlari / Soni / Kurslar soni" jadvali). */
 export default async function SalesFunnelPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const { supabase } = await requirePermission("leads.manage");
+  const { supabase, org } = await requirePermission("leads.manage");
 
-  const { data } = await supabase.from("leads").select("stage, created_at");
-  const leads = ((data ?? []) as { stage: LeadStage; created_at: string }[]).filter((l) => {
+  const [{ data }, members, { data: teachers }, { data: groups }] = await Promise.all([
+    supabase.from("leads").select("stage, created_at, interest, source, assigned_to, teacher_id, trial_date"),
+    getOrgMembers(supabase, org.id),
+    supabase.from("teachers").select("id, full_name").order("full_name"),
+    supabase.from("groups").select("name").order("name"),
+  ]);
+
+  const leads = ((data ?? []) as LeadRow[]).filter((l) => {
     const created = toIsoDay(l.created_at);
     if (params.from && created < params.from) return false;
     if (params.to && created > params.to) return false;
+    if (params.course && l.interest !== params.course) return false;
+    if (params.moderator && l.assigned_to !== params.moderator) return false;
+    if (params.teacher && l.teacher_id !== params.teacher) return false;
+    if (params.source && l.source !== params.source) return false;
     return true;
   });
 
-  const counts = new Map<LeadStage, number>();
-  for (const l of leads) counts.set(l.stage, (counts.get(l.stage) ?? 0) + 1);
-
-  // Voronka: har bosqichga yetib kelganlar (o'sha va undan keyingi bosqichdagilar, rad etilganlarsiz).
-  const pipeline = LEAD_STAGES.filter((s) => s !== "lost");
-  const reached = pipeline.map((_, i) =>
-    pipeline.slice(i).reduce((sum, s) => sum + (counts.get(s) ?? 0), 0),
-  );
-  const top = Math.max(1, reached[0]);
-  const lost = counts.get("lost") ?? 0;
-  const enrolled = counts.get("enrolled") ?? 0;
+  const isLost = (l: LeadRow) => l.stage === "lost";
+  const reports: { title: string; pick: (l: LeadRow) => boolean }[] = [
+    { title: "Barcha buyurtmalar soni", pick: () => true },
+    { title: "Buyurtmadan ketganlar", pick: isLost },
+    { title: "Sinov darsiga yozilganlar", pick: (l) => Boolean(l.trial_date) || VISITED.includes(l.stage) },
+    { title: "Sinov darsiga kelmay ketganlar", pick: (l) => isLost(l) && Boolean(l.trial_date) },
+    { title: "Sinov darsiga kelganlar", pick: (l) => VISITED.includes(l.stage) },
+    { title: "Sinov darsiga kelib ketganlar", pick: () => false },
+    { title: "Birinchi to‘lovni qilganlar", pick: (l) => l.stage === "paid" || l.stage === "enrolled" },
+    { title: "Birinchi to‘lovni qilib ketganlar", pick: () => false },
+    { title: "Tugatganlar", pick: () => false },
+    { title: "Boshqa filialdan ko'chirilgan", pick: () => false },
+    { title: "Boshqa filialga ko'chirilgan", pick: () => false },
+  ];
+  const rows = reports.map((r) => {
+    const picked = leads.filter(r.pick);
+    return {
+      title: r.title,
+      count: picked.length,
+      courses: new Set(picked.flatMap((l) => (l.interest ? [l.interest] : []))).size,
+    };
+  });
 
   return (
     <div className="space-y-4">
@@ -41,38 +75,36 @@ export default async function SalesFunnelPage({
         fields={[
           { name: "from", label: "Sanadan", type: "date", width: "w-40" },
           { name: "to", label: "Sanagacha", type: "date", width: "w-40" },
+          { name: "source", label: "Marketing", type: "select", options: LEAD_SOURCES.map((s) => ({ value: s, label: s })) },
+          {
+            name: "course",
+            label: "Kurs",
+            type: "select",
+            options: (groups ?? []).map((g) => ({ value: g.name as string, label: g.name as string })),
+          },
+          {
+            name: "moderator",
+            label: "Moderator",
+            type: "select",
+            options: members.filter((m) => m.role !== "teacher").map((m) => ({ value: m.userId, label: m.name })),
+          },
+          {
+            name: "teacher",
+            label: "O'qituvchi",
+            type: "select",
+            options: (teachers ?? []).map((t) => ({ value: t.id as string, label: t.full_name as string })),
+          },
         ]}
       />
-      <ReportCards
-        items={[
-          { label: "Jami buyurtmalar", value: leads.length },
-          { label: "O'quvchi bo'lganlar", value: enrolled, tone: "good" },
-          { label: "Rad etilgan", value: lost, tone: lost > 0 ? "bad" : "default" },
-          { label: "Konversiya", value: leads.length ? `${Math.round((enrolled / leads.length) * 100)}%` : "—" },
+      <ReportTable
+        rows={rows}
+        rowKey={(r) => r.title}
+        columns={[
+          { header: "Hisobot turlari", cell: (r) => <span className="font-medium text-ink">{r.title}</span> },
+          { header: "Soni", align: "right", cell: (r) => r.count },
+          { header: "Kurslar soni", align: "right", cell: (r) => r.courses },
         ]}
       />
-      <div className="space-y-2 rounded-xl border border-line bg-surface p-4">
-        {pipeline.map((stage, i) => {
-          const value = reached[i];
-          const prev = i > 0 ? reached[i - 1] : null;
-          return (
-            <div key={stage} className="flex items-center gap-3">
-              <div className="w-36 shrink-0 text-sm text-ink-muted">{LEAD_STAGE_LABELS[stage]}</div>
-              <div className="h-7 flex-1 overflow-hidden rounded-lg bg-canvas">
-                <div
-                  className="flex h-full items-center rounded-lg bg-brand-500 px-2 text-xs font-medium text-white"
-                  style={{ width: `${Math.max(4, (value / top) * 100)}%` }}
-                >
-                  {value}
-                </div>
-              </div>
-              <div className="w-16 shrink-0 text-right text-xs text-ink-faint">
-                {prev ? `${prev ? Math.round((value / prev) * 100) : 0}%` : ""}
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
