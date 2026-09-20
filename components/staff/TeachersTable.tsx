@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Inbox, Pencil, Power, Trash2 } from "lucide-react";
@@ -74,13 +75,14 @@ export function TeachersTable({ teachers, offset = 0 }: { teachers: TeacherListR
               <th className={TH}>Guruhlar</th>
               <th className={TH}>Turi</th>
               <th className={TH}>Filiallar</th>
+              <th className={TH}>Telefon raqam</th>
               <th className={TH}>Amallar</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {teachers.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-16 text-center">
+                <td colSpan={9} className="px-4 py-16 text-center">
                   <Inbox size={22} className="mx-auto mb-2 text-ink-faint" aria-hidden="true" />
                   <div className="text-sm font-medium text-ink-muted">Ma&apos;lumotlar topilmadi</div>
                   <div className="mt-0.5 text-xs text-ink-faint">Ma&apos;lumotlar topilmadi. Filterni o&apos;zgartirib ko&apos;ring.</div>
@@ -91,8 +93,9 @@ export function TeachersTable({ teachers, offset = 0 }: { teachers: TeacherListR
                 <tr key={t.id} className={`hover:bg-canvas ${!t.is_active ? "opacity-60" : ""}`}>
                   <td className="px-4 py-3 text-ink-faint">{offset + i + 1}</td>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-ink">{t.full_name}</div>
-                    {t.phone && <div className="text-xs text-ink-faint">{t.phone}</div>}
+                    <Link href={`/staff/${t.id}`} className="font-medium text-ink hover:text-brand-600 hover:underline">
+                      {t.full_name}
+                    </Link>
                     {!t.is_active && t.left_on && (
                       <div className="text-xs text-red-500">
                         Ketgan: {formatDate(t.left_on)}
@@ -105,6 +108,7 @@ export function TeachersTable({ teachers, offset = 0 }: { teachers: TeacherListR
                   <td className="px-4 py-3 text-ink-muted">{t.groupNames.length ? t.groupNames.join(", ") : "—"}</td>
                   <td className="px-4 py-3 text-ink-muted">{TEACHER_KIND_LABELS[t.kind]}</td>
                   <td className="px-4 py-3 text-ink-muted">{t.branchNames.length ? t.branchNames.join(", ") : "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{t.phone || "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button

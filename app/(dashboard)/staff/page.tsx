@@ -73,6 +73,11 @@ export default async function StaffPage({
     if (params.branch && !(t.branch_ids ?? []).includes(params.branch)) return false;
     if (params.joined && (t.created_at ?? "").slice(0, 10) !== params.joined) return false;
     if (params.left && t.left_on !== params.left) return false;
+    // Faollik sanasi: shu kunda xodim ishlab turgan bo'lishi kerak (qo'shilgan va hali ketmagan).
+    if (params.active_on) {
+      if ((t.created_at ?? "").slice(0, 10) > params.active_on) return false;
+      if (t.left_on && t.left_on < params.active_on) return false;
+    }
     if (params.reason && t.leave_reason !== params.reason) return false;
     return true;
   });
@@ -108,6 +113,7 @@ export default async function StaffPage({
                 { value: "inactive", label: "Nofaol" },
               ],
             },
+            { name: "active_on", label: "Faollik sanasi", type: "date" },
             { name: "left", label: "Ketish sanasi", type: "date" },
             {
               name: "role",
