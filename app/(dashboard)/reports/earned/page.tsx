@@ -6,7 +6,7 @@ import { monthStartIso, todayIso } from "@/lib/utils/date";
 
 interface PaymentRow {
   amount: number;
-  student: { group: { name: string; teacher_name: string | null } | null } | null;
+  student: { group: { name: string; teacher: { full_name: string } | null } | null } | null;
 }
 
 const NO_TEACHER = "O'qituvchi biriktirilmagan";
@@ -28,7 +28,7 @@ export default async function EarnedByTeacherPage({
 
   const { data } = await supabase
     .from("payments")
-    .select("amount, student:students(group:groups(name, teacher_name))")
+    .select("amount, student:students(group:groups(name, teacher:teachers(full_name)))")
     .gte("paid_at", from)
     .lte("paid_at", to)
     .limit(5000);
@@ -37,7 +37,7 @@ export default async function EarnedByTeacherPage({
   const byTeacher = new Map<string, { sum: number; count: number; groups: Set<string> }>();
   for (const p of payments) {
     const group = p.student?.group ?? null;
-    const teacher = group?.teacher_name?.trim() || NO_TEACHER;
+    const teacher = group?.teacher?.full_name?.trim() || NO_TEACHER;
     const cur = byTeacher.get(teacher) ?? { sum: 0, count: 0, groups: new Set<string>() };
     cur.sum += Number(p.amount);
     cur.count += 1;

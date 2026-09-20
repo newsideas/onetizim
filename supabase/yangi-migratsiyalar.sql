@@ -1,4 +1,4 @@
--- YANGI MIGRATSIYALAR: 0044 - 0069.
+-- YANGI MIGRATSIYALAR: 0044 - 0070.
 -- Supabase Dashboard -> SQL Editor -> New query: shu faylni to'liq joylab Run bosing (bir marta).
 -- Hammasi qayta ishga tushirilsa ham zarar qilmaydi (if not exists / drop policy if exists).
 
@@ -1125,3 +1125,11 @@ grant execute on function public.org_is_active(uuid) to authenticated;
 
 revoke execute on function public.get_invite(uuid) from public, anon, authenticated;
 revoke execute on function public.accept_invite(uuid) from public, anon, authenticated;
+
+
+-- ================= 0070_attendance_reason.sql =================
+-- 0070_attendance_reason.sql
+-- Edu tizimdagi davomat oynasi: kelmagan o'quvchi uchun "Sababi" (kasal, oilaviy sabab va h.k.).
+-- Ustun ixtiyoriy; eski davomat yozuvlariga ta'sir qilmaydi.
+
+alter table attendance add column if not exists reason text;

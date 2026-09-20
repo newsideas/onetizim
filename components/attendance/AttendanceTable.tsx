@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { markAttendance, type AttendanceStudent } from "@/lib/actions/attendance";
 import type { AttendanceStatus } from "@/types/database";
+import { ABSENCE_REASONS } from "@/lib/attendance-reasons";
 
 const STATUS_LABELS: Record<AttendanceStatus, string> = {
   present: "Bor",
@@ -31,17 +32,19 @@ export function AttendanceTable({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function handleMark(studentId: string, status: AttendanceStatus) {
-    const previous = students.find((s) => s.id === studentId)?.status ?? null;
+  function handleMark(studentId: string, status: AttendanceStatus, reason: string | null = null) {
+    const before = students.find((s) => s.id === studentId);
+    const previous = before?.status ?? null;
+    const previousReason = before?.reason ?? null;
     setError(null);
     setStudents((prev) =>
-      prev.map((s) => (s.id === studentId ? { ...s, status } : s)),
+      prev.map((s) => (s.id === studentId ? { ...s, status, reason: status === "absent" ? reason : null } : s)),
     );
     startTransition(async () => {
-      const result = await markAttendance(studentId, groupId, date, status);
+      const result = await markAttendance(studentId, groupId, date, status, reason);
       if (!result.ok) {
         setStudents((prev) =>
-          prev.map((s) => (s.id === studentId ? { ...s, status: previous } : s)),
+          prev.map((s) => (s.id === studentId ? { ...s, status: previous, reason: previousReason } : s)),
         );
         setError(result.error);
       }
@@ -76,7 +79,7 @@ export function AttendanceTable({
               <tr key={student.id} className="hover:bg-canvas">
                 <td className="px-4 py-3 text-ink">{student.full_name}</td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {STATUS_ORDER.map((status) => (
                       <button
                         key={status}
@@ -92,6 +95,22 @@ export function AttendanceTable({
                         {STATUS_LABELS[status]}
                       </button>
                     ))}
+                    {student.status === "absent" && (
+                      <select
+                        aria-label="Kelmagan sababi"
+                        value={student.reason ?? ""}
+                        onChange={(e) => handleMark(student.id, "absent", e.target.value || null)}
+                        disabled={isPending}
+                        className="rounded-lg border border-line bg-surface px-2 py-1.5 text-xs text-ink focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value="">Sababi</option>
+                        {ABSENCE_REASONS.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </td>
               </tr>
