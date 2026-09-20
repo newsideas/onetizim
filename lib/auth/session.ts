@@ -48,6 +48,8 @@ interface MemberRow {
   employee_id: string | null;
   full_name: string | null;
   org: CurrentOrg | null;
+  /** Biriktirilgan maxsus rolning ruxsatlari (0063); yo'q bo'lsa tayyor rol ruxsatlari ishlaydi. */
+  custom?: { permissions: string[] | null } | null;
 }
 
 /** Hisob yaratilganda user_metadata'ga yozilgan ma'lumotlar. */
@@ -61,12 +63,20 @@ const MISSING_TABLE_CODES = new Set(["PGRST205", "42P01"]);
 
 /** slug berilsa faqat shu subdomen maktabidagi a'zolik olinadi. */
 async function loadMember(supabase: SupabaseClient, userId: string, slug?: string) {
-  let query = supabase
-    .from("org_members")
-    .select("role, employee_id, full_name, org:organizations!inner(*)")
-    .eq("user_id", userId);
-  if (slug) query = query.eq("org.slug", slug);
-  const { data, error } = await query.limit(1).maybeSingle();
+  const select = (columns: string) => {
+    let query = supabase.from("org_members").select(columns).eq("user_id", userId);
+    if (slug) query = query.eq("org.slug", slug);
+    return query.limit(1).maybeSingle();
+  };
+
+  // Maxsus rol ruxsatlari (0063) shu bitta so'rovda keladi: har sahifada qo'shimcha bazaga borish yo'q.
+  let { data, error } = await select(
+    "role, employee_id, full_name, custom:org_roles(permissions), org:organizations!inner(*)",
+  );
+  // 0063 qo'llanmagan baza: rol jadvali yo'q, eski (rolsiz) so'rov bilan davom etamiz.
+  if (error && !MISSING_TABLE_CODES.has(error.code)) {
+    ({ data, error } = await select("role, employee_id, full_name, org:organizations!inner(*)"));
+  }
 
   if (error && MISSING_TABLE_CODES.has(error.code)) {
     // 0016 migratsiyasi hali qo'llanmagan baza: eski model — faqat egasi.
@@ -99,25 +109,12 @@ async function ensureMembership(supabase: SupabaseClient, user: User) {
 
 /**
  * Xodimga maxsus rol (0063) biriktirilgan bo'lsa, ruxsatlar asosiy rol ruxsatlarining shu rolda
- * belgilangan qismiga qisqaradi. Migratsiya qo'llanmagan bo'lsa yoki so'rov xato bersa — asosiy rol
- * ruxsatlari qoladi (login hech qachon buzilmaydi).
+ * belgilangan qismiga qisqaradi. Maxsus rol yo'q bo'lsa — tayyor rol ruxsatlari.
  */
-async function loadPermissions(supabase: SupabaseClient, userId: string, role: Role): Promise<Permission[]> {
+function resolvePermissions(role: Role, custom: MemberRow["custom"]): Permission[] {
   const base = permissionsFor(role);
-  if (role === "owner") return base;
-
-  const { data: link, error: linkError } = await supabase
-    .from("org_members")
-    .select("custom_role_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-  const roleId = linkError ? null : (link?.custom_role_id as string | null | undefined);
-  if (!roleId) return base;
-
-  const { data: custom, error } = await supabase.from("org_roles").select("permissions").eq("id", roleId).maybeSingle();
-  if (error || !custom) return base;
-
-  const granted = new Set<string>((custom.permissions as string[] | null) ?? []);
+  if (role === "owner" || !custom) return base;
+  const granted = new Set<string>(custom.permissions ?? []);
   return base.filter((p) => granted.has(p));
 }
 
@@ -148,7 +145,7 @@ export const getSession = cache(async (): Promise<Session> => {
     // qolgan bo'lsa ham (0043 qo'llanmaguncha) interfeys markaz sifatida ishlaydi.
     org: { ...member.org, type: "markaz" },
     role: member.role,
-    permissions: await loadPermissions(supabase, user.id, member.role),
+    permissions: resolvePermissions(member.role, member.custom),
     employeeId: member.employee_id,
     displayName: member.full_name || meta.full_name || user.email || "Foydalanuvchi",
     expired:
