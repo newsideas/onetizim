@@ -1,4 +1,4 @@
--- YANGI MIGRATSIYALAR: 0044 - 0072.
+-- YANGI MIGRATSIYALAR: 0044 - 0073.
 -- Supabase Dashboard -> SQL Editor -> New query: shu faylni to'liq joylab Run bosing (bir marta).
 -- Hammasi qayta ishga tushirilsa ham zarar qilmaydi (if not exists / drop policy if exists).
 
@@ -1162,3 +1162,8 @@ alter table teachers
   add column if not exists branch_ids uuid[] not null default '{}',
   add column if not exists left_on date,
   add column if not exists leave_reason text;
+
+-- ================= 0073_homework_kind.sql =================
+
+alter table homework
+  add column if not exists kind text not null default 'Uy vazifasi';

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { financeInputClass } from "@/components/finance/MoneyEntryModal";
 import { createHomework } from "@/lib/actions/homework";
+import { HOMEWORK_KINDS } from "@/lib/validations/homework";
 
 const labelClass = "mb-1.5 block text-xs font-medium text-ink-muted";
 
@@ -32,6 +33,7 @@ export function HomeworkForm({
   const [error, setError] = useState<string>();
   const [saved, setSaved] = useState(false);
 
+  const [kind, setKind] = useState<(typeof HOMEWORK_KINDS)[number]>("Uy vazifasi");
   const [subject, setSubject] = useState(defaultSubject);
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
@@ -45,6 +47,7 @@ export function HomeworkForm({
     setSaved(false);
     startTransition(async () => {
       const result = await createHomework({
+        kind,
         groupId: selectedGroup,
         subject,
         title,
@@ -86,6 +89,25 @@ export function HomeworkForm({
           </select>
         </div>
       )}
+
+      <div>
+        <label htmlFor="hw-kind" className={labelClass}>
+          Turi
+        </label>
+        <select
+          id="hw-kind"
+          value={kind}
+          onChange={(e) => setKind(e.target.value as (typeof HOMEWORK_KINDS)[number])}
+          disabled={isPending}
+          className={financeInputClass}
+        >
+          {HOMEWORK_KINDS.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div>

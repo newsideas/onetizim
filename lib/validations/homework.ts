@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+export const HOMEWORK_KINDS = ["Uy vazifasi", "Imtihon", "Test"] as const;
+
 export const homeworkSchema = z.object({
+  kind: z.enum(HOMEWORK_KINDS).optional(),
   groupId: z.string().uuid("Sinfni tanlang"),
   subject: z.string().trim().min(2, "Fan nomini kiriting").max(80, "Fan nomi juda uzun"),
   title: z.string().trim().min(2, "Vazifa mavzusini kiriting").max(150, "Mavzu juda uzun"),

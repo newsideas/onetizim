@@ -22,9 +22,9 @@ export function NewHomeworkButton({
     <>
       <Button type="button" onClick={() => setOpen(true)} className="gap-1.5">
         <Plus size={15} aria-hidden="true" />
-        Vazifa qo&apos;shish
+        Imtihon qo&apos;shish
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Vazifa qo'shish">
+      <Modal open={open} onClose={() => setOpen(false)} title="Imtihon qo'shish">
         <HomeworkForm
           groups={groups}
           subjects={subjects}

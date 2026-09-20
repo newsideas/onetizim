@@ -59,6 +59,11 @@ export function ReferenceManager({
       const opt = refOptions[field.ref]?.find((o) => o.id === value);
       return opt?.label ?? "—";
     }
+    // Sana (2026-09-20 yoki vaqt belgisi) kun.oy.yil ko'rinishida.
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      const [y, m, d] = value.slice(0, 10).split("-");
+      return `${d}.${m}.${y}`;
+    }
     return String(value);
   }
 
@@ -199,6 +204,12 @@ export function ReferenceManager({
     setError(null);
   }
 
+  // Edu tizim jadvalidagi ustunlar; bazada ma'lumoti yo'q ustunlar "—" bilan turadi.
+  const listed: RefField[] = config.listFields
+    ? config.listFields.map(
+        (name) => config.fields.find((f) => f.name === name) ?? ({ name, label: name, type: "text" } as RefField),
+      )
+    : config.fields;
   const th = "px-4 py-3 text-xs font-semibold tracking-wide whitespace-nowrap text-ink-muted uppercase";
 
   return (
@@ -243,9 +254,9 @@ export function ReferenceManager({
             <thead className="border-b border-line bg-canvas">
               <tr>
                 <th className={`${th} w-12`}>№</th>
-                {config.fields.map((f) => (
+                {listed.map((f) => (
                   <th key={f.name} className={th}>
-                    {f.label}
+                    {config.listLabels?.[f.name] ?? f.label}
                   </th>
                 ))}
                 <th className={th}>Amallar</th>
@@ -254,7 +265,7 @@ export function ReferenceManager({
             <tbody className="divide-y divide-line">
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={config.fields.length + 2} className="px-4 py-16 text-center">
+                  <td colSpan={listed.length + 2} className="px-4 py-16 text-center">
                     <Inbox size={22} className="mx-auto mb-2 text-ink-faint" aria-hidden="true" />
                     <div className="text-sm font-medium text-ink-muted">Ma&apos;lumotlar topilmadi</div>
                     <div className="mt-0.5 text-xs text-ink-faint">
@@ -266,7 +277,7 @@ export function ReferenceManager({
                 visible.map((row, i) => (
                   <tr key={row.id} className="hover:bg-canvas">
                     <td className="px-4 py-3 text-ink-faint">{offset + i + 1}</td>
-                    {config.fields.map((field) => (
+                    {listed.map((field) => (
                       <td key={field.name} className="max-w-xs truncate px-4 py-3 text-ink-muted">
                         {labelFor(field, row[field.name])}
                       </td>

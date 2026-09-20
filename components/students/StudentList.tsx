@@ -1,8 +1,8 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Inbox } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { BalanceBadge } from "@/components/payments/BalanceBadge";
-import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
 import { NewStudentButton } from "@/components/students/NewStudentButton";
 import { InlineFilters, TablePager, type InlineField } from "@/components/ui/ListToolbar";
 import { readPaging } from "@/lib/paging";
@@ -29,6 +29,7 @@ interface StudentQueryRow {
   birth_date: string | null;
   created_at: string;
   archived_at?: string | null;
+  marketing_campaign_id?: string | null;
   group_id: string | null;
   group: {
     name: string;
@@ -56,11 +57,11 @@ export async function StudentList({
   const terms = termsFor(org.type);
   const canManage = permissions.includes("students.manage");
 
-  const [studentsRes, groupsRes, teachersRes, coursesRes, paymentsRes] = await Promise.all([
+  const [studentsRes, groupsRes, teachersRes, coursesRes, paymentsRes, campaignsRes, referralsRes] = await Promise.all([
     supabase
       .from("students")
       .select(
-        "id, full_name, phone, balance, status, gender, birth_date, created_at, archived_at, group_id, " +
+        "id, full_name, phone, balance, status, gender, birth_date, created_at, archived_at, group_id, marketing_campaign_id, " +
           "group:groups(name, course_id, teacher_id, teacher:teachers(full_name))",
       )
       .order("created_at", { ascending: true }),
@@ -72,7 +73,16 @@ export async function StudentList({
       .select("student_id, paid_at")
       .order("paid_at", { ascending: false })
       .limit(5000),
+    supabase.from("marketing_campaigns").select("id, name"),
+    supabase.from("leads").select("referral_student_id").not("referral_student_id", "is", null),
   ]);
+
+  const campaignName = new Map((campaignsRes.data ?? []).map((c) => [c.id as string, c.name as string]));
+  // "Taklif qilganlari": shu o'quvchi tavsiya qilgan buyurtmalar soni.
+  const referralCount = new Map<string, number>();
+  for (const r of (referralsRes.data ?? []) as { referral_student_id: string }[]) {
+    referralCount.set(r.referral_student_id, (referralCount.get(r.referral_student_id) ?? 0) + 1);
+  }
 
   // Migratsiya (0041) qo'llanmagan bo'lsa archived_at yo'q — ro'yxat baribir ishlashi kerak.
   let rowsRaw = studentsRes.data;
@@ -80,7 +90,7 @@ export async function StudentList({
     const fallback = await supabase
       .from("students")
       .select(
-        "id, full_name, phone, balance, status, gender, birth_date, created_at, group_id, " +
+        "id, full_name, phone, balance, status, gender, birth_date, created_at, group_id, marketing_campaign_id, " +
           "group:groups(name, course_id, teacher_id, teacher:teachers(full_name))",
       )
       .order("created_at", { ascending: true });
@@ -186,10 +196,83 @@ export async function StudentList({
     { name: "birth", label: "Tug'ilgan kun", type: "date", width: "w-40" },
   ];
 
-  const showArchive = view === "archived";
-  const showStatus = view === "all";
-  const showPayment = view === "active" || view === "all";
-  const columnCount = 7 + (showArchive ? 1 : 0) + (showStatus ? 1 : 0) + (showPayment ? 1 : 0);
+  // Ustunlar Edu tizimdagi har bir ro'yxatdagidek (Yangi / Aktiv / Arxiv / Ro'yxat).
+  type Row = (typeof visible)[number];
+  interface Col {
+    header: string;
+    cell: (s: Row) => ReactNode;
+  }
+  const idCol: Col = { header: "ID", cell: (s) => <span className="text-ink-muted">{s.seq}</span> };
+  const nameCol = (label: string): Col => ({
+    header: label,
+    cell: (s) => (
+      <Link href={`/education/students/${s.id}`} className="font-medium text-ink hover:text-brand-600">
+        {s.full_name}
+      </Link>
+    ),
+  });
+  const phoneCol: Col = { header: "Telefon raqam", cell: (s) => <span className="whitespace-nowrap text-ink-muted">{s.phone || "—"}</span> };
+  const balanceCol: Col = { header: "Balans", cell: (s) => <span className="whitespace-nowrap"><BalanceBadge balance={Number(s.balance)} /></span> };
+  const dash = <span className="text-ink-muted">—</span>;
+  const text = (v: string | null | undefined) => <span className="text-ink-muted">{v || "—"}</span>;
+  const paymentCol: Col = {
+    header: "To'lov sanasi",
+    cell: (s) => (
+      <span className="whitespace-nowrap text-ink-muted">
+        {lastPayment.get(s.id) ? formatDate(lastPayment.get(s.id)!) : "—"}
+      </span>
+    ),
+  };
+  const createdCol: Col = {
+    header: "Yaratilgan sanasi",
+    cell: (s) => <span className="whitespace-nowrap text-ink-muted">{formatDate(s.created_at)}</span>,
+  };
+  const moderatorCol: Col = { header: "Moderator", cell: () => dash };
+
+  const columns: Col[] =
+    view === "new"
+      ? [
+          idCol,
+          nameCol(`${terms.student} ismi`),
+          phoneCol,
+          balanceCol,
+          { header: terms.group, cell: (s) => text(s.group?.name) },
+          { header: terms.teacher, cell: (s) => text(s.group?.teacher?.full_name) },
+          moderatorCol,
+          { header: "Ilovani yuklab olish sanasi", cell: () => dash },
+        ]
+      : view === "active"
+        ? [
+            nameCol(`${terms.student} ismi`),
+            phoneCol,
+            balanceCol,
+            paymentCol,
+            createdCol,
+            moderatorCol,
+            { header: "Taklif qilganlari", cell: (s) => <span className="text-ink-muted">{referralCount.get(s.id) ?? 0}</span> },
+          ]
+        : view === "archived"
+          ? [
+              idCol,
+              nameCol(`${terms.student}ni ismi`),
+              phoneCol,
+              balanceCol,
+              { header: `Arxivlangan ${terms.group.toLowerCase()}`, cell: (s) => text(s.group?.name) },
+              { header: `Arxiv ${terms.teacher.toLowerCase()}si`, cell: (s) => text(s.group?.teacher?.full_name) },
+              createdCol,
+              moderatorCol,
+            ]
+          : [
+              idCol,
+              nameCol("Ism"),
+              { header: "Coin", cell: () => <span className="text-ink-muted">0</span> },
+              phoneCol,
+              balanceCol,
+              paymentCol,
+              createdCol,
+              { header: "Manba", cell: (s) => text(s.marketing_campaign_id ? campaignName.get(s.marketing_campaign_id) : null) },
+            ];
+  const columnCount = columns.length + 1;
 
   return (
     <div className="space-y-3">
@@ -219,16 +302,11 @@ export async function StudentList({
             <thead className="border-b border-line bg-canvas">
               <tr>
                 <th className={`${TH} w-12`}>№</th>
-                <th className={TH}>ID</th>
-                <th className={TH}>{terms.student} ismi</th>
-                <th className={TH}>Telefon raqam</th>
-                <th className={TH}>Balans</th>
-                <th className={TH}>{showArchive ? `Arxivlangan ${terms.group.toLowerCase()}` : terms.group}</th>
-                <th className={TH}>{terms.teacher}</th>
-                {showPayment && <th className={TH}>To&apos;lov sanasi</th>}
-                {showStatus && <th className={TH}>Holati</th>}
-                {showArchive && <th className={TH}>Arxivlangan sana</th>}
-                <th className={TH}>Yaratilgan sana</th>
+                {columns.map((c) => (
+                  <th key={c.header} className={TH}>
+                    {c.header}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -246,39 +324,11 @@ export async function StudentList({
                 visible.map((s, i) => (
                   <tr key={s.id} className="hover:bg-canvas">
                     <td className="px-4 py-3 text-ink-faint">{offset + i + 1}</td>
-                    <td className="px-4 py-3 text-ink-muted">{s.seq}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/education/students/${s.id}`}
-                        className="font-medium text-ink hover:text-brand-600"
-                      >
-                        {s.full_name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{s.phone || "—"}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <BalanceBadge balance={Number(s.balance)} />
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted">{s.group?.name ?? "—"}</td>
-                    <td className="px-4 py-3 text-ink-muted">{s.group?.teacher?.full_name ?? "—"}</td>
-                    {showPayment && (
-                      <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
-                        {lastPayment.get(s.id) ? formatDate(lastPayment.get(s.id)!) : "—"}
+                    {columns.map((c) => (
+                      <td key={c.header} className="px-4 py-3">
+                        {c.cell(s)}
                       </td>
-                    )}
-                    {showStatus && (
-                      <td className="px-4 py-3">
-                        <StudentStatusBadge status={s.status} />
-                      </td>
-                    )}
-                    {showArchive && (
-                      <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
-                        {s.archived_at ? formatDate(s.archived_at) : "—"}
-                      </td>
-                    )}
-                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
-                      {formatDate(s.created_at)}
-                    </td>
+                    ))}
                   </tr>
                 ))
               )}

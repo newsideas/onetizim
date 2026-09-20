@@ -89,6 +89,10 @@ export interface ReferenceConfig {
   formPage?: string;
   /** "Qo'shish" tugmasi yozuvi (masalan "Filial qo'shish"); berilmasa "Qo'shish". */
   addLabel?: string;
+  /** Jadvalda ko'rinadigan maydonlar (tartibi bilan); berilmasa — hammasi. Forma baribir hamma maydonni ko'rsatadi. */
+  listFields?: string[];
+  /** Jadval sarlavhasi maydon yozuvidan farq qilsa (Edu tizimdagidek). */
+  listLabels?: Record<string, string>;
   /** Yon panel sarlavhasi ("<nom> qo'shish"); berilmasa ma'lumotnoma nomi ishlatiladi. */
   itemTitle?: string;
   /** Tahrirlash paneli sarlavhasi; berilmasa `<itemTitle>ni tahrirlash`. */
@@ -185,6 +189,9 @@ export const REFERENCES = {
     title: "Oflayn kurslar",
     subtitle: "Kurslar (fanlar) ro'yxati",
     formPage: "/education/courses",
+    addLabel: "Kurs qo'shish",
+    listFields: ["name", "color"],
+    listLabels: { color: "Rang" },
     labelField: "name",
     orderBy: { column: "name", ascending: true },
     fields: [
@@ -313,6 +320,7 @@ export const REFERENCES = {
     group: "education",
     title: "Onlayn kurs",
     subtitle: "Onlayn kurslar ro'yxati",
+    addLabel: "Kurs qo'shish",
     labelField: "name",
     orderBy: { column: "name", ascending: true },
     fields: [
@@ -330,6 +338,9 @@ export const REFERENCES = {
     labelField: "title",
     orderBy: { column: "created_at", ascending: false },
     formPage: "/education/contract-templates",
+    addLabel: "Shartnoma yaratish",
+    listFields: ["number", "title", "type_id", "created_at"],
+    listLabels: { created_at: "Yaratilgan sana" },
     fields: [
       { name: "number", label: "Shartnoma raqami", type: "text" },
       { name: "title", label: "Sarlavha", type: "text", required: true },
@@ -343,6 +354,15 @@ export const REFERENCES = {
     group: "education",
     title: "Qabul test bazasi",
     subtitle: "Kurslar bo'yicha qabul testlari",
+    addLabel: "Baza yaratish",
+    listFields: ["course_id", "questions_total", "questions_per_test", "minutes", "score_per_question", "status"],
+    listLabels: {
+      questions_total: "Bazadagi savollar",
+      questions_per_test: "Savol / test",
+      minutes: "Vaqt",
+      score_per_question: "Ball / savol",
+      status: "Holat",
+    },
     labelField: "id",
     orderBy: { column: "created_at", ascending: false },
     fields: [
@@ -358,6 +378,9 @@ export const REFERENCES = {
     group: "block-test",
     title: "Blok test turlari",
     subtitle: "Blok test turlari ro'yxati",
+    addLabel: "Tur qo'shish",
+    listFields: ["name", "code", "minutes", "courses", "is_active", "created_at"],
+    listLabels: { code: "Kodi", courses: "Kurslar", is_active: "Holati", created_at: "Qo'shilgan sana" },
     labelField: "name",
     orderBy: { column: "name", ascending: true },
     fields: [
@@ -375,6 +398,9 @@ export const REFERENCES = {
     group: "block-test",
     title: "Blok testlar",
     subtitle: "Blok testlar ro'yxati",
+    addLabel: "Blok test qo'shish",
+    listFields: ["name", "type_id", "status", "test_date", "start_time", "minutes", "responsible_id", "group_id"],
+    listLabels: { type_id: "Turi", status: "Holati", minutes: "Davomiyligi (daqiqa)" },
     labelField: "name",
     orderBy: { column: "test_date", ascending: false },
     fields: [
@@ -425,6 +451,7 @@ export const REFERENCES = {
     labelField: "name",
     orderBy: { column: "created_at", ascending: false },
     itemTitle: "Xarajat",
+    listFields: ["name", "amount", "kind", "start_date", "end_date", "status"],
     // Edu tizimdagidek: takrorlanuvchi reja (kunlik/oylik), holati va davri.
     fields: [
       { name: "name", label: "Nomi", type: "text", required: true },
@@ -584,6 +611,18 @@ export const REFERENCES = {
     group: "finance",
     title: "Bonus",
     subtitle: "Xodimlarga berilgan bonuslar",
+    addLabel: "Bonus yaratish",
+    listFields: ["transaction_type_id", "employee_id", "given_by", "amount_before", "amount", "amount_after", "reason", "cause"],
+    listLabels: {
+      transaction_type_id: "Bonus turi",
+      employee_id: "To'liq ismi",
+      given_by: "Kim tomonidan",
+      amount_before: "Oldingi miqdor",
+      amount: "Miqdor",
+      amount_after: "Keyingi miqdor",
+      reason: "Izoh",
+      cause: "Sababi",
+    },
     labelField: "id",
     orderBy: { column: "given_on", ascending: false },
     // Edu tizimdagidek: tranzaksiya turi, qiymat, izoh. Sana (given_on) bazada avtomatik bugungi kun bo'ladi.
@@ -600,6 +639,18 @@ export const REFERENCES = {
     group: "finance",
     title: "Jarima",
     subtitle: "Xodimlarga qo'yilgan jarimalar",
+    addLabel: "Jarima qo'shish",
+    listFields: ["employee_id", "amount_before", "amount", "amount_after", "reason", "cause", "transaction_type_id", "status"],
+    listLabels: {
+      employee_id: "To'liq ismi",
+      amount_before: "Oldingi miqdor",
+      amount: "Miqdori",
+      amount_after: "Keyingi miqdor",
+      reason: "Izoh",
+      cause: "Sababi",
+      transaction_type_id: "Tranzaksiya turi",
+      status: "Holati",
+    },
     labelField: "id",
     orderBy: { column: "given_on", ascending: false },
     // Edu tizimdagidek: tranzaksiya turi, qiymat, izoh. Sana (given_on) bazada avtomatik bugungi kun bo'ladi.
@@ -616,6 +667,16 @@ export const REFERENCES = {
     group: "control",
     title: "Fikr-mulohaza",
     subtitle: "O'quvchi va ota-onalarning fikrlari",
+    listFields: ["branch", "from_kind", "author_name", "phone", "kind", "comment", "created_at"],
+    listLabels: {
+      branch: "Filial",
+      from_kind: "Kimdan",
+      author_name: "Ism",
+      phone: "Telefon raqam",
+      kind: "Turi",
+      comment: "Izoh",
+      created_at: "Yaratilgan sanasi",
+    },
     labelField: "author_name",
     orderBy: { column: "given_on", ascending: false },
     fields: [
@@ -655,6 +716,8 @@ export const REFERENCES = {
     group: "education",
     title: "Mavsumiy baholash",
     subtitle: "O'quvchilarning mavsumiy baholari",
+    listFields: ["student_id", "course", "group_id", "assessed_on", "score", "note"],
+    listLabels: { course: "Kurs" },
     labelField: "id",
     orderBy: { column: "assessed_on", ascending: false },
     fields: [

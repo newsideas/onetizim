@@ -19,18 +19,21 @@ export async function createHomework(input: HomeworkInput) {
     const { supabase, org } = await assertPermission("homework.manage");
     const v = parsed.data;
 
-    const { data, error } = await supabase
+    const row = {
+      org_id: org.id,
+      group_id: v.groupId,
+      subject: v.subject,
+      title: v.title,
+      details: v.details,
+      due_on: v.dueOn,
+      max_score: v.maxScore,
+    };
+    let { data, error } = await supabase
       .from("homework")
-      .insert({
-        org_id: org.id,
-        group_id: v.groupId,
-        subject: v.subject,
-        title: v.title,
-        details: v.details,
-        due_on: v.dueOn,
-        max_score: v.maxScore,
-      })
+      .insert({ ...row, ...(v.kind ? { kind: v.kind } : {}) })
       .select("id");
+    // "Turi" ustuni (0073) qo'llanmagan bo'lsa, turisiz saqlanadi.
+    if (error && /kind/.test(error.message)) ({ data, error } = await supabase.from("homework").insert(row).select("id"));
     if (error) throw new ActionError("Vazifani saqlab bo'lmadi: " + error.message);
     // RLS ruxsat bermasa xato emas, 0 satr qaytadi.
     if (!data?.length) throw new ActionError("Bu sinfga vazifa berish uchun ruxsat yo'q");

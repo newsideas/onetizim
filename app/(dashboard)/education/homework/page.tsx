@@ -11,6 +11,7 @@ const TH = "px-4 py-3 text-xs font-semibold tracking-wide whitespace-nowrap text
 interface HomeworkQueryRow {
   id: string;
   subject: string;
+  kind?: string | null;
   title: string;
   details: string | null;
   due_on: string;
@@ -27,6 +28,10 @@ export default async function HomeworkPage({
   const params = await searchParams;
   const { supabase } = await requirePermission("homework.manage");
   const today = todayIso();
+
+  // "Turi" ustuni (0073) alohida so'raladi: migratsiya qo'llanmagan bo'lsa ro'yxat baribir chiqadi.
+  const kindsRes = await supabase.from("homework").select("id, kind");
+  const kindById = new Map((kindsRes.error ? [] : (kindsRes.data ?? [])).map((k) => [k.id as string, k.kind as string]));
 
   const [homeworkRes, groupsRes, lessonsRes, coursesRes] = await Promise.all([
     supabase
@@ -112,8 +117,8 @@ export default async function HomeworkPage({
             <thead className="border-b border-line bg-canvas">
               <tr>
                 <th className={`${TH} w-12`}>№</th>
+                <th className={TH}>Turi</th>
                 <th className={TH}>Nomi</th>
-                <th className={TH}>Fan</th>
                 <th className={TH}>Topshirish muddati</th>
                 <th className={TH}>O&apos;qituvchi</th>
                 <th className={TH}>Guruh</th>
@@ -138,8 +143,8 @@ export default async function HomeworkPage({
                 visible.map((h, i) => (
                   <tr key={h.id} className="hover:bg-canvas">
                     <td className="px-4 py-3 text-ink-faint">{offset + i + 1}</td>
+                    <td className="px-4 py-3 text-ink-muted">{kindById.get(h.id) || "Uy vazifasi"}</td>
                     <td className="px-4 py-3 font-medium text-ink">{h.title}</td>
-                    <td className="px-4 py-3 text-ink-muted">{h.subject}</td>
                     <td
                       className={`px-4 py-3 whitespace-nowrap ${
                         h.due_on < today ? "text-red-600" : "text-ink-muted"
