@@ -1,3 +1,4 @@
+import { CancelPaymentButton } from "@/components/payments/CancelPaymentButton";
 import { formatDate } from "@/lib/utils/date";
 import { formatSom } from "@/lib/utils/currency";
 import { METHOD_LABELS } from "@/lib/validations/payment";
@@ -32,6 +33,7 @@ export function PaymentsJournal({ payments }: { payments: PaymentJournalRow[] })
             <th className="px-4 py-3 font-medium">Usul</th>
             <th className="px-4 py-3 font-medium">Sana</th>
             <th className="px-4 py-3 font-medium">Izoh</th>
+            <th className="px-4 py-3" />
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -44,6 +46,9 @@ export function PaymentsJournal({ payments }: { payments: PaymentJournalRow[] })
               </td>
               <td className="px-4 py-3 text-ink-muted">{formatDate(p.paid_at)}</td>
               <td className="px-4 py-3 text-ink-muted">{p.note || "—"}</td>
+              <td className="px-4 py-3 text-right">
+                <CancelPaymentButton paymentId={p.id} />
+              </td>
             </tr>
           ))}
         </tbody>

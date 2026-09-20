@@ -15,6 +15,8 @@ export interface CurrentOrg {
   id: string;
   name: string;
   type: Segment;
+  /** Maktab (markaz) subdomeni — login uchun ichki email shunga bog'lanadi. */
+  slug: string | null;
   tin: string | null;
   region: string | null;
   district: string | null;
@@ -24,6 +26,8 @@ export interface CurrentOrg {
   phone: string | null;
   plan: string | null;
   trial_ends_at: string | null;
+  /** To'langan obuna tugaydigan sana (0064); migratsiya qo'llanmaguncha undefined. */
+  paid_until?: string | null;
 }
 
 export interface Session {
@@ -46,19 +50,10 @@ interface MemberRow {
   org: CurrentOrg | null;
 }
 
-/** Ro'yxatdan o'tishda user_metadata'ga yozilgan ma'lumotlar. */
+/** Hisob yaratilganda user_metadata'ga yozilgan ma'lumotlar. */
 interface SignupMetadata {
   invite_token?: string;
   full_name?: string;
-  org_name?: string;
-  org_type?: Segment;
-  org_slug?: string;
-  tin?: string;
-  region?: string;
-  district?: string;
-  address?: string;
-  director_last_name?: string;
-  director_first_name?: string;
   phone?: string;
 }
 
@@ -91,38 +86,39 @@ async function loadMember(supabase: SupabaseClient, userId: string, slug?: strin
 
 /**
  * A'zolik yo'q bo'lsa: taklif orqali ro'yxatdan o'tgan xodimning taklifini
- * qabul qiladi yoki direktor ro'yxatdan o'tganda kiritgan muassasani
- * yaratadi. "Confirm email" yoqilgan bo'lsa signUp paytida sessiya yo'q,
- * shuning uchun bu birinchi kirishda bajariladi.
+ * qabul qiladi. Markazni faqat super admin ochadi: foydalanuvchi
+ * metadata'si orqali muassasa yaratish yo'li yopilgan (aks holda ochiq
+ * signUp bilan har kim markaz ochib olishi mumkin edi).
  */
-async function ensureMembership(supabase: SupabaseClient, user: User, slug?: string) {
+async function ensureMembership(supabase: SupabaseClient, user: User) {
   const meta = (user.user_metadata ?? {}) as SignupMetadata;
-
   if (meta.invite_token) {
     await supabase.rpc("accept_invite", { p_token: meta.invite_token });
-    return;
   }
+}
 
-  if (!meta.org_name) return;
-  // Maktab faqat ro'yxatdan o'tishda tanlangan o'z subdomenida yaratiladi.
-  if (slug && meta.org_slug !== slug) return;
+/**
+ * Xodimga maxsus rol (0063) biriktirilgan bo'lsa, ruxsatlar asosiy rol ruxsatlarining shu rolda
+ * belgilangan qismiga qisqaradi. Migratsiya qo'llanmagan bo'lsa yoki so'rov xato bersa — asosiy rol
+ * ruxsatlari qoladi (login hech qachon buzilmaydi).
+ */
+async function loadPermissions(supabase: SupabaseClient, userId: string, role: Role): Promise<Permission[]> {
+  const base = permissionsFor(role);
+  if (role === "owner") return base;
 
-  await supabase.from("organizations").upsert(
-    {
-      owner_id: user.id,
-      name: meta.org_name,
-      type: meta.org_type || "markaz",
-      slug: meta.org_slug || null,
-      tin: meta.tin || null,
-      region: meta.region || null,
-      district: meta.district || null,
-      address: meta.address || null,
-      director_last_name: meta.director_last_name || null,
-      director_first_name: meta.director_first_name || null,
-      phone: meta.phone || null,
-    },
-    { onConflict: "owner_id", ignoreDuplicates: true },
-  );
+  const { data: link, error: linkError } = await supabase
+    .from("org_members")
+    .select("custom_role_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const roleId = linkError ? null : (link?.custom_role_id as string | null | undefined);
+  if (!roleId) return base;
+
+  const { data: custom, error } = await supabase.from("org_roles").select("permissions").eq("id", roleId).maybeSingle();
+  if (error || !custom) return base;
+
+  const granted = new Set<string>((custom.permissions as string[] | null) ?? []);
+  return base.filter((p) => granted.has(p));
 }
 
 /** Joriy so'rov uchun bir marta hisoblanadi (layout va sahifa bo'lishadi). */
@@ -138,25 +134,28 @@ export const getSession = cache(async (): Promise<Session> => {
 
   let member = await loadMember(supabase, user.id, slug);
   if (!member) {
-    await ensureMembership(supabase, user, slug);
+    await ensureMembership(supabase, user);
     member = await loadMember(supabase, user.id, slug);
   }
-  if (!member?.org || !isRole(member.role)) redirect(slug ? "/no-access" : "/onboarding");
+  if (!member?.org || !isRole(member.role)) redirect("/no-access");
 
   const meta = (user.user_metadata ?? {}) as SignupMetadata;
 
   return {
     supabase,
     user,
-    org: member.org,
+    // Tizim faqat o'quv markazlarga xizmat qiladi: bazada eski tur ("maktab"/"bogcha")
+    // qolgan bo'lsa ham (0043 qo'llanmaguncha) interfeys markaz sifatida ishlaydi.
+    org: { ...member.org, type: "markaz" },
     role: member.role,
-    permissions: permissionsFor(member.role),
+    permissions: await loadPermissions(supabase, user.id, member.role),
     employeeId: member.employee_id,
     displayName: member.full_name || meta.full_name || user.email || "Foydalanuvchi",
     expired:
       effectiveStatus({
         plan: (member.org.plan ?? "trial") as OrgPlan,
         trial_ends_at: member.org.trial_ends_at,
+        paid_until: member.org.paid_until,
       }) === "expired",
   };
 });

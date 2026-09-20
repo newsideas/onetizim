@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { deleteContract, setContractStatus } from "@/lib/actions/contracts";
+import { useDialogs } from "@/components/ui/ConfirmDialog";
 import { useContracts, type EditableContract } from "@/components/contracts/ContractsProvider";
 import type { ContractStatus } from "@/lib/validations/contract";
 
@@ -22,6 +23,7 @@ export function ContractActions({
   const { openEdit } = useContracts();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialogs } = useDialogs();
 
   function run(action: () => Promise<ActionResult>) {
     setError(null);
@@ -35,16 +37,21 @@ export function ContractActions({
     });
   }
 
-  function toggleStatus() {
+  async function toggleStatus() {
     const next: ContractStatus = status === "active" ? "cancelled" : "active";
     const question =
       next === "cancelled" ? "Shartnomani bekor qilmoqchimisiz?" : "Shartnomani qayta faollashtirasizmi?";
-    if (!confirm(question)) return;
+    const options = {
+      danger: next === "cancelled",
+      confirmLabel: next === "cancelled" ? "Ha, bekor qilish" : "Ha, faollashtirish",
+    };
+    if (!(await confirm(question, options))) return;
     run(() => setContractStatus(contract.id, next));
   }
 
-  function remove() {
-    if (!confirm("Shartnoma va uning fayli butunlay o'chiriladi. Davom etasizmi?")) return;
+  async function remove() {
+    const question = "Shartnoma va uning fayli butunlay o'chiriladi. Davom etasizmi?";
+    if (!(await confirm(question, { danger: true, confirmLabel: "O'chirish" }))) return;
     run(() => deleteContract(contract.id));
   }
 
@@ -52,6 +59,7 @@ export function ContractActions({
 
   return (
     <div>
+      {dialogs}
       <div className="flex gap-1">
         <button
           type="button"

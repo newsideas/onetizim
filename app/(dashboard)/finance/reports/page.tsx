@@ -34,7 +34,7 @@ export default async function FinanceReportsPage() {
       subtitle="So'nggi 6 oy — tushum, xarajat va sof natija"
       notice={
         error
-          ? "Hisobot funksiyalari bazada topilmadi — 0024_finance.sql va 0025_finance_reports.sql migratsiyalarini Supabase SQL Editor'da ishga tushiring."
+          ? "Hisobot funksiyalari bazada topilmadi — 0024_finance.sql va 0025_finance_reports.sql migratsiyalarini Supabase SQL Editor&apos;da ishga tushiring."
           : undefined
       }
     >

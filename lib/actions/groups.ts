@@ -70,10 +70,36 @@ function toGroupRow(
     end_time: values.endTime || null,
     monthly_price: values.monthlyPrice,
     education_type: values.educationType,
+    status: values.status,
+    level: values.level?.trim() || null,
+    telegram_url: values.telegramUrl?.trim() || null,
     start_date: values.startDate || null,
     end_date: values.endDate || null,
     lesson_duration_minutes: values.lessonDurationMinutes ?? null,
   };
+}
+
+export interface GroupFormOptions {
+  courses: string[];
+  teachers: string[];
+  rooms: string[];
+}
+
+/** Guruh oynasidagi tanlov ro'yxatlari: kurslar, o'qituvchilar va xonalar (nomlari bilan). */
+export async function getGroupFormOptions() {
+  return runAction(async (): Promise<GroupFormOptions> => {
+    const { supabase } = await assertPermission("groups.manage");
+    const [courses, teachers, rooms] = await Promise.all([
+      supabase.from("courses").select("name").order("name"),
+      supabase.from("teachers").select("full_name").eq("is_active", true).order("full_name"),
+      supabase.from("rooms").select("name").order("name"),
+    ]);
+    return {
+      courses: ((courses.data ?? []) as { name: string }[]).map((c) => c.name),
+      teachers: ((teachers.data ?? []) as { full_name: string }[]).map((t) => t.full_name),
+      rooms: ((rooms.data ?? []) as { name: string }[]).map((r) => r.name),
+    };
+  });
 }
 
 export async function createGroup(input: GroupInput) {

@@ -1,56 +1,25 @@
-import { StudentsTabs } from "@/components/education/SectionTabs";
-import { requirePermission } from "@/lib/auth/session";
-import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
-import { NewStudentButton } from "@/components/students/NewStudentButton";
-import { StudentsFilter } from "@/components/students/StudentsFilter";
-import { termsFor } from "@/lib/segment";
+import { StudentList, type StudentView } from "@/components/students/StudentList";
 
-const VALID_STATUSES = ["active", "frozen", "archived", "all"];
+/**
+ * Ko'rinish URL'dan aniqlanadi: ?view=new — yangi, ?status=archived — arxiv,
+ * ?status=frozen/all — to'liq baza (filtrlangan), aks holda aktiv o'quvchilar.
+ */
+function resolveView(params: Record<string, string | undefined>): {
+  view: StudentView;
+  params: Record<string, string | undefined>;
+} {
+  if (params.view === "new") return { view: "new", params };
+  if (params.status === "archived") return { view: "archived", params };
+  if (params.status === "frozen") return { view: "all", params };
+  if (params.status === "all") return { view: "all", params: { ...params, status: undefined } };
+  return { view: "active", params };
+}
 
 export default async function StudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const params = await searchParams;
-  const status =
-    params.status && VALID_STATUSES.includes(params.status) ? params.status : "active";
-
-  const { supabase, org } = await requirePermission("students.view");
-
-  const terms = termsFor(org.type);
-
-  let studentsQuery = supabase
-    .from("students")
-    .select("*, group:groups(name)")
-    .order("full_name");
-
-  if (status !== "all") {
-    studentsQuery = studentsQuery.eq("status", status);
-  }
-
-  const { data: students } = await studentsQuery;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">{terms.studentPlural}</h1>
-        <NewStudentButton />
-      </div>
-
-      <StudentsTabs current="list" />
-
-      <StudentsFilter current={status} />
-
-      <StudentsTable
-        students={(students as StudentTableRow[]) ?? []}
-        emptyText={
-          status === "active"
-            ? `Hali aktiv ${terms.studentPlural.toLowerCase()} yo'q. "${terms.newStudent}" tugmasi orqali qo'shing.`
-            : `Bu holatda ${terms.student.toLowerCase()} yo'q.`
-        }
-        groupLabel={terms.group}
-      />
-    </div>
-  );
+  const { view, params } = resolveView(await searchParams);
+  return <StudentList view={view} params={params} />;
 }

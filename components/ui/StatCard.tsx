@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
 type Accent = "brand" | "red" | "green" | "amber" | "blue" | "purple" | "dark" | "gray";
@@ -14,31 +15,45 @@ const accentClasses: Record<Accent, string> = {
   gray: "bg-[#b4b4b4]",
 };
 
+const CARD =
+  "flex items-center gap-2.5 rounded-xl border border-line bg-surface p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-shadow duration-300 ease-(--ease-edu) hover:shadow-md";
+
 export function StatCard({
   label,
   value,
   icon: Icon,
   accent = "brand",
   hint,
+  href,
 }: {
   label: string;
   value: string | number;
   icon: LucideIcon;
   accent?: Accent;
   hint?: string;
+  /** Berilsa karta bosilganda tegishli ro'yxatga olib boradi. */
+  href?: string;
 }) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-shadow duration-300 ease-(--ease-edu) hover:shadow-md">
+  const content = (
+    <>
       <div
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white ${accentClasses[accent]}`}
       >
         <Icon size={20} aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <div className="truncate text-xs text-ink">{label}</div>
+        <div className="text-xs leading-tight text-ink">{label}</div>
         <div className="truncate text-lg leading-tight font-bold text-ink">{value}</div>
         {hint && <div className="mt-0.5 truncate text-[11px] text-ink-faint">{hint}</div>}
       </div>
-    </div>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className={CARD}>
+      {content}
+    </Link>
+  ) : (
+    <div className={CARD}>{content}</div>
   );
 }

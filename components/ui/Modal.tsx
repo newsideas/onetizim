@@ -8,11 +8,14 @@ export function Modal({
   onClose,
   title,
   children,
+  wide = false,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
+  /** Ko'p maydonli oynalar (masalan, "Xodim qo'shish") uchun keng ko'rinish. */
+  wide?: boolean;
 }) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -31,7 +34,7 @@ export function Modal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-xl">
+      <div className={`relative max-h-[90vh] w-full ${wide ? "max-w-4xl" : "max-w-md"} overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-xl`}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-ink">{title}</h2>
           <button

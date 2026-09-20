@@ -10,7 +10,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { supabase, user, org, role, permissions, displayName, expired } = await getSession();
+  const { supabase, org, role, permissions, displayName, expired } = await getSession();
   if (expired) redirect("/subscription-expired");
 
   // Qarzdorlar soni faqat to'lovlarni ko'ra oladiganlar uchun.
@@ -29,8 +29,7 @@ export default async function DashboardLayout({
       <PermissionsProvider role={role} displayName={displayName} permissions={permissions}>
         <DashboardShell
           orgName={org.name}
-          userEmail={user.email}
-          trialDaysLeft={daysUntil(org.trial_ends_at)}
+          trialDaysLeft={daysUntil(org.plan === "active" ? (org.paid_until ?? null) : org.trial_ends_at)}
           debtorCount={debtorCount}
         >
           {children}

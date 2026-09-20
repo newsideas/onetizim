@@ -1,120 +1,139 @@
 "use client";
 
-import { unwrap } from "@/lib/actions/result";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { todayIso } from "@/lib/utils/date";
-import {
-  paymentSchema,
-  METHOD_LABELS,
-  type PaymentInput,
-} from "@/lib/validations/payment";
+import { unwrap } from "@/lib/actions/result";
 import { createPayment } from "@/lib/actions/payments";
+import { todayIso } from "@/lib/utils/date";
+import { METHOD_LABELS, PAYMENT_WINDOW_METHODS } from "@/lib/validations/payment";
 import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { SearchSelect } from "@/components/ui/SearchSelect";
 import { Select } from "@/components/ui/Select";
-import { FormError } from "@/components/ui/FormError";
 
 export interface StudentOption {
   id: string;
   full_name: string;
 }
 
-
+/**
+ * Edu tizimdagi "Kirim" paneli: tranzaksiya turi (o'quvchi to'ladi), o'quvchi, qiymat,
+ * to'lov turi (Naqd / Plastik / Terminal), sana va izoh.
+ */
 export function PaymentForm({
   students,
   onSuccess,
+  cashboxId,
 }: {
   students: StudentOption[];
   onSuccess: () => void;
+  /** To'lov tushadigan kassa; berilmasa asosiy kassa. */
+  cashboxId?: string;
 }) {
   const router = useRouter();
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState("");
+  const [paidAt, setPaidAt] = useState(todayIso());
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string>();
+  const [saving, setSaving] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<PaymentInput>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: { paidAt: todayIso(), method: "naqd" },
-  });
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setError(undefined);
+    if (!studentId) return setError("O'quvchini tanlang");
+    if (!amount || Number(amount) <= 0) return setError("Summani kiriting");
+    if (!method) return setError("To'lov turini tanlang");
 
-  async function onSubmit(values: PaymentInput) {
-    setServerError(null);
+    setSaving(true);
     try {
-      unwrap(await createPayment(values));
+      unwrap(
+        await createPayment({
+          studentId,
+          amount: Number(amount),
+          method: method as (typeof PAYMENT_WINDOW_METHODS)[number],
+          paidAt,
+          note,
+          cashboxId,
+        }),
+      );
       router.refresh();
       onSuccess();
-    } catch (e) {
-      setServerError(e instanceof Error ? e.message : "Xatolik yuz berdi");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Xatolik yuz berdi");
+      setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+    <form onSubmit={submit} className="space-y-3" noValidate>
       <div>
-        <Label htmlFor="studentId">O&apos;quvchi</Label>
-        <Select id="studentId" error={errors.studentId?.message} {...register("studentId")}>
-          <option value="">Tanlang...</option>
-          {students.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.full_name}
-            </option>
-          ))}
+        <Label htmlFor="pay-type">Tranzaksiya</Label>
+        <Select id="pay-type" value="student" disabled onChange={() => {}}>
+          <option value="student">O&apos;quvchi to&apos;ladi</option>
         </Select>
-        <FormError message={errors.studentId?.message} />
       </div>
 
       <div>
-        <Label htmlFor="amount">Summa (so&apos;m)</Label>
+        <Label htmlFor="pay-student">O&apos;quvchini tanlang</Label>
+        <SearchSelect
+          id="pay-student"
+          value={studentId}
+          onChange={setStudentId}
+          options={students.map((s) => ({ value: s.id, label: s.full_name }))}
+          placeholder="Tanlang"
+          disabled={saving}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="pay-amount">Qiymat</Label>
         <Input
-          id="amount"
+          id="pay-amount"
           type="number"
           min={0}
-          step={1000}
-          error={errors.amount?.message}
-          {...register("amount", { valueAsNumber: true })}
+          inputMode="numeric"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          disabled={saving}
         />
-        <FormError message={errors.amount?.message} />
       </div>
 
       <div>
-        <Label htmlFor="method">To&apos;lov usuli</Label>
-        <Select id="method" error={errors.method?.message} {...register("method")}>
-          {Object.entries(METHOD_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
+        <Label htmlFor="pay-method">To&apos;lov turi</Label>
+        <Select id="pay-method" value={method} onChange={(e) => setMethod(e.target.value)} disabled={saving}>
+          <option value="">Tanlang</option>
+          {PAYMENT_WINDOW_METHODS.map((m) => (
+            <option key={m} value={m}>
+              {METHOD_LABELS[m]}
             </option>
           ))}
         </Select>
-        <FormError message={errors.method?.message} />
       </div>
 
       <div>
-        <Label htmlFor="paidAt">Sana</Label>
-        <Input
-          id="paidAt"
-          type="date"
-          error={errors.paidAt?.message}
-          {...register("paidAt")}
-        />
-        <FormError message={errors.paidAt?.message} />
+        <Label htmlFor="pay-date">Sanani tanlang</Label>
+        <Input id="pay-date" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} disabled={saving} />
       </div>
 
       <div>
-        <Label htmlFor="note">Izoh (ixtiyoriy)</Label>
-        <Input id="note" placeholder="Masalan: sentyabr oyi uchun" {...register("note")} />
+        <Label htmlFor="pay-note">Izoh</Label>
+        <Input id="pay-note" value={note} onChange={(e) => setNote(e.target.value)} disabled={saving} />
       </div>
 
-      <FormError message={serverError ?? undefined} />
+      <FormError message={error} />
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saqlanmoqda..." : "To'lovni saqlash"}
-      </Button>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button type="button" variant="secondary" onClick={onSuccess} disabled={saving}>
+          Orqaga
+        </Button>
+        <Button type="submit" disabled={saving}>
+          {saving ? "Saqlanmoqda..." : "Saqlash"}
+        </Button>
+      </div>
     </form>
   );
 }

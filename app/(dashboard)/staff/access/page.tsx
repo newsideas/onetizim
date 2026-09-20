@@ -3,44 +3,28 @@ import { getOrgMembers } from "@/lib/staff";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { StaffTabs } from "@/components/staff/StaffTabs";
 import { MembersTable } from "@/components/staff/MembersTable";
-import { InviteStaffButton, type TeacherOption } from "@/components/staff/InviteStaffButton";
-import { PendingInvitesList, type PendingInvite } from "@/components/staff/PendingInvitesList";
 
+/** Tizimga kira oladigan xodimlar: rollarni biriktirish va kirish huquqini bekor qilish. */
 export default async function StaffAccessPage() {
   const { supabase, org, user } = await requirePermission("staff.manage");
 
-  const [members, { data: employees }, { data: invitesData, error: invitesError }] = await Promise.all([
+  const [members, { data: rolesData }] = await Promise.all([
     getOrgMembers(supabase, org.id),
-    supabase.from("teachers").select("id, full_name").eq("is_active", true).order("full_name"),
-    supabase
-      .from("org_invites")
-      .select("id, token, role, full_name, expires_at")
-      .is("accepted_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false }),
+    // Maxsus rollar (0063); jadval bo'lmasa bo'sh ro'yxat qaytadi.
+    supabase.from("org_roles").select("id, name").order("created_at"),
   ]);
 
   return (
     <ListPageShell
-      title="Kirish va rollar"
-      subtitle="Kim tizimga kira oladi va nima qila oladi"
-      actions={<InviteStaffButton employees={(employees ?? []) as TeacherOption[]} />}
+      title="A'zolar"
+      subtitle="Kim tizimga kira oladi va qaysi rolda. Yangi xodimga login va parol «Login va parollar» bo'limida beriladi"
       tabs={<StaffTabs current="access" />}
-      notice={
-        invitesError
-          ? "Taklif jadvali bazada topilmadi — 0016_org_members.sql va 0021_staff_invites.sql migratsiyalarini Supabase SQL Editor'da ishga tushiring."
-          : undefined
-      }
     >
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-ink-muted">A&apos;zolar</h2>
-        <MembersTable members={members} currentUserId={user.id} />
-      </div>
-
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-ink-muted">Kutilayotgan takliflar</h2>
-        <PendingInvitesList invites={(invitesData ?? []) as PendingInvite[]} />
-      </div>
+      <MembersTable
+        members={members}
+        currentUserId={user.id}
+        customRoles={(rolesData ?? []) as { id: string; name: string }[]}
+      />
     </ListPageShell>
   );
 }

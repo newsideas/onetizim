@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { ActionError, runAction } from "@/lib/actions/result";
 import { isRole, type Role } from "@/lib/auth/permissions";
-import { inviteSchema, teacherSchema, type InviteInput, type TeacherInput } from "@/lib/validations/staff";
+import { teacherSchema, type TeacherInput } from "@/lib/validations/staff";
 
 function revalidateStaff() {
   revalidatePath("/staff");
@@ -24,7 +24,22 @@ function toTeacherRow(input: TeacherInput) {
     kind: v.kind,
     salary_type: v.salaryType ?? null,
     rate: v.rate ?? null,
+    gender: v.gender || null,
+    birth_date: v.birthDate,
+    pays_salary: v.paysSalary ?? true,
+    work_schedule_id: v.workScheduleId,
+    comment: v.comment,
+    email: v.email?.trim() || null,
   };
+}
+
+/** "Xodim qo'shish" oynasidagi ish jadvallari ro'yxati. */
+export async function getTeacherFormOptions() {
+  return runAction(async () => {
+    const { supabase } = await assertPermission("staff.manage");
+    const { data } = await supabase.from("work_schedules").select("id, name").order("name");
+    return (data ?? []) as { id: string; name: string }[];
+  });
 }
 
 export async function createTeacher(input: TeacherInput) {
@@ -73,42 +88,6 @@ export async function deleteTeacher(teacherId: string) {
   });
 }
 
-/** Taklif havolasi yaratadi; havolaning o'zi (domen bilan) brauzerda yig'iladi. */
-export async function createStaffInvite(input: InviteInput) {
-  return runAction(async () => {
-    const parsed = inviteSchema.safeParse(input);
-    if (!parsed.success) {
-      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
-    }
-    const { supabase, org } = await assertPermission("staff.manage");
-    const v = parsed.data;
-
-    const { data, error } = await supabase
-      .from("org_invites")
-      .insert({
-        org_id: org.id,
-        role: v.role,
-        employee_id: v.employeeId,
-        full_name: v.fullName,
-      })
-      .select("token")
-      .single();
-
-    if (error || !data) throw new ActionError("Taklif yaratib bo'lmadi");
-    revalidateStaff();
-    return data.token as string;
-  });
-}
-
-export async function revokeInvite(inviteId: string) {
-  return runAction(async () => {
-    const { supabase } = await assertPermission("staff.manage");
-    const { error } = await supabase.from("org_invites").delete().eq("id", inviteId);
-    if (error) throw new ActionError("Taklifni bekor qilib bo'lmadi: " + error.message);
-    revalidateStaff();
-  });
-}
-
 export async function updateMemberRole(userId: string, role: Role) {
   return runAction(async () => {
     if (!isRole(role) || role === "owner") throw new ActionError("Noto'g'ri rol");
@@ -125,6 +104,8 @@ export async function updateMemberRole(userId: string, role: Role) {
 
     const { error } = await supabase.from("org_members").update({ role }).eq("user_id", userId);
     if (error) throw new ActionError("Rolni o'zgartirib bo'lmadi: " + error.message);
+    // Tayyor rol tanlansa, oldingi maxsus rol olib tashlanadi (0063 qo'llanmagan bo'lsa xato e'tiborsiz).
+    await supabase.from("org_members").update({ custom_role_id: null }).eq("user_id", userId);
     revalidateStaff();
   });
 }

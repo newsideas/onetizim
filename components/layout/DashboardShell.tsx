@@ -49,7 +49,7 @@ export function DashboardShell({
       {/* Desktop: doim ko'rinadigan sidebar (yig'ilsa faqat ikonkalar) */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 hidden bg-surface transition-[width] duration-300 ease-(--ease-edu) md:block ${
-          collapsed ? "w-[72px]" : "w-44"
+          collapsed ? "w-[72px]" : "w-48"
         }`}
       >
         <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
@@ -71,7 +71,7 @@ export function DashboardShell({
 
       <div
         className={`transition-[padding] duration-300 ease-(--ease-edu) ${
-          collapsed ? "md:pl-[72px]" : "md:pl-44"
+          collapsed ? "md:pl-[72px]" : "md:pl-48"
         }`}
       >
         <Header

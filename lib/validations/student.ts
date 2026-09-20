@@ -43,6 +43,28 @@ export const studentSchema = z.object({
 
 export type StudentInput = z.infer<typeof studentSchema>;
 
+/**
+ * "Yangi o'quvchi qo'shish" oynasi (Edu tizimdagidek): faqat ism majburiy,
+ * guruh keyin biriktiriladi.
+ */
+export const newStudentSchema = z.object({
+  firstName: z.string().trim().min(1, "Ismni kiriting"),
+  lastName: optionalText,
+  fatherName: optionalText,
+  phone: optionalText,
+  email: z.union([z.string().trim().email("Elektron pochta noto'g'ri"), z.literal("")]).optional(),
+  categoryId: optionalText,
+  birthDate: optionalText,
+  paymentDate: optionalText,
+  marketingCampaignId: optionalText,
+  studyLanguage: optionalText,
+  fatherPhone: optionalText,
+  motherName: optionalText,
+  motherPhone: optionalText,
+});
+
+export type NewStudentInput = z.infer<typeof newStudentSchema>;
+
 export const GENDER_LABELS = {
   erkak: "Erkak",
   ayol: "Ayol",

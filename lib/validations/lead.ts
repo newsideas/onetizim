@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Xususiy maktab qabul voronkasi. */
+/** O'quv markaz qabul voronkasi. */
 export const LEAD_STAGES = [
   "new",
   "contacted",
@@ -17,7 +17,7 @@ export type LeadStage = (typeof LEAD_STAGES)[number];
 export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
   new: "Yangi",
   contacted: "Bog'lanildi",
-  visit: "Maktabga tashrif",
+  visit: "Markazga tashrif",
   test: "Test",
   accepted: "Qabul qilindi",
   contract: "Shartnoma",
@@ -50,6 +50,9 @@ export const LEAD_SOURCES = [
   "Banner",
 ];
 
+/** "Yangi buyurtma" oynasidagi "Dars kunini tanlang" variantlari (Edu tizimdagidek). */
+export const LESSON_DAY_OPTIONS = ["Juft kunlar", "Toq kunlar", "Boshqa kunlar"] as const;
+
 const optionalText = (max: number) =>
   z
     .string()
@@ -73,6 +76,19 @@ export const leadSchema = z.object({
     .pipe(z.enum(INTEREST_LEVELS, { message: "Qiziqish darajasi noto'g'ri" }).nullable()),
   nextContactOn: optionalText(10),
   note: optionalText(2000),
+
+  // Edu tizimdagi "Yangi buyurtma" maydonlari (0054_lead_order_fields.sql)
+  studentId: optionalText(36),
+  referralStudentId: optionalText(36),
+  lessonDays: z
+    .string()
+    .optional()
+    .transform((v) => (v ? v : null))
+    .pipe(z.enum(LESSON_DAY_OPTIONS, { message: "Dars kunini tanlang" }).nullable()),
+  lessonTime: optionalText(8),
+  teacherId: optionalText(36),
+  groupId: optionalText(36),
+  trialTime: optionalText(8),
 });
 
 export type LeadInput = z.input<typeof leadSchema>;

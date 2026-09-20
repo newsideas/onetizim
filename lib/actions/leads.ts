@@ -24,14 +24,77 @@ function toLeadRow(input: LeadInput) {
     interest_level: v.interestLevel,
     next_contact_on: v.nextContactOn,
     note: v.note,
+    student_id: v.studentId,
+    referral_student_id: v.referralStudentId,
+    lesson_days: v.lessonDays,
+    lesson_time: v.lessonTime,
+    teacher_id: v.teacherId,
+    group_id: v.groupId,
+    trial_time: v.trialTime,
   };
+}
+
+/** Yangi ustunlar (0054) bazada yo'q bo'lsa, foydalanuvchiga aniq yo'l ko'rsatiladi. */
+function saveError(fallback: string, message: string): ActionError {
+  return new ActionError(
+    /column|schema cache/.test(message)
+      ? "Yangi ustunlar bazada yo'q — 0054_lead_order_fields.sql migratsiyasini ishga tushiring"
+      : fallback,
+  );
+}
+
+export interface LeadFormOptions {
+  students: { id: string; name: string; phone: string | null }[];
+  courses: string[];
+  teachers: { id: string; name: string }[];
+  /** "Yig'ilayotgan guruh" — nabor (kutayotgan) holatidagi guruhlar. */
+  groups: { id: string; name: string }[];
+}
+
+/** "Yangi buyurtma" oynasidagi tanlov ro'yxatlari. */
+export async function getLeadFormOptions() {
+  return runAction(async (): Promise<LeadFormOptions> => {
+    const { supabase } = await assertPermission("leads.manage");
+    const [students, courses, teachers, groups] = await Promise.all([
+      supabase.from("students").select("id, full_name, phone").order("full_name"),
+      supabase.from("courses").select("name").order("name"),
+      supabase.from("teachers").select("id, full_name").order("full_name"),
+      supabase.from("groups").select("id, name").eq("status", "waiting").order("name"),
+    ]);
+    return {
+      students: ((students.data ?? []) as { id: string; full_name: string; phone: string | null }[]).map((s) => ({
+        id: s.id,
+        name: s.full_name,
+        phone: s.phone,
+      })),
+      courses: ((courses.data ?? []) as { name: string }[]).map((c) => c.name),
+      teachers: ((teachers.data ?? []) as { id: string; full_name: string }[]).map((t) => ({
+        id: t.id,
+        name: t.full_name,
+      })),
+      groups: (groups.data ?? []) as { id: string; name: string }[],
+    };
+  });
 }
 
 export async function createLead(input: LeadInput) {
   return runAction(async () => {
     const { supabase, org } = await assertPermission("leads.manage");
-    const { error } = await supabase.from("leads").insert({ org_id: org.id, ...toLeadRow(input) });
-    if (error) throw new ActionError("Lidni saqlab bo'lmadi");
+
+    // Buyurtma mavjud o'quvchiga bog'lanadi: ism va telefon o'quvchidan olinadi.
+    let values = input;
+    if (input.studentId) {
+      const { data: student } = await supabase
+        .from("students")
+        .select("full_name, phone")
+        .eq("id", input.studentId)
+        .maybeSingle();
+      if (!student) throw new ActionError("O'quvchi topilmadi");
+      values = { ...input, fullName: student.full_name, phone: input.phone || student.phone || "" };
+    }
+
+    const { error } = await supabase.from("leads").insert({ org_id: org.id, ...toLeadRow(values) });
+    if (error) throw saveError("Lidni saqlab bo'lmadi", error.message);
     revalidatePath("/leads");
   });
 }
@@ -40,7 +103,7 @@ export async function updateLead(leadId: string, input: LeadInput) {
   return runAction(async () => {
     const { supabase } = await assertPermission("leads.manage");
     const { error } = await supabase.from("leads").update(toLeadRow(input)).eq("id", leadId);
-    if (error) throw new ActionError("Lidni yangilab bo'lmadi");
+    if (error) throw saveError("Lidni yangilab bo'lmadi", error.message);
     revalidatePath("/leads");
   });
 }

@@ -9,7 +9,7 @@ export default async function StaffPage() {
 
   const { data, error } = await supabase
     .from("teachers")
-    .select("id, full_name, phone, position, kind, salary_type, rate, is_active")
+    .select("*")
     .order("is_active", { ascending: false })
     .order("full_name");
 
@@ -22,7 +22,7 @@ export default async function StaffPage() {
         tabs={<StaffTabs current="list" />}
         notice={
           error
-            ? "Xodim kartasi ustunlari bazada topilmadi — 0016_org_members.sql migratsiyasini Supabase SQL Editor'da ishga tushiring."
+            ? "Xodim kartasi ustunlari bazada topilmadi — 0016_org_members.sql migratsiyasini Supabase SQL Editor&apos;da ishga tushiring."
             : undefined
         }
       >

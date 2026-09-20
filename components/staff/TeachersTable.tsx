@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Power, Trash2 } from "lucide-react";
+import { useDialogs } from "@/components/ui/ConfirmDialog";
 import { useTeachers, type TeacherRow } from "@/components/staff/TeachersProvider";
 import { deleteTeacher, setTeacherActive } from "@/lib/actions/staff";
 import { SALARY_TYPE_LABELS } from "@/lib/validations/finance";
@@ -21,6 +22,7 @@ export function TeachersTable({ teachers }: { teachers: TeacherRow[] }) {
   const { openEdit } = useTeachers();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialogs } = useDialogs();
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
@@ -35,8 +37,8 @@ export function TeachersTable({ teachers }: { teachers: TeacherRow[] }) {
     run(() => setTeacherActive(teacher.id, !teacher.is_active));
   }
 
-  function remove(teacher: TeacherRow) {
-    if (!confirm(`"${teacher.full_name}"ni o'chirmoqchimisiz?`)) return;
+  async function remove(teacher: TeacherRow) {
+    if (!(await confirm(`"${teacher.full_name}"ni o'chirmoqchimisiz?`, { danger: true, confirmLabel: "O'chirish" }))) return;
     run(() => deleteTeacher(teacher.id));
   }
 
@@ -50,6 +52,7 @@ export function TeachersTable({ teachers }: { teachers: TeacherRow[] }) {
 
   return (
     <div className="space-y-2">
+      {dialogs}
       {error && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}

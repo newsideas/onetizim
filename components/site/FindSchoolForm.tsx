@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { ROOT_DOMAIN, isValidSlug, tenantUrl } from "@/lib/tenant";
 import { Button } from "@/components/ui/Button";
 
-/** Maktab manzilini kiritib, o'sha maktabning kirish sahifasiga o'tish. */
+/** Markaz manzilini kiritib, o'sha markazning kirish sahifasiga o'tish. */
 export function FindSchoolForm() {
   const [slug, setSlug] = useState("");
   const [error, setError] = useState<string>();
@@ -12,7 +12,7 @@ export function FindSchoolForm() {
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const value = slug.trim().toLowerCase();
-    if (!isValidSlug(value)) return setError("Maktab manzilini to'g'ri kiriting (masalan: renessans)");
+    if (!isValidSlug(value)) return setError("Markaz manzilini to'g'ri kiriting (masalan: renessans)");
     setError(undefined);
     window.location.href = tenantUrl(value, "/login", window.location);
   }
@@ -20,7 +20,7 @@ export function FindSchoolForm() {
   return (
     <form onSubmit={submit} className="space-y-3" noValidate>
       <label htmlFor="school-slug" className="block text-sm font-medium text-ink">
-        Maktabingiz manzili
+        Markazingiz manzili
       </label>
       <div className="flex items-center overflow-hidden rounded-lg border border-line bg-surface focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
         <input

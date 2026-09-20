@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteGrade } from "@/lib/actions/grades";
+import { useDialogs } from "@/components/ui/ConfirmDialog";
 
 const SCORE_CLASS: Record<number, string> = {
   5: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
@@ -25,9 +26,11 @@ export function GradeChip({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
+  const { confirm, dialogs } = useDialogs();
 
-  function remove() {
-    if (!confirm(`${title}\n\nShu bahoni o'chirmoqchimisiz?`)) return;
+  async function remove() {
+    const question = `${title}\n\nShu bahoni o'chirmoqchimisiz?`;
+    if (!(await confirm(question, { danger: true, confirmLabel: "O'chirish" }))) return;
     setError(undefined);
     startTransition(async () => {
       const result = await deleteGrade(id);
@@ -37,17 +40,20 @@ export function GradeChip({
   }
 
   return (
-    <button
-      type="button"
-      onClick={remove}
-      disabled={isPending}
-      title={error ?? title}
-      aria-label={`${title} — o'chirish`}
-      className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-xs font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 ${
-        error ? "ring-2 ring-red-500" : ""
-      } ${SCORE_CLASS[score] ?? ""}`}
-    >
-      {score}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={remove}
+        disabled={isPending}
+        title={error ?? title}
+        aria-label={`${title} — o'chirish`}
+        className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-xs font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 ${
+          error ? "ring-2 ring-red-500" : ""
+        } ${SCORE_CLASS[score] ?? ""}`}
+      >
+        {score}
+      </button>
+      {dialogs}
+    </>
   );
 }

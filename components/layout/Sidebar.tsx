@@ -2,28 +2,66 @@
 
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { buildNavSections, filterNavSections, type NavSection } from "@/lib/navigation";
+import {
+  buildNavSections,
+  filterNavSections,
+  type NavItem,
+  type NavSection,
+} from "@/lib/navigation";
 import { useSegment } from "@/components/layout/SegmentProvider";
 import { usePermissions } from "@/components/auth/PermissionsProvider";
 import { Logo } from "@/components/ui/Logo";
 import { initials } from "@/lib/staff";
 
-function matches(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+function matches(pathname: string, path: string) {
+  if (path === "/") return pathname === "/";
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 /**
- * Joriy sahifaga eng aniq mos keladigan havola. "/settings" va
- * "/settings/references/classrooms" ikkalasi ham mos kelsa, uzunrog'i
- * faol hisoblanadi.
+ * Havola joriy sahifaga qanchalik mos: yo'l uzunroq bo'lsa va so'rov
+ * parametrlari (masalan `?status=archived`) ham mos kelsa — yuqoriroq.
+ * Mos kelmasa null.
  */
-function findActiveHref(pathname: string, hrefs: string[]) {
-  return hrefs
-    .filter((href) => matches(pathname, href))
-    .sort((a, b) => b.length - a.length)[0];
+function matchScore(pathname: string, search: URLSearchParams, href: string): number | null {
+  const [path, query = ""] = href.split("?");
+  if (!matches(pathname, path)) return null;
+
+  const params = [...new URLSearchParams(query)];
+  for (const [key, value] of params) {
+    if (search.get(key) !== value) return null;
+  }
+  return path.length * 10 + params.length;
+}
+
+const itemKey = (section: NavSection, item?: NavItem) =>
+  item ? `${section.label}/${item.label}` : section.label;
+
+/**
+ * Joriy sahifaga eng aniq mos band. Ikki bo'limda bir xil sahifa bo'lsa
+ * (masalan "Shartnoma") birinchisi faol hisoblanadi.
+ */
+function findActiveKey(
+  pathname: string,
+  search: URLSearchParams,
+  sections: NavSection[],
+): string | null {
+  let best: { key: string; score: number } | null = null;
+
+  for (const section of sections) {
+    const candidates: [string, string | undefined][] = section.items
+      ? section.items.map((item) => [itemKey(section, item), item.href])
+      : [[itemKey(section), section.href]];
+
+    for (const [key, href] of candidates) {
+      if (!href) continue;
+      const score = matchScore(pathname, search, href);
+      if (score !== null && (!best || score > best.score)) best = { key, score };
+    }
+  }
+  return best?.key ?? null;
 }
 
 const ITEM_BASE =
@@ -31,9 +69,34 @@ const ITEM_BASE =
 const ITEM_ACTIVE =
   "bg-brand-50 text-brand-600 before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-brand-600 dark:bg-brand-600/15 dark:text-brand-400";
 const ITEM_IDLE = "text-ink hover:bg-canvas";
+const ITEM_SOON = "cursor-default text-ink-faint";
+
+const SOON_HINT = "Tez orada";
 
 /** Sichqoncha ketgach ichki bandlar oynasi yopilishidan oldingi kechikish. */
 const CLOSE_DELAY_MS = 180;
+
+/** Ichki bandlar oynasining ekran chetidan qoldiradigan oralig'i. */
+const FLY_MARGIN = 8;
+
+interface FlyPos {
+  left: number;
+  /** Yuqori bo'limlar tepadan, pastdagilari (Hisobotlar, Sozlamalar) pastdan hizalanadi. */
+  top?: number;
+  bottom?: number;
+}
+
+/** Bandlarni `group` bo'yicha ustunlarga ajratadi; guruhsiz bo'lsa bitta ustun. */
+function toColumns(items: NavItem[]): { title: string | null; items: NavItem[] }[] {
+  const columns: { title: string | null; items: NavItem[] }[] = [];
+  for (const item of items) {
+    const title = item.group ?? null;
+    const column = columns.find((c) => c.title === title);
+    if (column) column.items.push(item);
+    else columns.push({ title, items: [item] });
+  }
+  return columns;
+}
 
 export function Sidebar({
   onNavigate,
@@ -45,6 +108,7 @@ export function Sidebar({
   onToggleCollapsed?: () => void;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { terms } = useSegment();
   const { permissions, displayName, roleLabel } = usePermissions();
 
@@ -53,13 +117,10 @@ export function Sidebar({
     [terms, permissions],
   );
 
-  const activeHref = findActiveHref(
-    pathname,
-    sections.flatMap((s) => (s.items ? s.items.map((i) => i.href) : s.href ? [s.href] : [])),
-  );
+  const activeKey = findActiveKey(pathname, searchParams, sections);
 
   const [openLabel, setOpenLabel] = useState<string | null>(null);
-  const [flyPos, setFlyPos] = useState({ top: 0, left: 0 });
+  const [flyPos, setFlyPos] = useState<FlyPos>({ top: 0, left: 0 });
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const flyRef = useRef<HTMLDivElement>(null);
@@ -103,7 +164,13 @@ export function Sidebar({
   function openFor(label: string, el: HTMLElement) {
     cancelClose();
     const rect = el.getBoundingClientRect();
-    setFlyPos({ top: rect.top, left: rect.right + 6 });
+    const left = rect.right + 6;
+    // Katta menyu ekrandan chiqib ketmasligi uchun pastki yarmidagi bo'limlar pastdan hizalanadi.
+    setFlyPos(
+      rect.top > window.innerHeight / 2
+        ? { left, bottom: Math.max(FLY_MARGIN, window.innerHeight - rect.bottom) }
+        : { left, top: rect.top },
+    );
     setOpenLabel(label);
   }
 
@@ -121,13 +188,15 @@ export function Sidebar({
   return (
     <nav ref={navRef} aria-label="Asosiy menyu" className="relative flex h-full flex-col bg-surface">
       <div className={`flex h-14 shrink-0 items-center ${collapsed ? "justify-center" : "px-4"}`}>
-        {collapsed ? (
-          <span className="block h-9 w-9 overflow-hidden">
-            <Logo variant="brand" className="h-9" />
-          </span>
-        ) : (
-          <Logo variant="brand" className="h-9" />
-        )}
+        <Link href="/" aria-label="Bosh sahifa" title="Bosh sahifa" className="flex items-center">
+          {collapsed ? (
+            <span className="block h-6 w-6 overflow-hidden">
+              <Logo variant="brand" className="h-6" />
+            </span>
+          ) : (
+            <Logo variant="brand" className="h-6" />
+          )}
+        </Link>
       </div>
 
       {onToggleCollapsed && (
@@ -150,7 +219,7 @@ export function Sidebar({
           );
 
           if (section.href) {
-            const active = section.href === activeHref;
+            const active = itemKey(section) === activeKey;
             return (
               <Link
                 key={section.label}
@@ -166,7 +235,22 @@ export function Sidebar({
             );
           }
 
-          const containsActive = Boolean(section.items?.some((i) => i.href === activeHref));
+          // Sahifasi ham, ichki bandi ham yo'q bo'lim — hali qurilmagan.
+          if (!section.items) {
+            return (
+              <span
+                key={section.label}
+                aria-disabled="true"
+                title={`${section.label} — ${SOON_HINT.toLowerCase()}`}
+                className={`${ITEM_BASE} ${itemPadding} ${ITEM_SOON}`}
+              >
+                <Icon size={18} strokeWidth={2} aria-hidden="true" className="shrink-0" />
+                {label}
+              </span>
+            );
+          }
+
+          const containsActive = section.items.some((i) => itemKey(section, i) === activeKey);
           const isOpen = openLabel === section.label;
 
           return (
@@ -215,29 +299,59 @@ export function Sidebar({
           aria-label={openSection.label}
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
-          style={{ top: flyPos.top, left: flyPos.left }}
-          className="fixed z-50 min-w-[190px] animate-[edu-pop_150ms_var(--ease-edu)] rounded-xl border border-line bg-surface p-1.5 shadow-lg"
+          style={{
+            top: flyPos.top,
+            bottom: flyPos.bottom,
+            left: flyPos.left,
+            maxHeight: `calc(100vh - ${FLY_MARGIN * 2}px)`,
+          }}
+          className="fixed z-50 flex max-w-[calc(100vw-200px)] animate-[edu-pop_150ms_var(--ease-edu)] gap-1 overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-lg"
         >
-          {openSection.items.map((item) => {
-            const active = item.href === activeHref;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                onClick={() => {
-                  setOpenLabel(null);
-                  onNavigate?.();
-                }}
-                aria-current={active ? "page" : undefined}
-                className={`block rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-200 ${
-                  active ? "bg-brand-50 text-brand-600 dark:bg-brand-600/15 dark:text-brand-400" : "text-ink hover:bg-canvas"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          {toColumns(openSection.items).map((column) => (
+            <div key={column.title ?? "all"} className="min-w-[190px] flex-1">
+              {column.title && (
+                <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold tracking-wide text-ink-faint uppercase">
+                  {column.title}
+                </div>
+              )}
+              {column.items.map((item) => {
+                if (!item.href) {
+                  return (
+                    <span
+                      key={item.label}
+                      role="menuitem"
+                      aria-disabled="true"
+                      title={SOON_HINT}
+                      className={`block rounded-lg px-3 py-2 text-[13px] font-medium ${ITEM_SOON}`}
+                    >
+                      {item.label}
+                    </span>
+                  );
+                }
+
+                const active = itemKey(openSection, item) === activeKey;
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    role="menuitem"
+                    onClick={() => {
+                      setOpenLabel(null);
+                      onNavigate?.();
+                    }}
+                    aria-current={active ? "page" : undefined}
+                    className={`block rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                      active
+                        ? "bg-brand-50 text-brand-600 dark:bg-brand-600/15 dark:text-brand-400"
+                        : "text-ink hover:bg-canvas"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
     </nav>

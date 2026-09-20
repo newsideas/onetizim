@@ -48,13 +48,13 @@ const FEATURES = [
 export function AuthShowcase() {
   return (
     <div className="hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:px-12 xl:px-20">
-      <Logo className="mb-8 h-16" />
+      <Logo className="mb-8 h-10" />
 
       <h2 className="text-2xl font-semibold text-ink">
         Muassasangizni bitta tizimda to&apos;laqonli boshqaring
       </h2>
       <p className="mt-2 max-w-lg text-sm text-ink-muted">
-        Xususiy maktab, bog&apos;cha va o&apos;quv markazlari uchun: o&apos;quvchilar
+        O&apos;quv markazlari uchun: o&apos;quvchilar
         bazasi, davomat, to&apos;lovlar, moliya va ota-onalar bilan aloqa —
         barchasi yagona platformada.
       </p>

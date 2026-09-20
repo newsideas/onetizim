@@ -3,27 +3,44 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Drawer } from "@/components/ui/Drawer";
 import { PaymentForm, type StudentOption } from "@/components/payments/PaymentForm";
 
-export function NewPaymentButton({ students }: { students: StudentOption[] }) {
+/** Edu tizimdagi kassa "Kirim" tugmasi: o'quvchi to'lovini kiritish paneli. */
+export function NewPaymentButton({
+  students,
+  label = "Kirim",
+  cashboxId,
+  className,
+}: {
+  students: StudentOption[];
+  label?: string;
+  /** To'lov tushadigan kassa; berilmasa asosiy kassa. */
+  cashboxId?: string;
+  /** Berilsa, tugma standart ko'rinish o'rniga shu klasslar bilan chiziladi (kassa kartasidagi tugma). */
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
-        <Plus size={16} /> Yangi to&apos;lov
-      </Button>
+      {className ? (
+        <button type="button" onClick={() => setOpen(true)} className={className}>
+          <Plus size={14} /> {label}
+        </button>
+      ) : (
+        <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
+          <Plus size={16} /> {label}
+        </Button>
+      )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Yangi to'lov kiritish">
+      <Drawer open={open} onClose={() => setOpen(false)} title="Kirim" tone="brand">
         {students.length === 0 ? (
-          <p className="text-sm text-ink-muted">
-            Avval kamida bitta o&apos;quvchi qo&apos;shing.
-          </p>
+          <p className="text-sm text-ink-muted">Avval kamida bitta o&apos;quvchi qo&apos;shing.</p>
         ) : (
-          <PaymentForm students={students} onSuccess={() => setOpen(false)} />
+          <PaymentForm students={students} cashboxId={cashboxId} onSuccess={() => setOpen(false)} />
         )}
-      </Modal>
+      </Drawer>
     </>
   );
 }

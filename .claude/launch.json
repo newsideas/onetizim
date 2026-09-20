@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "edugram-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set APPDATA=C:\\Users\\amirj\\AppData\\Local\\Temp\\next-appdata-workaround&& npm run dev"
+      ],
       "port": 3000
     }
   ]

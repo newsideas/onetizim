@@ -33,9 +33,23 @@ export async function createExpense(input: ExpenseInput) {
       method: v.method,
       spent_at: v.spentAt,
       note: v.note,
+      ...(v.cashboxId ? { cashbox_id: v.cashboxId } : {}),
     });
     if (error) throw new ActionError("Xarajatni saqlab bo'lmadi: " + error.message);
     revalidateFinance();
+  });
+}
+
+/** "Chiqim" oynasidagi tranzaksiya turlari (Moliya → Tranzaksiya turi, turi "Chiqim"). */
+export async function getExpenseTypes() {
+  return runAction(async () => {
+    const { supabase } = await assertPermission("payments.manage");
+    const { data } = await supabase
+      .from("transaction_types")
+      .select("name")
+      .eq("kind", "Chiqim")
+      .order("name");
+    return ((data ?? []) as { name: string }[]).map((t) => t.name);
   });
 }
 

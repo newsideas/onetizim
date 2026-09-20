@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { isValidSlug } from "@/lib/tenant";
+import { normalizePhone } from "@/lib/auth/identity";
 
 export const loginSchema = z.object({
-  email: z.string().email("Email noto'g'ri kiritildi"),
+  /** Telefon raqam, login yoki (eski hisoblar uchun) email. */
+  identifier: z.string().trim().min(3, "Telefon raqam yoki loginni kiriting"),
   password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak"),
 });
 
@@ -10,50 +12,31 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 const optionalText = z.string().trim().optional();
 
-export const registerSchema = z.object({
-  // Muassasa ma'lumotlari
-  orgName: z.string().trim().min(2, "Muassasa nomini kiriting"),
-  orgType: z.enum(["maktab", "bogcha", "markaz"], {
-    message: "Muassasa turini tanlang",
-  }),
-  orgSlug: z
+/**
+ * Super admin yangi o'quv markaz ochganda kiritiladigan ma'lumotlar: nom, rahbar F.I.Sh, telefon va joylashuv.
+ * Parol avtomatik yaratiladi, subdomen esa keyin markaz sahifasida belgilanadi.
+ */
+export const createCenterSchema = z.object({
+  orgName: z.string().trim().min(2, "Markaz nomini kiriting").max(120, "Markaz nomi juda uzun"),
+  directorName: z
     .string()
     .trim()
-    .transform((v) => v.toLowerCase())
-    .refine(isValidSlug, "Manzil 3–32 ta harf, raqam yoki chiziqchadan iborat bo'lsin"),
-  tin: optionalText,
-  region: z.string().trim().min(1, "Viloyatni tanlang"),
-  district: z.string().trim().min(2, "Tuman yoki shaharni kiriting"),
-  address: optionalText,
-
-  // Rahbar ma'lumotlari
-  directorLastName: z.string().trim().min(2, "Familiyani kiriting"),
-  directorFirstName: z.string().trim().min(2, "Ismni kiriting"),
-  phone: z.string().trim().min(9, "Telefon raqamini kiriting"),
-
-  // Hisob
-  email: z.string().email("Email noto'g'ri kiritildi"),
-  password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak"),
-
-  // Shartlar
-  acceptTerms: z.literal(true, {
-    message: "Foydalanish shartlarini qabul qiling",
-  }),
+    .refine((v) => v.split(/\s+/).filter(Boolean).length >= 2, "Rahbarning familiyasi va ismini kiriting")
+    .refine((v) => v.length <= 120, "Ism juda uzun"),
+  // Direktorning telefoni tizimga kirish logini bo'ladi.
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => normalizePhone(v) !== null, "Telefon raqamni to'g'ri kiriting (+998 90 123 45 67)"),
+  location: optionalText,
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
+export type CreateCenterInput = z.infer<typeof createCenterSchema>;
 
-export const inviteSignupSchema = z.object({
-  fullName: z.string().trim().min(3, "Familiya va ismingizni kiriting"),
-  email: z.string().email("Email noto'g'ri kiritildi"),
-  password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak"),
-});
+/** Markaz subdomeni (renessans.edugram.uz): super admin markaz sahifasida belgilaydi. */
+export const subdomainSchema = z
+  .string()
+  .trim()
+  .transform((v) => v.toLowerCase())
+  .refine(isValidSlug, "Manzil 3–32 ta harf, raqam yoki chiziqchadan iborat bo'lsin");
 
-export type InviteSignupInput = z.infer<typeof inviteSignupSchema>;
-
-export const createOrganizationSchema = z.object({
-  orgName: z.string().trim().min(2, "Muassasa nomini kiriting"),
-  orgType: z.enum(["maktab", "bogcha", "markaz"], { message: "Muassasa turini tanlang" }),
-});
-
-export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;

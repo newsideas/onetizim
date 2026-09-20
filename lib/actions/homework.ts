@@ -28,6 +28,7 @@ export async function createHomework(input: HomeworkInput) {
         title: v.title,
         details: v.details,
         due_on: v.dueOn,
+        max_score: v.maxScore,
       })
       .select("id");
     if (error) throw new ActionError("Vazifani saqlab bo'lmadi: " + error.message);

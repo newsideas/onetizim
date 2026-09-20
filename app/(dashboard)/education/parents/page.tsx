@@ -4,6 +4,9 @@ import { ListPageShell } from "@/components/ui/ListPage";
 import { NewParentButton } from "@/components/parents/NewParentButton";
 import { ParentRowActions } from "@/components/parents/ParentRowActions";
 import { formatSom } from "@/lib/utils/currency";
+import { PageTabs } from "@/components/ui/PageTabs";
+import { ParentsByStudent } from "@/components/parents/ParentsByStudent";
+import { termsFor } from "@/lib/segment";
 
 interface ChildRow {
   id: string;
@@ -21,9 +24,24 @@ interface ParentRow {
   links: { student: ChildRow | null }[];
 }
 
-export default async function ParentsPage() {
-  const { supabase, permissions } = await requirePermission("students.view");
+export default async function ParentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const params = await searchParams;
+  const { supabase, org, permissions } = await requirePermission("students.view");
   const canManage = permissions.includes("students.manage");
+  const byParent = params.view === "parents";
+
+  const tabs = (
+    <PageTabs
+      tabs={[
+        { label: "O'quvchilar bo'yicha", href: "/education/parents", active: !byParent },
+        { label: "Ota-onalar", href: "/education/parents?view=parents", active: byParent },
+      ]}
+    />
+  );
 
   const [parentsResult, { data: students }] = await Promise.all([
     supabase
@@ -40,14 +58,27 @@ export default async function ParentsPage() {
   const parents = (parentsResult.data ?? []) as unknown as ParentRow[];
   const studentOptions = (students ?? []) as { id: string; full_name: string }[];
 
+  if (!byParent) {
+    return (
+      <ParentsByStudent
+        supabase={supabase}
+        params={params}
+        tabs={tabs}
+        studentLabel={termsFor(org.type).student}
+        actions={canManage ? <NewParentButton students={studentOptions} /> : undefined}
+      />
+    );
+  }
+
   return (
     <ListPageShell
       title="Ota-onalar"
       subtitle="Ota-onalar va ularning farzandlari"
+      tabs={tabs}
       actions={canManage ? <NewParentButton students={studentOptions} /> : undefined}
       notice={
         parentsResult.error
-          ? "Ota-onalar jadvali bazada topilmadi — 0030_parents.sql migratsiyasini Supabase SQL Editor'da ishga tushiring."
+          ? "Ota-onalar jadvali bazada topilmadi — 0030_parents.sql migratsiyasini Supabase SQL Editor&apos;da ishga tushiring."
           : undefined
       }
     >

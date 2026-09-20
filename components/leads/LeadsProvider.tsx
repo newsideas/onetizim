@@ -21,6 +21,13 @@ export interface LeadRow {
   student_id: string | null;
   created_at: string;
   updated_at: string;
+  // "Yangi buyurtma" maydonlari (0054); migratsiya qo'llanmaguncha bazadan kelmaydi.
+  referral_student_id?: string | null;
+  lesson_days?: string | null;
+  lesson_time?: string | null;
+  teacher_id?: string | null;
+  group_id?: string | null;
+  trial_time?: string | null;
 }
 
 export interface LeadOptions {
@@ -75,7 +82,7 @@ export function NewLeadButton() {
       className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
     >
       <Plus size={16} aria-hidden="true" />
-      Yangi ariza
+      Buyurtma qo&apos;shish
     </button>
   );
 }

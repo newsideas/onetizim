@@ -7,11 +7,13 @@ import { useSignOut } from "@/components/auth/useSignOut";
 
 const LINKS = [
   { href: "/admin", label: "Umumiy ko'rsatkichlar" },
-  { href: "/admin/organizations", label: "Maktablar" },
+  { href: "/admin/organizations", label: "Markazlar" },
+  { href: "/admin/payments", label: "To'lovlar" },
+  { href: "/admin/profile", label: "Profil" },
 ];
 
 /** Super Admin panelining yagona sarlavhasi — maktab menyusidan butunlay alohida. */
-export function AdminHeader({ email }: { email?: string }) {
+export function AdminHeader({ login }: { login?: string | null }) {
   const pathname = usePathname();
   const signOut = useSignOut();
 
@@ -41,9 +43,9 @@ export function AdminHeader({ email }: { email?: string }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-3 text-sm">
-          {email && <span className="hidden text-ink-faint sm:inline">{email}</span>}
+          {login && <span className="hidden text-ink-faint sm:inline">{login}</span>}
           <Link href="/" className="text-ink-muted hover:text-ink">
-            Maktab paneli
+            Markaz paneli
           </Link>
           <button
             type="button"

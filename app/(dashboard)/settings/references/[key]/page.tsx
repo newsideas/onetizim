@@ -20,13 +20,14 @@ export default async function ReferencePage({
   if (!isReferenceKey(key)) notFound();
 
   const config = getReference(key);
+  if (config.group === "hidden") notFound();
   const { supabase } = await requirePermission("settings.manage");
 
   const linkedKeys = [
     ...new Set(config.fields.flatMap((f) => (f.ref ? [f.ref] : []))),
   ];
 
-  const [{ data: rows }, ...linked] = await Promise.all([
+  const [{ data: rows, error }, ...linked] = await Promise.all([
     supabase
       .from(config.table)
       .select("*")
@@ -51,8 +52,16 @@ export default async function ReferencePage({
   });
 
   return (
-    <ListPageShell title={config.title} subtitle={config.subtitle}>
-      <ReferenceNav current={key} />
+    <ListPageShell
+      title={config.title}
+      subtitle={config.subtitle}
+      notice={
+        error
+          ? "Bu ro'yxat jadvali bazada topilmadi — yangi migratsiyalarni (yangi-migratsiyalar.sql) Supabase SQL Editor'da ishga tushiring."
+          : undefined
+      }
+    >
+      <ReferenceNav current={key} group={config.group} />
       <ReferenceManager
         key={key}
         refKey={key}
@@ -64,10 +73,10 @@ export default async function ReferencePage({
   );
 }
 
-function ReferenceNav({ current }: { current: ReferenceKey }) {
+function ReferenceNav({ current, group }: { current: ReferenceKey; group?: string }) {
   return (
     <nav aria-label="Ma'lumotnomalar" className="flex flex-wrap gap-1.5">
-      {REFERENCE_KEYS.map((key) => {
+      {REFERENCE_KEYS.filter((key) => getReference(key).group === group).map((key) => {
         const active = key === current;
         return (
           <Link

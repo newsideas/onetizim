@@ -57,7 +57,6 @@ const ARCHIVED: [string, string][] = [
   ["/expenses", "/finance/payments"],
   ["/education", "/education/students"],
   ["/finance", "/finance/payments"],
-  ["/settings/references", "/settings/references/academic-years"],
 ];
 
 const nextConfig: NextConfig = {

@@ -16,7 +16,7 @@ export const EXPENSE_CATEGORIES = [
   "Boshqa",
 ];
 
-const methodSchema = z.enum(["naqd", "karta", "click", "payme"], {
+const methodSchema = z.enum(["naqd", "karta", "click", "payme", "terminal"], {
   message: "To'lov usulini tanlang",
 });
 
@@ -34,6 +34,8 @@ export const expenseSchema = z.object({
   method: methodSchema,
   spentAt: isoDate,
   note: optionalNote,
+  /** Kassa ko'rsatilmasa baza tashkilotning asosiy kassasini tanlaydi (0057). */
+  cashboxId: z.string().optional(),
 });
 
 export type ExpenseInput = z.input<typeof expenseSchema>;

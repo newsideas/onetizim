@@ -15,6 +15,13 @@ export interface TeacherRow {
   salary_type: SalaryType | null;
   rate: number | null;
   is_active: boolean;
+  // "Xodim qo'shish" maydonlari (0055); migratsiya qo'llanmaguncha bazadan kelmaydi.
+  gender?: string | null;
+  birth_date?: string | null;
+  pays_salary?: boolean | null;
+  work_schedule_id?: string | null;
+  comment?: string | null;
+  email?: string | null;
 }
 
 interface TeachersContextValue {

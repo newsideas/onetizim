@@ -1,127 +1,170 @@
+import { Inbox } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
-import { GradeFilters } from "@/components/grades/GradeFilters";
-import { HomeworkForm } from "@/components/homework/HomeworkForm";
 import { HomeworkDeleteButton } from "@/components/homework/HomeworkDeleteButton";
+import { NewHomeworkButton } from "@/components/homework/NewHomeworkButton";
+import { InlineFilters, TablePager } from "@/components/ui/ListToolbar";
+import { readPaging } from "@/lib/paging";
 import { formatDate, todayIso } from "@/lib/utils/date";
 
-interface HomeworkRow {
+const TH = "px-4 py-3 text-xs font-semibold tracking-wide whitespace-nowrap text-ink-muted uppercase";
+
+interface HomeworkQueryRow {
   id: string;
   subject: string;
   title: string;
   details: string | null;
   due_on: string;
+  max_score: number | null;
+  created_at: string;
+  group: { id: string; name: string; teacher: { full_name: string } | null } | null;
 }
 
 export default async function HomeworkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ group?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
   const { supabase } = await requirePermission("homework.manage");
-  const { data: groups } = await supabase.from("groups").select("id, name").order("name");
-
-  if (!groups || groups.length === 0) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-ink">Uy vazifalari</h1>
-        <div className="rounded-xl border border-line p-8 text-center text-ink-faint">
-          Sizga biriktirilgan sinf yo&apos;q.
-        </div>
-      </div>
-    );
-  }
-
-  const groupId =
-    params.group && groups.some((g) => g.id === params.group) ? params.group : groups[0].id;
   const today = todayIso();
 
-  const [homeworkResult, { data: lessons }, { data: courses }] = await Promise.all([
+  const [homeworkRes, groupsRes, lessonsRes, coursesRes] = await Promise.all([
     supabase
       .from("homework")
-      .select("id, subject, title, details, due_on")
-      .eq("group_id", groupId)
+      .select(
+        "id, subject, title, details, due_on, max_score, created_at, " +
+          "group:groups(id, name, teacher:teachers(full_name))",
+      )
       .order("due_on", { ascending: false })
-      .limit(100),
-    supabase.from("lessons").select("subject").eq("group_id", groupId),
+      .limit(1000),
+    supabase.from("groups").select("id, name").order("name"),
+    supabase.from("lessons").select("subject"),
     supabase.from("courses").select("name").order("name"),
   ]);
 
-  const rows = (homeworkResult.data ?? []) as HomeworkRow[];
+  const groups = groupsRes.data ?? [];
   const subjects = [
     ...new Set([
-      ...(lessons ?? []).map((l) => l.subject as string),
-      ...(courses ?? []).map((c) => c.name as string),
+      ...(lessonsRes.data ?? []).map((l) => l.subject as string),
+      ...(coursesRes.data ?? []).map((c) => c.name as string),
     ]),
   ].sort();
 
-  const upcoming = rows.filter((r) => r.due_on >= today).sort((a, b) => a.due_on.localeCompare(b.due_on));
-  const past = rows.filter((r) => r.due_on < today);
+  const q = params.q?.trim().toLowerCase();
+  const items = ((homeworkRes.data ?? []) as unknown as HomeworkQueryRow[]).filter((h) => {
+    if (q && !`${h.title} ${h.subject}`.toLowerCase().includes(q)) return false;
+    if (params.group && h.group?.id !== params.group) return false;
+    if (params.state === "upcoming" && h.due_on < today) return false;
+    if (params.state === "past" && h.due_on >= today) return false;
+    return true;
+  });
 
-  function renderRows(list: HomeworkRow[]) {
-    return (
-      <ul className="divide-y divide-line rounded-xl border border-line">
-        {list.map((r) => (
-          <li key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-ink">
-                {r.title} <span className="font-normal text-ink-faint">· {r.subject}</span>
-              </div>
-              {r.details && <p className="mt-0.5 text-sm text-ink-muted">{r.details}</p>}
-              <p className="mt-1 text-xs text-ink-faint">Topshirish: {formatDate(r.due_on)}</p>
-            </div>
-            <HomeworkDeleteButton homeworkId={r.id} title={r.title} />
-          </li>
-        ))}
-      </ul>
-    );
-  }
+  const { page, size } = readPaging(params);
+  const current = Math.min(page, Math.max(1, Math.ceil(items.length / size)));
+  const offset = (current - 1) * size;
+  const visible = items.slice(offset, offset + size);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-ink">Uy vazifalari</h1>
-
-      {homeworkResult.error && (
+    <div className="space-y-3">
+      {homeworkRes.error && (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-          Uy vazifalari jadvali bazada topilmadi — 0034_teacher_cabinet.sql migratsiyasini Supabase
-          SQL Editor&apos;da ishga tushiring.
+          Vazifalar jadvali bazada topilmadi — 0034_teacher_cabinet.sql va 0042_group_module.sql
+          migratsiyalarini Supabase SQL Editor&apos;da ishga tushiring.
         </p>
       )}
 
-      <GradeFilters
-        groups={groups}
-        groupId={groupId}
-        subject=""
-        subjects={[]}
-        basePath="/education/homework"
-        hideSubject
+      <InlineFilters
+        storageKey="homework"
+        configurable={false}
+        actions={
+          groups.length > 0 ? (
+            <NewHomeworkButton groups={groups} subjects={subjects} today={today} />
+          ) : undefined
+        }
+        fields={[
+          { name: "q", label: "Qidiruv", type: "text" },
+          {
+            name: "group",
+            label: "Guruh",
+            type: "select",
+            options: groups.map((g) => ({ value: g.id, label: g.name })),
+          },
+          {
+            name: "state",
+            label: "Muddati",
+            type: "select",
+            options: [
+              { value: "upcoming", label: "Yaqin muddatli" },
+              { value: "past", label: "Muddati o'tgan" },
+            ],
+          },
+        ]}
       />
 
-      <HomeworkForm
-        key={groupId}
-        groupId={groupId}
-        subjects={subjects}
-        defaultSubject=""
-        today={today}
-      />
-
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-ink-muted">Yaqin muddatli vazifalar</h2>
-        {upcoming.length === 0 ? (
-          <div className="rounded-xl border border-line p-6 text-center text-sm text-ink-faint">
-            Hozircha vazifa yo&apos;q.
-          </div>
-        ) : (
-          renderRows(upcoming)
-        )}
-      </section>
-
-      {past.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-ink-muted">Muddati o&apos;tgan</h2>
-          {renderRows(past)}
-        </section>
-      )}
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+        <div className="flex justify-end px-4 py-3">
+          <span className="rounded-lg border border-line px-2.5 py-1 text-xs text-ink-muted">
+            Umumiy soni <b className="ml-1 text-ink">{items.length}</b>
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-line bg-canvas">
+              <tr>
+                <th className={`${TH} w-12`}>№</th>
+                <th className={TH}>Nomi</th>
+                <th className={TH}>Fan</th>
+                <th className={TH}>Topshirish muddati</th>
+                <th className={TH}>O&apos;qituvchi</th>
+                <th className={TH}>Guruh</th>
+                <th className={TH}>Maksimal ball</th>
+                <th className={TH}>Izoh</th>
+                <th className={TH}>Yaratilgan sana</th>
+                <th className={TH}>Amallar</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {visible.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-4 py-16 text-center">
+                    <Inbox size={22} className="mx-auto mb-2 text-ink-faint" aria-hidden="true" />
+                    <div className="text-sm font-medium text-ink-muted">Ma&apos;lumotlar topilmadi</div>
+                    <div className="mt-0.5 text-xs text-ink-faint">
+                      Ma&apos;lumotlar topilmadi. Filterni o&apos;zgartirib ko&apos;ring.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                visible.map((h, i) => (
+                  <tr key={h.id} className="hover:bg-canvas">
+                    <td className="px-4 py-3 text-ink-faint">{offset + i + 1}</td>
+                    <td className="px-4 py-3 font-medium text-ink">{h.title}</td>
+                    <td className="px-4 py-3 text-ink-muted">{h.subject}</td>
+                    <td
+                      className={`px-4 py-3 whitespace-nowrap ${
+                        h.due_on < today ? "text-red-600" : "text-ink-muted"
+                      }`}
+                    >
+                      {formatDate(h.due_on)}
+                    </td>
+                    <td className="px-4 py-3 text-ink-muted">{h.group?.teacher?.full_name ?? "—"}</td>
+                    <td className="px-4 py-3 text-ink-muted">{h.group?.name ?? "—"}</td>
+                    <td className="px-4 py-3 text-ink-muted">{h.max_score ?? "—"}</td>
+                    <td className="max-w-xs truncate px-4 py-3 text-ink-muted">{h.details || "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
+                      {formatDate(h.created_at)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <HomeworkDeleteButton homeworkId={h.id} title={h.title} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <TablePager total={items.length} page={current} size={size} />
+      </div>
     </div>
   );
 }

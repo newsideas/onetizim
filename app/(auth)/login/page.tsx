@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveHost } from "@/lib/tenant";
 
 /**
- * Kirish sahifasi manzilga qarab o'zgaradi: maktab subdomenida maktab nomi,
- * admin subdomenida "Super Admin". Mavjud bo'lmagan subdomen — 404.
+ * Kirish sahifasi manzilga qarab o'zgaradi: markaz subdomenida markaz nomi
+ * va telefon/login bilan kirish, admin subdomenida Super Admin (email).
+ * Mavjud bo'lmagan subdomen — 404.
  */
 export default async function LoginPage({
   searchParams,
@@ -24,20 +25,16 @@ export default async function LoginPage({
 
     return (
       <LoginForm
-        title={org.name}
-        subtitle="Tizimga kirish — o'z login va parolingizni kiriting"
+        schoolName={org.name}
+        slug={host.slug}
         notice={
           params.registered
-            ? "Maktabingiz ro'yxatdan o'tdi. Ro'yxatdan o'tishda kiritgan email va parol bilan kiring."
+            ? "Markazingiz ochildi. Telefon raqamingiz va parolingiz bilan kiring."
             : undefined
         }
       />
     );
   }
 
-  if (host.kind === "admin") {
-    return <LoginForm title="Super Admin" subtitle="Platforma boshqaruvi — faqat administratorlar uchun" />;
-  }
-
-  return <LoginForm title="Tizimga kirish" subtitle="Hisobingizga kiring" />;
+  return <LoginForm schoolName={host.kind === "admin" ? "Super Admin" : undefined} />;
 }

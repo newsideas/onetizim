@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isRole, permissionForPath, roleCan } from "@/lib/auth/permissions";
 import { resolveHost, type HostInfo } from "@/lib/tenant";
 
-const AUTH_ROUTES = new Set(["/login", "/register"]);
+const AUTH_ROUTES = new Set(["/login"]);
 
 /** Mavjud bo'lmagan yo'l: Next.js 404 sahifasini ko'rsatadi. */
 const NOT_FOUND_PATH = "/404-not-found";
@@ -12,17 +12,16 @@ type Gate = { action: "allow"; rewrite?: string } | { action: "notfound" };
 
 /**
  * Manzil (host) turiga qarab qaysi yo'llar ochiqligini belgilaydi:
- * - asosiy sayt (edugram.uz): tanishtiruv, ro'yxatdan o'tish, maktab qidirish;
- * - admin.edugram.uz: faqat Super Admin;
- * - <slug>.edugram.uz: faqat maktab ilovasi.
+ * - asosiy manzil (onetizim.uz): hozircha sahifasiz; faqat tashqi xizmatlar API'si ochiq;
+ * - admin.edugram.uz: faqat Super Admin (markazlarni shu yerda ochamiz);
+ * - <slug>.edugram.uz: faqat o'quv markaz ilovasi.
  */
 function gateByHost(host: HostInfo, pathname: string): Gate {
   const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
 
+  // Asosiy manzilda hozircha sahifa yo'q (tanishtiruv sayti keyin quriladi): faqat tashqi xizmatlar uchun API.
   if (host.kind === "root") {
-    if (pathname === "/") return { action: "allow", rewrite: "/site" };
-    if (pathname === "/login") return { action: "allow", rewrite: "/site/find-school" };
-    if (pathname === "/register" || under("/site") || pathname.startsWith("/api/telegram/webhook")) {
+    if (pathname.startsWith("/api/telegram/webhook")) {
       return { action: "allow" };
     }
     return { action: "notfound" };
@@ -34,7 +33,7 @@ function gateByHost(host: HostInfo, pathname: string): Gate {
     return { action: "notfound" };
   }
 
-  if (under("/admin") || under("/site") || pathname === "/register") return { action: "notfound" };
+  if (under("/admin")) return { action: "notfound" };
   return { action: "allow" };
 }
 
@@ -51,7 +50,6 @@ function isPublicPath(pathname: string, host: HostInfo) {
   if (host.kind === "admin") return pathname === "/login";
   return (
     AUTH_ROUTES.has(pathname) ||
-    pathname.startsWith("/invite/") ||
     pathname.startsWith("/api/telegram/webhook") ||
     pathname.startsWith("/api/cron/")
   );
@@ -120,7 +118,14 @@ export async function updateSession(request: NextRequest) {
     return redirectTo("/login", pathname === "/" ? undefined : pathname + search);
   }
 
-  if (AUTH_ROUTES.has(pathname)) return redirectTo("/");
+  if (AUTH_ROUTES.has(pathname)) {
+    // Token amal qilsa ham server sessiyani bekor qilgan bo'lishi mumkin (masalan parol yangilangan):
+    // bunday foydalanuvchini "/" ga yubormaymiz, aks holda "/" va "/login" orasida cheksiz sikl bo'ladi.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user ? redirectTo("/") : supabaseResponse;
+  }
 
   const role = claims.org_role;
   const permission = permissionForPath(pathname);

@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "EduGram System",
-  description: "Xususiy maktab, bog'cha va o'quv markazlari uchun boshqaruv tizimi",
+  description: "O'quv markazlari uchun boshqaruv tizimi",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

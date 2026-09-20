@@ -1,166 +1,192 @@
 import { redirect } from "next/navigation";
-import { Users, AlertTriangle, CalendarCheck, Wallet, Coins, Target } from "lucide-react";
+import {
+  Archive,
+  Banknote,
+  ListX,
+  Snowflake,
+  UserCheck,
+  UserMinus,
+  UserPlus,
+  UserRound,
+  UserRoundCheck,
+  UserX,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
-import { ABSENCE_ALERT_THRESHOLD, getDashboardData } from "@/lib/dashboard";
+import { getHomeStats } from "@/lib/home";
 import { termsFor } from "@/lib/segment";
 import { StatCard } from "@/components/ui/StatCard";
-import { formatSom } from "@/lib/utils/currency";
-import { bugungiKun, formatDate } from "@/lib/utils/date";
+import { HomeDashboard, type HomeOptions } from "@/components/home/HomeDashboard";
 import {
-  FinancialActivity,
-  FinanceChart,
-  ImportantAlerts,
-  type DashboardAlert,
-  MonthlyTable,
-  OrgCard,
-  GroupDistribution,
-  TodayAttendance,
-  QuickActions,
-} from "@/components/dashboard/DashboardBlocks";
+  buildEntries,
+  type LessonRow,
+  type ScheduleGroup,
+} from "@/components/schedule/schedule-entries";
+import { bugungiKun } from "@/lib/utils/date";
+
+const SCHEDULE_SELECT =
+  "id, name, schedule_days, start_time, end_time, end_date, lesson_duration_minutes, " +
+  "teacher:teachers(full_name), room:rooms(id, name), course:courses(name)";
+
+const LESSON_SELECT =
+  "id, group_id, teacher_id, room_id, subject, weekday, start_time, end_time, " +
+  "group:groups(name, end_date), teacher:teachers(full_name), room:rooms(id, name)";
+
+const NOTICE =
+  "rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300";
 
 export default async function DashboardPage() {
   const { supabase, org, role } = await requirePermission("dashboard.view");
-  // O'qituvchi maktabning moliyaviy ko'rsatkichlarini emas, o'z kabinetini ko'radi.
+  // O'qituvchi maktabning umumiy ko'rsatkichlarini emas, o'z kabinetini ko'radi.
   if (role === "teacher") redirect("/cabinet");
+
   const terms = termsFor(org.type);
-  const data = await getDashboardData(supabase);
+  const student = terms.student.toLowerCase();
 
-  const alerts: DashboardAlert[] = [];
-  if (data.debtorCount > 0) {
-    alerts.push({
-      tone: "red",
-      text: `${data.debtorCount} ta ${terms.student.toLowerCase()}ning to'lovi kechikkan`,
-      detail: `Jami qarz: ${formatSom(data.totalDebt)}`,
-      href: "/finance/payments",
-    });
-  }
-  if (data.frequentAbsentees.length > 0) {
-    alerts.push({
-      tone: "amber",
-      text: `${data.frequentAbsentees.length} ta ${terms.student.toLowerCase()} so'nggi 30 kunda ${ABSENCE_ALERT_THRESHOLD}+ marta dars qoldirgan`,
-      detail: data.frequentAbsentees
-        .slice(0, 3)
-        .map((a) => `${a.full_name} (${a.count})`)
-        .join(", "),
-      href: "/education/attendance",
-    });
-  }
-  if (data.callsDue > 0) {
-    alerts.push({
-      tone: "amber",
-      text: `${data.callsDue} ta arizada bugun bog'lanish kerak`,
+  const [stats, groupsRes, lessonsRes, teachersRes, roomsRes, coursesRes] = await Promise.all([
+    getHomeStats(supabase),
+    supabase.from("groups").select(SCHEDULE_SELECT).order("start_time", { nullsFirst: false }),
+    supabase.from("lessons").select(LESSON_SELECT).order("start_time"),
+    supabase.from("teachers").select("full_name").order("full_name"),
+    supabase.from("rooms").select("id, name").order("name"),
+    supabase.from("courses").select("name").order("name"),
+  ]);
+
+  // Supabase'ning TS inferi many-to-one join'ni massiv deb hisoblaydi, lekin
+  // PostgREST yakka obyekt qaytaradi (education/schedule sahifasidagi kabi cast).
+  const groups = (groupsRes.data ?? []) as unknown as ScheduleGroup[];
+  const lessons = (lessonsRes.data ?? []) as unknown as LessonRow[];
+  const entries = buildEntries(groups, lessons);
+
+  const options: HomeOptions = {
+    teachers: (teachersRes.data ?? []).map((t) => t.full_name as string),
+    groups: groups.map((g) => g.name),
+    rooms: (roomsRes.data ?? []) as { id: string; name: string }[],
+    courses: (coursesRes.data ?? []).map((c) => c.name as string),
+  };
+
+  const studentsHref = "/education/students";
+
+  const cards = [
+    { label: "Buyurtmalar", value: stats.orders, icon: UserPlus, accent: "green", href: "/leads" },
+    {
+      label: "Birinchi darsga keladiganlar",
+      value: stats.firstLesson,
+      icon: UserRoundCheck,
+      accent: "brand",
       href: "/leads",
-    });
-  }
-  if (data.todayPaid > 0) {
-    alerts.push({
-      tone: "green",
-      text: `Bugungi tushum: ${formatSom(data.todayPaid)}`,
+    },
+    {
+      label: `Yangi ${terms.studentPlural.toLowerCase()}`,
+      value: stats.newStudents,
+      icon: UserRound,
+      accent: "purple",
+      href: studentsHref,
+    },
+    {
+      label: `Aktiv ${terms.studentPlural.toLowerCase()}`,
+      value: stats.activeStudents,
+      icon: UserCheck,
+      accent: "green",
+      href: `${studentsHref}?status=active`,
+    },
+    {
+      label: "Buyurtmadan ketganlar",
+      value: stats.lostOrders,
+      icon: ListX,
+      accent: "red",
+      href: "/leads",
+    },
+    {
+      label: `Yangi ${student}dan ketganlar`,
+      value: stats.leftNew,
+      icon: UserMinus,
+      accent: "red",
+      href: `${studentsHref}?status=archived`,
+    },
+    {
+      label: `Aktiv ${student}dan ketganlar`,
+      value: stats.leftActive,
+      icon: UserX,
+      accent: "red",
+      href: `${studentsHref}?status=archived`,
+    },
+    {
+      label: "Qarzdorlar",
+      value: stats.debtors,
+      icon: Banknote,
+      accent: "dark",
       href: "/finance/payments",
-    });
-  }
+    },
+    {
+      label: terms.groupPlural,
+      value: stats.groups,
+      icon: Users,
+      accent: "blue",
+      href: "/education/groups",
+    },
+    {
+      label: "Birinchi to'lovni qilganlar",
+      value: stats.firstPayers,
+      icon: Wallet,
+      accent: "amber",
+      href: "/finance/payments",
+    },
+    {
+      label: "Muzlatilgan",
+      value: stats.frozen,
+      icon: Snowflake,
+      accent: "blue",
+      href: `${studentsHref}?status=frozen`,
+    },
+    {
+      label: "Arxivlar",
+      value: stats.archived,
+      icon: Archive,
+      accent: "gray",
+      href: `${studentsHref}?status=archived`,
+    },
+  ] as const;
 
-  const director =
-    [org.director_last_name, org.director_first_name]
-      .filter(Boolean)
-      .join(" ") || null;
+  const notices = (
+    <>
+      {lessonsRes.error && (
+        <p className={NOTICE}>
+          Darslar jadvali bazada topilmadi — 0028_lessons.sql migratsiyasini Supabase SQL
+          Editor&apos;da ishga tushiring.
+        </p>
+      )}
+      {stats.archiveDateMissing && (
+        <p className={NOTICE}>
+          «Ketganlar» kartalari uchun 0041_student_archived_at.sql migratsiyasini Supabase SQL
+          Editor&apos;da ishga tushiring.
+        </p>
+      )}
+    </>
+  );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-ink">Bosh sahifa</h1>
-        <p className="text-sm text-ink-muted">
-          {formatDate(new Date())} · {bugungiKun()}
-        </p>
-      </div>
-
-      {/* Umumiy ko'rsatkichlar */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold tracking-wide text-ink-muted uppercase">
-          Umumiy ko&apos;rsatkichlar
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          <StatCard
-            label={`Aktiv ${terms.studentPlural.toLowerCase()}`}
-            value={data.activeStudents}
-            icon={Users}
-            accent="brand"
-            hint={`Jami ${data.totalStudents} ta`}
-          />
-          <StatCard
-            label="Qarzdorlar"
-            value={data.debtorCount}
-            icon={AlertTriangle}
-            accent="red"
-            hint={data.totalDebt > 0 ? formatSom(data.totalDebt) : undefined}
-          />
-          <StatCard
-            label="Bugungi to'lov"
-            value={formatSom(data.todayPaid)}
-            icon={Wallet}
-            accent="green"
-          />
-          <StatCard
-            label="Oylik tushum"
-            value={formatSom(data.monthRevenue)}
-            icon={Coins}
-            accent="blue"
-          />
-          <StatCard
-            label={`Bugungi ${terms.lessonPlural.toLowerCase()}`}
-            value={data.todayGroups}
-            icon={CalendarCheck}
-            accent="amber"
-            hint={bugungiKun()}
-          />
-          <StatCard
-            label="Yangi arizalar"
-            value={data.newLeadsMonth}
-            icon={Target}
-            accent="brand"
-            hint={data.callsDue > 0 ? `Bugun bog'lanish: ${data.callsDue}` : "Bu oy"}
-          />
+    <HomeDashboard
+      title="Dars jadvali"
+      today={bugungiKun()}
+      entries={entries}
+      options={options}
+      statsNotice={notices}
+      stats={
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {cards.map((c) => (
+            <StatCard
+              key={c.label}
+              label={c.label}
+              value={c.value}
+              icon={c.icon}
+              accent={c.accent}
+              href={c.href}
+            />
+          ))}
         </div>
-      </section>
-
-      {/* Muhim ogohlantirishlar */}
-      <ImportantAlerts alerts={alerts} />
-
-      {/* Moliyaviy faollik va tahlil */}
-      <section className="grid gap-4 xl:grid-cols-2">
-        <FinancialActivity
-          debtors={data.topDebtors}
-          payments={data.recentPayments}
-          debtorCount={data.debtorCount}
-          terms={terms}
-        />
-        <FinanceChart months={data.months} />
-      </section>
-
-      {/* Oylar kesimida hisob-kitob */}
-      <MonthlyTable months={data.months} />
-
-      {/* Muassasa, guruhlar va davomat */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        <OrgCard
-          name={org.name}
-          typeLabel={terms.label}
-          director={director}
-          phone={org.phone ?? null}
-          region={org.region ?? null}
-          district={org.district ?? null}
-        />
-        <GroupDistribution groups={data.groupCounts} terms={terms} />
-        <TodayAttendance
-          present={data.attendanceToday.present}
-          late={data.attendanceToday.late}
-          absent={data.attendanceToday.absent}
-          percent={data.attendanceToday.percent}
-          terms={terms}
-        />
-      </section>
-
-      <QuickActions terms={terms} />
-    </div>
+      }
+    />
   );
 }

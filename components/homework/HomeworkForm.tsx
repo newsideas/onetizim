@@ -12,11 +12,17 @@ const labelClass = "mb-1.5 block text-xs font-medium text-ink-muted";
 /** Sinfga yangi uy vazifasi berish. */
 export function HomeworkForm({
   groupId,
+  groups,
   subjects,
   defaultSubject,
   today,
+  onSaved,
 }: {
-  groupId: string;
+  /** Aniq sinf uchun; berilmasa `groups` dan tanlanadi. */
+  groupId?: string;
+  /** Berilsa forma ichida guruh tanlovi chiqadi (Barcha vazifalar sahifasi). */
+  groups?: { id: string; name: string }[];
+  onSaved?: () => void;
   subjects: string[];
   defaultSubject: string;
   today: string;
@@ -30,24 +36,56 @@ export function HomeworkForm({
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [dueOn, setDueOn] = useState(today);
+  const [maxScore, setMaxScore] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState(groupId ?? groups?.[0]?.id ?? "");
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(undefined);
     setSaved(false);
     startTransition(async () => {
-      const result = await createHomework({ groupId, subject, title, details, dueOn });
+      const result = await createHomework({
+        groupId: selectedGroup,
+        subject,
+        title,
+        details,
+        dueOn,
+        maxScore: maxScore.trim() === "" ? null : Number(maxScore),
+      });
       if (!result.ok) return setError(result.error);
       setTitle("");
       setDetails("");
+      setMaxScore("");
       setSaved(true);
       router.refresh();
+      onSaved?.();
     });
   }
 
   return (
     <form onSubmit={submit} className="space-y-3 rounded-xl border border-line p-4" noValidate>
       <h2 className="text-sm font-semibold text-ink">Yangi uy vazifasi</h2>
+
+      {groups && (
+        <div>
+          <label htmlFor="hw-group" className={labelClass}>
+            Guruh <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="hw-group"
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            disabled={isPending}
+            className={financeInputClass}
+          >
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
@@ -86,6 +124,20 @@ export function HomeworkForm({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label htmlFor="hw-max" className={labelClass}>
+            Maksimal ball
+          </label>
+          <input
+            id="hw-max"
+            type="number"
+            min={1}
+            value={maxScore}
+            onChange={(e) => setMaxScore(e.target.value)}
+            disabled={isPending}
+            className={financeInputClass}
+          />
+        </div>
         <div className="sm:col-span-2">
           <label htmlFor="hw-details" className={labelClass}>
             Izoh

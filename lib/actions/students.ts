@@ -3,7 +3,12 @@
 import { ActionError, runAction } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
-import { studentSchema, type StudentInput } from "@/lib/validations/student";
+import {
+  newStudentSchema,
+  studentSchema,
+  type NewStudentInput,
+  type StudentInput,
+} from "@/lib/validations/student";
 import type { StudentStatus } from "@/types/database";
 import { linkParentToStudent } from "@/lib/parents";
 
@@ -83,6 +88,84 @@ export async function createStudent(input: StudentInput) {
   });
 }
 
+export interface StudentFormOptions {
+  categories: { id: string; name: string }[];
+  campaigns: { id: string; name: string }[];
+  languages: string[];
+}
+
+/** "Yangi o'quvchi qo'shish" oynasidagi tanlov ro'yxatlari (kategoriya, marketing, o'qish tili). */
+export async function getStudentFormOptions() {
+  return runAction(async (): Promise<StudentFormOptions> => {
+    const { supabase } = await assertPermission("students.manage");
+    const [categories, campaigns, languages] = await Promise.all([
+      supabase.from("course_categories").select("id, name").order("name"),
+      supabase.from("marketing_campaigns").select("id, name").order("name"),
+      supabase.from("academic_languages").select("name").order("name"),
+    ]);
+    return {
+      categories: (categories.data ?? []) as { id: string; name: string }[],
+      campaigns: (campaigns.data ?? []) as { id: string; name: string }[],
+      languages: ((languages.data ?? []) as { name: string }[]).map((l) => l.name),
+    };
+  });
+}
+
+/** Edu tizimdagi "Yangi o'quvchi qo'shish" oynasi: faqat ism majburiy, guruh keyin biriktiriladi. */
+export async function createStudentQuick(input: NewStudentInput) {
+  return runAction(async () => {
+    const parsed = newStudentSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+    }
+    const v = parsed.data;
+
+    const { supabase, org } = await assertPermission("students.manage");
+
+    const firstName = v.firstName.trim();
+    const lastName = nullable(v.lastName);
+    const { data, error } = await supabase
+      .from("students")
+      .insert({
+        org_id: org.id,
+        first_name: firstName,
+        last_name: lastName,
+        middle_name: nullable(v.fatherName),
+        full_name: [lastName, firstName].filter(Boolean).join(" "),
+        phone: nullable(v.phone),
+        email: nullable(v.email),
+        category_id: nullable(v.categoryId),
+        birth_date: nullable(v.birthDate),
+        payment_date: nullable(v.paymentDate),
+        marketing_campaign_id: nullable(v.marketingCampaignId),
+        study_language: nullable(v.studyLanguage),
+        father_phone: nullable(v.fatherPhone),
+        mother_name: nullable(v.motherName),
+        mother_phone: nullable(v.motherPhone),
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      throw new ActionError(
+        /column|schema cache/.test(error.message)
+          ? "Yangi ustunlar bazada yo'q — 0052_student_quick_fields.sql migratsiyasini ishga tushiring"
+          : "Saqlashda xatolik: " + error.message,
+      );
+    }
+
+    await linkParentToStudent(supabase, org.id, data.id as string, {
+      fullName: nullable(v.motherName),
+      phone: nullable(v.motherPhone),
+      relation: "Onasi",
+    });
+
+    revalidatePath("/education/students");
+    revalidatePath("/education/parents");
+    return data.id as string;
+  });
+}
+
 export async function updateStudent(studentId: string, input: StudentInput) {
   return runAction(async () => {
     const parsed = studentSchema.safeParse(input);
@@ -113,14 +196,22 @@ export async function updateStudent(studentId: string, input: StudentInput) {
 export async function updateStudentStatus(
   studentId: string,
   status: StudentStatus,
+  /** Arxivlanganda ketish sababi (ixtiyoriy). */
+  reason?: string,
 ) {
   return runAction(async () => {
     const { supabase } = await assertPermission("students.manage");
 
-    const { error } = await supabase
+    const archiveReason = status === "archived" ? reason?.trim().slice(0, 200) : undefined;
+    let { error } = await supabase
       .from("students")
-      .update({ status })
+      .update(archiveReason ? { status, archive_reason: archiveReason } : { status })
       .eq("id", studentId);
+
+    // 0049 migratsiyasi hali qo'llanmagan bo'lsa sabab saqlanmaydi, lekin arxivlash ishlayveradi.
+    if (error && archiveReason && error.message.includes("archive_reason")) {
+      ({ error } = await supabase.from("students").update({ status }).eq("id", studentId));
+    }
 
     if (error) {
       throw new ActionError("Holatni o'zgartirishda xatolik: " + error.message);

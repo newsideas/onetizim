@@ -190,7 +190,7 @@ export default async function ContractAssignPage({
         actions={<NewContractButton />}
         notice={
           contractsResult.error
-            ? "Shartnomalar jadvali bazada topilmadi — 0013, 0014 va 0015 migratsiyalarini Supabase SQL Editor'da ishga tushiring."
+            ? "Shartnomalar jadvali bazada topilmadi — 0013, 0014 va 0015 migratsiyalarini Supabase SQL Editor&apos;da ishga tushiring."
             : undefined
         }
         tabs={

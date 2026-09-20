@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setOrgPlan, type PlanChange } from "@/lib/actions/platform";
+import { useDialogs } from "@/components/ui/ConfirmDialog";
 import type { EffectiveStatus } from "@/lib/platform";
 
 const buttonClass =
@@ -21,9 +22,10 @@ export function OrgPlanControls({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
+  const { confirm, dialogs } = useDialogs();
 
-  function apply(change: PlanChange, question: string) {
-    if (!confirm(`${orgName}\n\n${question}`)) return;
+  async function apply(change: PlanChange, question: string) {
+    if (!(await confirm(`${orgName}\n\n${question}`, { confirmLabel: "Ha" }))) return;
     setError(undefined);
     startTransition(async () => {
       const result = await setOrgPlan(orgId, change);
@@ -34,6 +36,7 @@ export function OrgPlanControls({
 
   return (
     <div className="space-y-1">
+      {dialogs}
       <div className="flex flex-wrap gap-1.5">
         <button
           type="button"

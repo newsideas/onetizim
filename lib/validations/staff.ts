@@ -6,11 +6,13 @@ export type TeacherKind = (typeof TEACHER_KINDS)[number];
 
 export const TEACHER_KIND_LABELS: Record<TeacherKind, string> = {
   teacher: "O'qituvchi",
-  manager: "Menejer",
+  manager: "Moderator",
   admin: "Ma'muriyat",
 };
 
 export const SALARY_TYPES = ["fixed", "per_lesson", "percent"] as const;
+
+export const GENDERS = ["Erkak", "Ayol"] as const;
 
 const optionalText = (max: number) =>
   z
@@ -30,17 +32,38 @@ export const teacherSchema = z.object({
     .nonnegative("Stavka manfiy bo'lishi mumkin emas")
     .optional()
     .nullable(),
+
+  // Edu tizimdagi "Xodim qo'shish" maydonlari (0055_teacher_details.sql)
+  gender: z.union([z.enum(GENDERS), z.literal("")]).optional(),
+  birthDate: optionalText(10),
+  paysSalary: z.boolean().optional(),
+  workScheduleId: optionalText(36),
+  comment: optionalText(500),
+  email: z.union([z.string().trim().email("Elektron pochta noto'g'ri"), z.literal("")]).optional(),
 });
 
 export type TeacherInput = z.input<typeof teacherSchema>;
 
-/** Taklif faqat direktordan past rollarga beriladi. */
+/** Tayinlanadigan rollar: direktordan past hammasi. */
 export const INVITABLE_ROLES = ROLES.filter((r) => r !== "owner");
 
-export const inviteSchema = z.object({
+/** Direktor / o'quv menejeri xodimga login va parol beradi. */
+export const staffAccountSchema = z.object({
   fullName: z.string().trim().min(2, "Ism familiyani kiriting").max(120, "Ism juda uzun"),
-  role: z.enum(["manager", "teacher"], { message: "Rolni tanlang" }),
-  employeeId: optionalText(36),
+  /** Telefon raqam yoki login (masalan: aziz.karimov). */
+  login: z.string().trim().min(3, "Login yoki telefon raqamni kiriting").max(40, "Login juda uzun"),
+  password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak").max(72, "Parol juda uzun"),
+  role: z.enum(["manager", "teacher", "accountant"], { message: "Rolni tanlang" }),
+  employeeId: z
+    .string()
+    .nullish()
+    .transform((v) => v || null),
 });
 
-export type InviteInput = z.input<typeof inviteSchema>;
+export type StaffAccountInput = z.input<typeof staffAccountSchema>;
+
+export const resetPasswordSchema = z.object({
+  password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak").max(72, "Parol juda uzun"),
+});
+
+export type ResetPasswordInput = z.input<typeof resetPasswordSchema>;

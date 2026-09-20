@@ -7,14 +7,15 @@
  * bazadagi RLS (0017–0020 migratsiyalari).
  */
 
-export type Role = "owner" | "manager" | "teacher";
+export type Role = "owner" | "manager" | "teacher" | "accountant";
 
-export const ROLES: Role[] = ["owner", "manager", "teacher"];
+export const ROLES: Role[] = ["owner", "manager", "teacher", "accountant"];
 
 export const ROLE_LABELS: Record<Role, string> = {
   owner: "Direktor",
   manager: "Administrator",
   teacher: "O'qituvchi",
+  accountant: "Buxgalter",
 };
 
 export const PERMISSION_LABELS = {
@@ -33,6 +34,7 @@ export const PERMISSION_LABELS = {
   "salaries.manage": "Oyliklar",
   "finance.reports": "Balans va moliyaviy hisobot",
   "staff.manage": "Xodimlar va rollar",
+  "staff.accounts": "Xodimlar uchun login va parol",
   "notifications.manage": "Xabarnomalar",
   "settings.manage": "Sozlamalar",
 } as const;
@@ -57,8 +59,18 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "payments.manage",
     "contracts.manage",
     "notifications.manage",
+    "staff.accounts",
   ],
   teacher: ["dashboard.view", "groups.view", "schedule.view", "attendance.mark", "grades.manage", "homework.manage"],
+  // Buxgalter faqat moliya bilan ishlaydi (RLS: 0040_login_accounts.sql).
+  accountant: [
+    "dashboard.view",
+    "students.view",
+    "groups.view",
+    "payments.manage",
+    "contracts.manage",
+    "finance.reports",
+  ],
 };
 
 export function isRole(value: unknown): value is Role {
@@ -79,10 +91,20 @@ export function roleCan(role: Role, permission: Permission): boolean {
  */
 export const ROUTE_PERMISSIONS: [prefix: string, permission: Permission][] = [
   ["/leads", "leads.manage"],
+  ["/tasks", "dashboard.view"],
+  ["/control", "attendance.mark"],
+  ["/reports", "finance.reports"],
+  ["/finance/income-expense", "finance.reports"],
+  ["/finance/income-plan", "finance.reports"],
+  ["/finance/analytics", "finance.reports"],
   ["/education/students/new", "students.manage"],
   ["/education/students", "students.view"],
   ["/education/parents", "students.view"],
   ["/education/groups/assign", "students.manage"],
+  ["/education/groups/students", "students.view"],
+  ["/education/courses", "settings.manage"],
+  ["/education/rooms", "groups.view"],
+  ["/education/equipment", "groups.view"],
   ["/education/groups", "groups.view"],
   ["/education/schedule", "schedule.view"],
   ["/education/attendance", "attendance.mark"],
@@ -93,6 +115,7 @@ export const ROUTE_PERMISSIONS: [prefix: string, permission: Permission][] = [
   ["/finance/contracts", "contracts.manage"],
   ["/finance/salaries", "salaries.manage"],
   ["/finance/reports", "finance.reports"],
+  ["/staff/accounts", "staff.accounts"],
   ["/staff", "staff.manage"],
   ["/notifications", "notifications.manage"],
   ["/settings", "settings.manage"],

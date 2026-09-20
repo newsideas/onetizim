@@ -24,7 +24,7 @@ export default async function NotificationsPage() {
       actions={<BroadcastButton groups={(groups ?? []) as GroupOption[]} groupLabel={terms.group} />}
       notice={
         error
-          ? "Bildirishnomalar tarixi bazada topilmadi — 0027_notifications.sql migratsiyasini Supabase SQL Editor'da ishga tushiring."
+          ? "Bildirishnomalar tarixi bazada topilmadi — 0027_notifications.sql migratsiyasini Supabase SQL Editor&apos;da ishga tushiring."
           : undefined
       }
     >
