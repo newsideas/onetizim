@@ -1,4 +1,4 @@
--- YANGI MIGRATSIYALAR (hali ishlatilmaganlar): 0044 - 0050.
+-- YANGI MIGRATSIYALAR: 0044 - 0064.
 -- Supabase Dashboard -> SQL Editor -> New query: shu faylni to'liq joylab Run bosing (bir marta).
 -- Hammasi qayta ishga tushirilsa ham zarar qilmaydi (if not exists / drop policy if exists).
 

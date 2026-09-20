@@ -29,7 +29,10 @@ function gateByHost(host: HostInfo, pathname: string): Gate {
 
   if (host.kind === "admin") {
     if (pathname === "/") return { action: "allow", rewrite: "/admin" };
-    if (pathname === "/login" || under("/admin")) return { action: "allow" };
+    // Telegram webhook bitta manzilda turadi (bot sozlamasida); domen ulanmaguncha admin manzili ham shu vazifani bajaradi.
+    if (pathname === "/login" || under("/admin") || pathname.startsWith("/api/telegram/webhook")) {
+      return { action: "allow" };
+    }
     return { action: "notfound" };
   }
 
@@ -47,7 +50,7 @@ function rewriteTo(request: NextRequest, pathname: string, cookiesFrom?: NextRes
 
 /** Kirmasdan ochiladigan yo'llar. */
 function isPublicPath(pathname: string, host: HostInfo) {
-  if (host.kind === "admin") return pathname === "/login";
+  if (host.kind === "admin") return pathname === "/login" || pathname.startsWith("/api/telegram/webhook");
   return (
     AUTH_ROUTES.has(pathname) ||
     pathname.startsWith("/api/telegram/webhook") ||

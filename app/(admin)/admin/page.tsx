@@ -4,11 +4,12 @@ import { effectiveStatus, fetchPlatformOrgs, fetchPlatformPayments } from "@/lib
 import { Card, CardHeader } from "@/components/ui/Card";
 import { MonthBars } from "@/components/platform/MonthBars";
 import { formatSom } from "@/lib/utils/currency";
-import { daysUntil, formatDate, MONTH_NAMES, monthsAgo, monthStartIso } from "@/lib/utils/date";
+import { daysUntil, formatDate, monthsAgo, monthStartIso } from "@/lib/utils/date";
 
 /** Obunasi shuncha kundan kam qolgan markazlar "tugayotgan" hisoblanadi. */
 const EXPIRING_SOON_DAYS = 7;
 const CHART_MONTHS = 6;
+const SHORT_MONTHS = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
 
 function Kpi({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
@@ -34,7 +35,8 @@ export default async function PlatformPage() {
   const revenueMonth = payments.filter((p) => p.paid_at.startsWith(thisMonth)).reduce((sum, p) => sum + p.amount, 0);
 
   const months = Array.from({ length: CHART_MONTHS }, (_, i) => monthsAgo(CHART_MONTHS - 1 - i));
-  const monthLabel = (start: string) => MONTH_NAMES[Number(start.slice(5, 7)) - 1].slice(0, 3);
+  // Qisqa oy nomlari: "Iyun" va "Iyul" bir xil bo'lib qolmasligi uchun alohida ro'yxat.
+  const monthLabel = (start: string) => SHORT_MONTHS[Number(start.slice(5, 7)) - 1];
   const revenueBars = months.map((m) => {
     const value = payments.filter((p) => p.paid_at.startsWith(m.slice(0, 7))).reduce((s, p) => s + p.amount, 0);
     return { label: monthLabel(m), value, display: value >= 1_000_000 ? `${+(value / 1_000_000).toFixed(1)} mln` : formatSom(value) };
