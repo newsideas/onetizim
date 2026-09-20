@@ -9,6 +9,9 @@ import { IDENTITY_DOMAIN, identityToEmail, normalizePhone } from "@/lib/auth/ide
 import { generatePassword } from "@/lib/auth/passwords";
 import { createCenterSchema, subdomainSchema, type CreateCenterInput } from "@/lib/validations/auth";
 
+/** Yangi markazning bepul sinov muddati (kun). */
+const TRIAL_DAYS = 7;
+
 /**
  * Super admin yangi o'quv markazni ochadi: nom, rahbar F.I.Sh, telefon va joylashuv kiritiladi.
  * Direktor hisobi (telefon + avtomatik parol), markaz va direktor a'zoligi bitta amalda yaratiladi.
@@ -59,6 +62,8 @@ export async function createCenter(input: CreateCenterInput) {
         director_last_name: lastName,
         director_first_name: firstName,
         phone,
+        // Sinov muddati 7 kun (bazadagi eski standart 14 kun edi).
+        trial_ends_at: new Date(Date.now() + TRIAL_DAYS * 86_400_000).toISOString(),
       })
       .select("id")
       .single();

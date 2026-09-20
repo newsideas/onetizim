@@ -9,7 +9,7 @@ import {
   type EffectiveStatus,
 } from "@/lib/platform";
 import { formatPhone } from "@/lib/auth/identity";
-import { ROOT_DOMAIN } from "@/lib/tenant";
+import { PUBLIC_DOMAIN } from "@/lib/tenant";
 import { daysUntil, formatDate } from "@/lib/utils/date";
 
 const STATUS_CLASS: Record<EffectiveStatus, string> = {
@@ -65,7 +65,7 @@ export default async function PlatformOrganizationsPage() {
                         {org.name}
                       </Link>
                       <div className={`text-xs ${org.slug ? "text-ink-faint" : "text-amber-600"}`}>
-                        {org.slug ? `${org.slug}.${ROOT_DOMAIN}` : "Subdomen belgilanmagan"}
+                        {org.slug ? `${org.slug}.${PUBLIC_DOMAIN}` : "Subdomen belgilanmagan"}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-ink-muted">

@@ -55,7 +55,7 @@ export function PaymentForm({ orgId, today }: { orgId: string; today: string }) 
           />
         </div>
         <div>
-          <Label htmlFor="pay-months">Necha oyga</Label>
+          <Label htmlFor="pay-months">Necha oyga (1 oy = 30 kun)</Label>
           <Input id="pay-months" type="number" min={1} max={36} value={months} onChange={(e) => setMonths(e.target.value)} />
         </div>
         <div>

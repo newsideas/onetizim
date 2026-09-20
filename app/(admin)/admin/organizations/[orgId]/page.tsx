@@ -13,7 +13,7 @@ import { PaymentForm } from "@/components/platform/PaymentForm";
 import { DirectorPasswordForm } from "@/components/platform/DirectorPasswordForm";
 import { SubdomainForm } from "@/components/platform/SubdomainForm";
 import { formatPhone } from "@/lib/auth/identity";
-import { ROOT_DOMAIN } from "@/lib/tenant";
+import { PUBLIC_DOMAIN } from "@/lib/tenant";
 import { formatSom } from "@/lib/utils/currency";
 import { daysUntil, formatDate, todayIso } from "@/lib/utils/date";
 
@@ -40,7 +40,7 @@ export default async function PlatformOrgPage({ params }: { params: Promise<{ or
   const status = effectiveStatus(org);
   const endsAt = org.plan === "active" ? org.paid_until : org.trial_ends_at;
   const left = daysUntil(endsAt);
-  const host = org.slug ? `${org.slug}.${ROOT_DOMAIN}` : null;
+  const host = org.slug ? `${org.slug}.${PUBLIC_DOMAIN}` : null;
 
   return (
     <div className="space-y-6">

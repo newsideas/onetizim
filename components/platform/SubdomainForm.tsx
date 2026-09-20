@@ -3,7 +3,7 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { setCenterSubdomain } from "@/lib/actions/centers";
-import { ROOT_DOMAIN } from "@/lib/tenant";
+import { PUBLIC_DOMAIN } from "@/lib/tenant";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
@@ -53,7 +53,7 @@ export function SubdomainForm({ orgId, orgName, currentSlug }: { orgId: string; 
             className="rounded-r-none"
           />
           <span className="flex items-center rounded-r-lg border border-l-0 border-line bg-canvas px-3 text-sm text-ink-muted">
-            .{ROOT_DOMAIN}
+            .{PUBLIC_DOMAIN}
           </span>
         </div>
       </div>

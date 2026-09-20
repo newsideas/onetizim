@@ -8,10 +8,7 @@ import { fetchPlatformOrgs } from "@/lib/platform";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { identityToEmail, normalizePhone, PLATFORM_SLUG } from "@/lib/auth/identity";
 
-const DAY_MS = 86_400_000;
-
 const planChangeSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("extend"), days: z.union([z.literal(7), z.literal(14), z.literal(30)]) }),
   z.object({ kind: z.literal("activate") }),
   z.object({ kind: z.literal("expire") }),
 ]);
@@ -33,25 +30,12 @@ export async function setOrgPlan(orgId: string, change: PlanChange) {
     const org = orgs.find((o) => o.id === id.data);
     if (!org) throw new ActionError("Maktab topilmadi");
 
-    const c = parsed.data;
-    let plan: "trial" | "active" | "expired";
-    let trialEnds: string | null = null;
-
-    if (c.kind === "extend") {
-      // Muddati o'tgan bo'lsa bugundan, aks holda joriy tugash sanasidan boshlab uzaytiriladi.
-      const current = org.trial_ends_at ? new Date(org.trial_ends_at).getTime() : 0;
-      trialEnds = new Date(Math.max(Date.now(), current) + c.days * DAY_MS).toISOString();
-      plan = "trial";
-    } else if (c.kind === "activate") {
-      plan = "active";
-    } else {
-      plan = "expired";
-    }
+    const plan = parsed.data.kind === "activate" ? "active" : "expired";
 
     const { error } = await supabase.rpc("admin_set_plan", {
       p_org: id.data,
       p_plan: plan,
-      p_trial_ends: trialEnds,
+      p_trial_ends: null,
     });
     if (error) throw new ActionError("Obunani o'zgartirib bo'lmadi: " + error.message);
 

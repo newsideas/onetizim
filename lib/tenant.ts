@@ -11,6 +11,12 @@
 
 export const ROOT_DOMAIN = (process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "localhost").toLowerCase();
 
+/**
+ * Mijozlarga ko'rsatiladigan haqiqiy domen (admin panelda manzil yozuvi uchun). Mahalliy ishlab chiqishda
+ * `ROOT_DOMAIN` "localhost" bo'lsa ham, admin panelda markaz manzili `<nom>.onetizim.uz` deb ko'rinadi.
+ */
+export const PUBLIC_DOMAIN = (process.env.NEXT_PUBLIC_PUBLIC_DOMAIN ?? "onetizim.uz").toLowerCase();
+
 export const ADMIN_SUBDOMAIN = "admin";
 
 /** DB dagi slug_is_valid() bilan bir xil qoida (0037). */

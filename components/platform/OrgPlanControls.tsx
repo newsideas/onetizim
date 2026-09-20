@@ -38,17 +38,6 @@ export function OrgPlanControls({
     <div className="space-y-1">
       {dialogs}
       <div className="flex flex-wrap gap-1.5">
-        {/* Sinovni uzaytirish faqat sinov/muddati o'tgan markaz uchun; faol obunani sinovga qaytarmaydi. */}
-        {status !== "active" && (
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => apply({ kind: "extend", days: 14 }, "Sinov muddati 14 kunga uzaytirilsinmi?")}
-            className={buttonClass}
-          >
-            +14 kun
-          </button>
-        )}
         {status !== "active" && (
           <button
             type="button"
