@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/admin", label: "Umumiy ko'rsatkichlar" },
   { href: "/admin/requests", label: "Arizalar" },
   { href: "/admin/organizations", label: "Markazlar" },
+  { href: "/admin/news", label: "Yangiliklar" },
   { href: "/admin/payments", label: "To'lovlar" },
   { href: "/admin/profile", label: "Profil" },
 ];

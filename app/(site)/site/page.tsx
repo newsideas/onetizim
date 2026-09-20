@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { DemoRequestForm } from "@/components/site/DemoRequestForm";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatDate } from "@/lib/utils/date";
 
 /** Yorug' mavzu qiymatlari (globals.css dagi tokenlar bilan bir xil). */
 const LIGHT_TOKENS = {
@@ -54,9 +56,35 @@ function contactLink(): { href: string; label: string } | null {
   return null;
 }
 
-/** Rasmiy sayt (onetizim.uz): xizmat haqida va demo uchun ariza. */
-export default function SitePage() {
+/** Yangiliklar saytda 60 soniyada bir yangilanadi (admin panel mahalliy, Vercel keshini o'zi tozalay olmaydi). */
+export const revalidate = 60;
+
+interface NewsRow {
+  id: string;
+  created_at: string;
+  title: string;
+  body: string | null;
+}
+
+/** Oxirgi e'lon qilingan 3 yangilik; jadval yo'q yoki xato bo'lsa bo'lim umuman ko'rsatilmaydi. */
+async function loadNews(): Promise<NewsRow[]> {
+  try {
+    const { data, error } = await createAdminClient()
+      .from("site_news")
+      .select("id, created_at, title, body")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(3);
+    return error ? [] : ((data ?? []) as NewsRow[]);
+  } catch {
+    return [];
+  }
+}
+
+/** Rasmiy sayt (onetizim.uz): xizmat haqida, yangiliklar va demo uchun ariza. */
+export default async function SitePage() {
   const contact = contactLink();
+  const news = await loadNews();
 
   return (
     // Rasmiy sayt har doim yorug': tokenlar o'ramada qotirilgan, shuning uchun qorong'i tizimda ham miltillamaydi.
@@ -146,6 +174,23 @@ export default function SitePage() {
             </div>
           </div>
         </section>
+
+        {news.length > 0 && (
+          <section id="yangiliklar" className="mx-auto max-w-5xl scroll-mt-16 px-4 py-16">
+            <h2 className="text-center text-2xl font-bold text-ink sm:text-3xl">Yangiliklar</h2>
+            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              {news.map((n) => (
+                <article key={n.id} className="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <time className="text-xs text-ink-faint" dateTime={n.created_at}>
+                    {formatDate(n.created_at)}
+                  </time>
+                  <h3 className="mt-1 text-base font-semibold text-ink">{n.title}</h3>
+                  {n.body && <p className="mt-2 line-clamp-4 text-sm text-ink-muted">{n.body}</p>}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section id="demo" className="mx-auto max-w-xl scroll-mt-16 px-4 py-16">
           <h2 className="text-center text-2xl font-bold text-ink sm:text-3xl">Demo uchun ariza</h2>
