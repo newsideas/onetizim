@@ -32,13 +32,24 @@ export type HostInfo =
   | { kind: "tenant"; slug: string };
 
 /**
+ * Super Admin paneli internetga chiqmaydi: u faqat `ADMIN_PANEL_ENABLED=true` bo'lgan muhitda
+ * (sizning kompyuteringiz, `.env.local`) ishlaydi. Vercel'da bu o'zgaruvchi qo'yilmaydi —
+ * admin manzili ham, admin server amallari ham yopiq. Faqat serverda o'qiladi (NEXT_PUBLIC_ emas).
+ */
+export function isAdminPanelEnabled(): boolean {
+  return (process.env.ADMIN_PANEL_ENABLED ?? "").trim().toLowerCase() === "true";
+}
+
+/**
  * Domen ulanmaguncha (masalan, faqat xxx.vercel.app bor paytda) subdomenlar ishlamaydi.
+ * `NEXT_PUBLIC_FORCE_HOST=root` — shu manzil rasmiy sayt bo'lib ochiladi;
  * `NEXT_PUBLIC_FORCE_HOST=admin` — shu manzil Super Admin bo'lib ochiladi;
  * `NEXT_PUBLIC_FORCE_HOST=tenant:<slug>` — shu manzil bitta markaz ilovasi bo'lib ochiladi.
  * O'zgaruvchi bo'sh bo'lsa (asosiy holat) hech narsa o'zgarmaydi. Domen ulangach o'chiriladi.
  */
 function forcedHost(): HostInfo | null {
   const value = (process.env.NEXT_PUBLIC_FORCE_HOST ?? "").trim().toLowerCase();
+  if (value === "root") return { kind: "root" };
   if (value === "admin") return { kind: "admin" };
   if (value.startsWith("tenant:")) {
     const slug = value.slice("tenant:".length);

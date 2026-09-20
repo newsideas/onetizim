@@ -4,6 +4,7 @@ import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ActionError } from "@/lib/actions/result";
+import { isAdminPanelEnabled } from "@/lib/tenant";
 
 /**
  * Super Admin paneli maktab (org) sessiyasiga bog'liq emas: faqat foydalanuvchi
@@ -23,6 +24,7 @@ const getAdminContext = cache(async () => {
 
 /** Sahifalar uchun: admin bo'lmasa 404 — panel mavjudligi ham sezilmaydi. */
 export async function requirePlatformAdmin() {
+  if (!isAdminPanelEnabled()) notFound();
   const ctx = await getAdminContext();
   if (!ctx.isAdmin) notFound();
   return ctx;
@@ -30,6 +32,8 @@ export async function requirePlatformAdmin() {
 
 /** Server action'lar uchun. Ruxsat bazadagi funksiyalarda ham qayta tekshiriladi. */
 export async function assertPlatformAdmin() {
+  // Server amallari boshqa manzildan chaqirilsa ham internetdagi versiyada ishlamaydi.
+  if (!isAdminPanelEnabled()) throw new ActionError("Ruxsat yo'q");
   const ctx = await getAdminContext();
   if (!ctx.isAdmin) throw new ActionError("Ruxsat yo'q");
   return ctx;

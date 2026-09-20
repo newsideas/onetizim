@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isRole, permissionForPath, roleCan } from "@/lib/auth/permissions";
-import { resolveHost, type HostInfo } from "@/lib/tenant";
+import { isAdminPanelEnabled, resolveHost, type HostInfo } from "@/lib/tenant";
 
 const AUTH_ROUTES = new Set(["/login"]);
 
@@ -28,6 +28,10 @@ function gateByHost(host: HostInfo, pathname: string): Gate {
   }
 
   if (host.kind === "admin") {
+    // Super Admin faqat mahalliy kompyuterda ishlaydi; internetdagi versiyada bu manzil umuman yo'q.
+    if (!isAdminPanelEnabled()) {
+      return pathname.startsWith("/api/telegram/webhook") ? { action: "allow" } : { action: "notfound" };
+    }
     if (pathname === "/") return { action: "allow", rewrite: "/admin" };
     // Telegram webhook bitta manzilda turadi (bot sozlamasida); domen ulanmaguncha admin manzili ham shu vazifani bajaradi.
     if (pathname === "/login" || under("/admin") || pathname.startsWith("/api/telegram/webhook")) {
