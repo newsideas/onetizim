@@ -167,7 +167,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
 
         { label: "Xodimlar reytingi", href: "/control/staff-rating", group: "Hisobotlar" },
         { label: "Davomat qilinmagan guruhlar", href: "/control/unmarked-groups", group: "Hisobotlar" },
-        { label: "Filiallar holati", href: referencePath("branches"), permission: "settings.manage", group: "Hisobotlar" },
+        { label: "Filiallar holati", href: "/reports/branches-status", permission: "finance.reports", group: "Hisobotlar" },
         { label: "Turniket analitikasi", href: "/control/turnstile", group: "Hisobotlar" },
         { label: "Turniket kirish-chiqish analitikasi", href: "/control/turnstile-log", group: "Hisobotlar" },
         { label: "Support analitikasi", href: "/control/support", group: "Hisobotlar" },
@@ -219,7 +219,8 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
         { label: `${terms.student}ning umumiy to'lanmagan summasi`, href: "/reports/unpaid", permission: "finance.reports", group: "Moliya" },
         { label: "Kurs narxidan farqli to'lovlar tranzaksiyasi", href: "/reports/price-mismatch", permission: "finance.reports", group: "Moliya" },
         { label: "Bekor qilingan to'lovlar", href: "/reports/cancelled-payments", permission: "finance.reports", group: "Moliya" },
-        { label: "Umumiy chegirmalar", href: referencePath("contract-discounts"), permission: "settings.manage", group: "Moliya" },
+        { label: "Umumiy chegirmalar", href: "/reports/discounts", permission: "finance.reports", group: "Moliya" },
+        { label: "O'quv markazga ishlab berilgan pul", href: "/reports/earned", permission: "finance.reports", group: "Moliya" },
 
         {
           label: `${terms.studentPlural} hisoboti`,
@@ -233,7 +234,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
         { label: "Xonalar analitikasi", href: "/education/rooms?tab=analytics", permission: "groups.view", group: "O'quv" },
         { label: "Davomati bekor qilinganlar analitikasi", href: "/control/absences", permission: "attendance.mark", group: "O'quv" },
 
-        { label: "Filiallar holati", href: referencePath("branches"), permission: "settings.manage", group: "Nazorat" },
+        { label: "Filiallar holati", href: "/reports/branches-status", permission: "finance.reports", group: "Nazorat" },
         { label: "Xodimlar reytingi", href: "/control/staff-rating", permission: "attendance.mark", group: "Nazorat" },
         { label: "Davomat qilinmagan guruhlar", href: "/control/unmarked-groups", permission: "attendance.mark", group: "Nazorat" },
       ],
