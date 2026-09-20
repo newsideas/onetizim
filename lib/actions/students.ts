@@ -166,6 +166,59 @@ export async function createStudentQuick(input: NewStudentInput) {
   });
 }
 
+/** "O'quvchini tahrirlash" oynasi: yangi o'quvchi oynasidagi maydonlar (ism, aloqa, ota-ona, marketing, til...). */
+export async function updateStudentQuick(studentId: string, input: NewStudentInput) {
+  return runAction(async () => {
+    const parsed = newStudentSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new ActionError(parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri");
+    }
+    const v = parsed.data;
+
+    const { supabase, org } = await assertPermission("students.manage");
+
+    const firstName = v.firstName.trim();
+    const lastName = nullable(v.lastName);
+    const { error } = await supabase
+      .from("students")
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        middle_name: nullable(v.fatherName),
+        full_name: [lastName, firstName].filter(Boolean).join(" "),
+        phone: nullable(v.phone),
+        email: nullable(v.email),
+        category_id: nullable(v.categoryId),
+        birth_date: nullable(v.birthDate),
+        payment_date: nullable(v.paymentDate),
+        marketing_campaign_id: nullable(v.marketingCampaignId),
+        study_language: nullable(v.studyLanguage),
+        father_phone: nullable(v.fatherPhone),
+        mother_name: nullable(v.motherName),
+        mother_phone: nullable(v.motherPhone),
+      })
+      .eq("id", studentId);
+
+    if (error) {
+      throw new ActionError(
+        /column|schema cache/.test(error.message)
+          ? "Yangi ustunlar bazada yo'q — 0052_student_quick_fields.sql migratsiyasini ishga tushiring"
+          : "Yangilashda xatolik: " + error.message,
+      );
+    }
+
+    await linkParentToStudent(supabase, org.id, studentId, {
+      fullName: nullable(v.motherName),
+      phone: nullable(v.motherPhone),
+      relation: "Onasi",
+    });
+
+    revalidatePath("/education/students");
+    revalidatePath("/education/parents");
+    revalidatePath(`/education/students/${studentId}`);
+  });
+}
+
 export async function updateStudent(studentId: string, input: StudentInput) {
   return runAction(async () => {
     const parsed = studentSchema.safeParse(input);

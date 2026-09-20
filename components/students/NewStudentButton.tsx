@@ -2,11 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { unwrap } from "@/lib/actions/result";
 import {
   createStudentQuick,
   getStudentFormOptions,
+  updateStudentQuick,
   type StudentFormOptions,
 } from "@/lib/actions/students";
 import { Button } from "@/components/ui/Button";
@@ -57,6 +58,24 @@ function withCode(digits: string): string {
   return clean ? `+998${clean}` : "";
 }
 
+/** Bazadagi "+998901234567" ni maydonga tushadigan "901234567" ga qaytaradi. */
+function withoutCode(stored: string | undefined): string {
+  return (stored ?? "").replace(/^\+?998/, "").replace(/\D/g, "");
+}
+
+export type StudentEditValues = Partial<typeof EMPTY>;
+
+/** Tahrirlash uchun boshlang'ich qiymatlar: telefonlar +998 siz, bo'sh maydonlar "". */
+function initialValues(values?: StudentEditValues): typeof EMPTY {
+  const merged = { ...EMPTY, ...values };
+  return {
+    ...merged,
+    phone: withoutCode(merged.phone),
+    fatherPhone: withoutCode(merged.fatherPhone),
+    motherPhone: withoutCode(merged.motherPhone),
+  };
+}
+
 /**
  * Edu tizimdagi "Yangi o'quvchi qo'shish" oynasi. O'quvchilar ro'yxatidan ham, buyurtma
  * oynasidagi "O'quvchi qo'shish" tugmasidan ham ochiladi (`onCreated` yangi o'quvchini qaytaradi).
@@ -65,14 +84,19 @@ export function NewStudentModal({
   open,
   onClose,
   onCreated,
+  student,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated?: (student: { id: string; name: string }) => void;
+  /** Berilsa oyna tahrirlash rejimida ochiladi ("O'quvchini tahrirlash"). */
+  student?: { id: string; values: StudentEditValues };
 }) {
   const router = useRouter();
-  const [values, setValues] = useState(EMPTY);
-  const [extra, setExtra] = useState(false);
+  const [values, setValues] = useState(() => initialValues(student?.values));
+  const [extra, setExtra] = useState(() =>
+    Boolean(student?.values.fatherPhone || student?.values.motherName || student?.values.motherPhone),
+  );
   const [options, setOptions] = useState<StudentFormOptions | null>(null);
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
@@ -103,14 +127,19 @@ export function NewStudentModal({
     setError(undefined);
     setSaving(true);
     try {
-      const id = unwrap(
-        await createStudentQuick({
-          ...values,
-          phone: withCode(values.phone),
-          fatherPhone: withCode(values.fatherPhone),
-          motherPhone: withCode(values.motherPhone),
-        }),
-      );
+      const payload = {
+        ...values,
+        phone: withCode(values.phone),
+        fatherPhone: withCode(values.fatherPhone),
+        motherPhone: withCode(values.motherPhone),
+      };
+      if (student) {
+        unwrap(await updateStudentQuick(student.id, payload));
+        close();
+        router.refresh();
+        return;
+      }
+      const id = unwrap(await createStudentQuick(payload));
       const name = [values.lastName.trim(), values.firstName.trim()].filter(Boolean).join(" ");
       close();
       router.refresh();
@@ -123,7 +152,7 @@ export function NewStudentModal({
   }
 
   return (
-    <Modal open={open} onClose={close} title="Yangi o'quvchi qo'shish">
+    <Modal open={open} onClose={close} title={student ? "O'quvchini tahrirlash" : "Yangi o'quvchi qo'shish"}>
       <form onSubmit={submit} className="space-y-3" noValidate>
         <p className="text-xs text-ink-faint">* Zarurligini bildiradi</p>
 
@@ -248,6 +277,28 @@ export function NewStudentButton() {
         O&apos;quvchi qo&apos;shish
       </button>
       <NewStudentModal open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+/**
+ * O'quvchi kartasidagi "Tahrirlash" tugmasi: oyna faqat ochiq paytda qurilgani uchun har safar
+ * eng so'nggi qiymatlar bilan ochiladi.
+ */
+export function EditStudentButton({ studentId, values }: { studentId: string; values: StudentEditValues }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
+      >
+        <Pencil size={15} />
+        Tahrirlash
+      </button>
+      {open && <NewStudentModal open onClose={() => setOpen(false)} student={{ id: studentId, values }} />}
     </>
   );
 }

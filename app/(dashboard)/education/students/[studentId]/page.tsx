@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { BalanceBadge } from "@/components/payments/BalanceBadge";
 import { StudentStatusActions } from "@/components/students/StudentStatusActions";
+import { EditStudentButton } from "@/components/students/NewStudentButton";
 import { formatDate } from "@/lib/utils/date";
 import { formatSom } from "@/lib/utils/currency";
 import { averageScore } from "@/lib/validations/grade";
@@ -24,7 +25,7 @@ export default async function StudentDetailPage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  const { supabase } = await requirePermission("students.view");
+  const { supabase, permissions } = await requirePermission("students.view");
 
   const [{ data: student }, { data: payments }, { data: attendance }, { data: grades }] =
     await Promise.all([
@@ -69,6 +70,28 @@ export default async function StudentDetailPage({
           <ArrowLeft size={18} />
         </Link>
         <h1 className="text-xl font-semibold text-ink">{student.full_name}</h1>
+        {permissions.includes("students.manage") && (
+          <div className="ml-auto">
+            <EditStudentButton
+              studentId={studentId}
+              values={{
+                firstName: (student.first_name as string | null) ?? "",
+                lastName: (student.last_name as string | null) ?? "",
+                fatherName: (student.middle_name as string | null) ?? "",
+                phone: (student.phone as string | null) ?? "",
+                email: (student.email as string | null) ?? "",
+                categoryId: (student.category_id as string | null) ?? "",
+                birthDate: (student.birth_date as string | null) ?? "",
+                paymentDate: (student.payment_date as string | null) ?? "",
+                marketingCampaignId: (student.marketing_campaign_id as string | null) ?? "",
+                studyLanguage: (student.study_language as string | null) ?? "",
+                fatherPhone: (student.father_phone as string | null) ?? "",
+                motherName: (student.mother_name as string | null) ?? "",
+                motherPhone: (student.mother_phone as string | null) ?? "",
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
