@@ -546,12 +546,12 @@ export const REFERENCES = {
     subtitle: "Xodimlarning ish vaqti jadvallari",
     labelField: "name",
     orderBy: { column: "name", ascending: true },
+    // Yillik kalendar alohida sahifada (Edu tizimdagidek); bu yerda faqat ro'yxat ustunlari.
+    formPage: "/settings/work-schedules",
     fields: [
-      { name: "name", label: "Jadval nomi", type: "text", required: true },
-      { name: "start_time", label: "Boshlanishi", type: "time", required: true },
-      { name: "end_time", label: "Tugashi", type: "time", required: true },
-      { name: "work_days", label: "Ish kunlari", type: "text" },
-      { name: "note", label: "Izoh", type: "text" },
+      { name: "name", label: "Nomi", type: "text", required: true },
+      { name: "year", label: "Yil", type: "number" },
+      { name: "code", label: "Kod", type: "text" },
     ],
   },
 
