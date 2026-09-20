@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { GroupInfoCard } from "@/components/groups/GroupInfoCard";
 import { EditGroupButton } from "@/components/groups/EditGroupButton";
-import { GroupAttendanceGrid, type GridLesson, type GridStudent } from "@/components/groups/GroupAttendanceGrid";
+import { GroupAttendanceGrid, type GridLesson, type GridMark, type GridStudent } from "@/components/groups/GroupAttendanceGrid";
 import { GROUP_SELECT, type GroupRow } from "@/components/groups/GroupsTable";
 import { StudentsTable, type StudentTableRow } from "@/components/students/StudentsTable";
 import { termsFor, type Segment } from "@/lib/segment";
@@ -91,7 +91,7 @@ export default async function GroupDetailPage({
   const period = parseMonth(query.month);
   let lessons: GridLesson[] = [];
   let gridStudents: GridStudent[] = [];
-  const marks: Record<string, AttendanceStatus> = {};
+  const marks: Record<string, GridMark> = {};
   if (tab === "attendance") {
     lessons = lessonDatesOf(period, group.schedule_days ?? [], group.start_date ?? null, group.end_date ?? null);
     const active = studentRows.filter((s) => s.status === "active");
@@ -99,7 +99,7 @@ export default async function GroupDetailPage({
     const [attRes, gradeRes] = await Promise.all([
       supabase
         .from("attendance")
-        .select("student_id, lesson_date, status")
+        .select("student_id, lesson_date, status, reason")
         .eq("group_id", groupId)
         .gte("lesson_date", period)
         .lt("lesson_date", rangeEnd),
@@ -110,7 +110,9 @@ export default async function GroupDetailPage({
         .gte("graded_on", period)
         .lt("graded_on", rangeEnd),
     ]);
-    for (const a of attRes.data ?? []) marks[`${a.student_id}|${a.lesson_date}`] = a.status as AttendanceStatus;
+    for (const a of attRes.data ?? []) {
+      marks[`${a.student_id}|${a.lesson_date}`] = { status: a.status as AttendanceStatus, reason: a.reason ?? null };
+    }
     const scores = new Map<string, number[]>();
     for (const g of gradeRes.data ?? []) scores.set(g.student_id, [...(scores.get(g.student_id) ?? []), Number(g.score)]);
     gridStudents = active.map((s) => {
