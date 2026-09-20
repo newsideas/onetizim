@@ -97,6 +97,8 @@ export const ROUTE_PERMISSIONS: [prefix: string, permission: Permission][] = [
   ["/finance/income-expense", "finance.reports"],
   ["/finance/income-plan", "finance.reports"],
   ["/finance/analytics", "finance.reports"],
+  ["/finance/pnl", "finance.reports"],
+  ["/finance/cashflow", "finance.reports"],
   ["/education/students/new", "students.manage"],
   ["/education/students", "students.view"],
   ["/education/parents", "students.view"],

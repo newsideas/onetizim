@@ -410,6 +410,8 @@ export const REFERENCES = {
         options: ["Boshqa", "O'quvchilar", "Xodim", "Uchinchi shaxs"],
       },
       { name: "kind", label: "Kategoriyasi", type: "select", options: ["Kirim", "Chiqim"], required: true },
+      // Pul oqimi hisoboti (0068) shu bo'yicha chiqimlarni guruhlaydi; bo'sh bo'lsa "Operatsion".
+      { name: "activity", label: "Faoliyat turi", type: "select", options: ["Operatsion", "Investitsion", "Moliyaviy"] },
     ],
   },
 

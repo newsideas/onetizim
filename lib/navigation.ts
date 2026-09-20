@@ -141,8 +141,8 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
           permission: "finance.reports",
           group: "Hisobotlar",
         },
-        { label: "Moliya hisobotlari (P&L)", href: "/finance/reports", permission: "finance.reports", group: "Hisobotlar" },
-        { label: "Pul oqimi", href: "/finance/payments/cashbox", group: "Hisobotlar" },
+        { label: "Moliya hisobotlari (P&L)", href: "/finance/pnl", permission: "finance.reports", group: "Hisobotlar" },
+        { label: "Pul oqimi", href: "/finance/cashflow", permission: "finance.reports", group: "Hisobotlar" },
 
         { label: "Tranzaksiya turi", href: referencePath("transaction-types"), permission: "settings.manage", group: "Ma'lumotlar" },
         { label: "Tranzaksiyalar", href: "/finance/payments", group: "Ma'lumotlar" },
