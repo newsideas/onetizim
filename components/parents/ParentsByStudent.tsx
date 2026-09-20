@@ -3,6 +3,7 @@ import { Inbox } from "lucide-react";
 import { BalanceBadge } from "@/components/payments/BalanceBadge";
 import { InlineFilters, TablePager } from "@/components/ui/ListToolbar";
 import { readPaging } from "@/lib/paging";
+import { todayIso } from "@/lib/utils/date";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
 
@@ -16,6 +17,10 @@ interface StudentRow {
   id: string;
   full_name: string;
   balance: number;
+  status: string;
+  created_at: string;
+  birth_date: string | null;
+  group: { subject: string | null; teacher: { full_name: string } | null } | null;
   links: ParentLink[];
 }
 
@@ -48,11 +53,17 @@ export async function ParentsByStudent({
 }) {
   const { data } = await supabase
     .from("students")
-    .select("id, full_name, balance, links:student_parents(parent:parents(full_name, relation, phone))")
+    .select(
+      "id, full_name, balance, status, created_at, birth_date, group:groups(subject, teacher:teachers(full_name)), links:student_parents(parent:parents(full_name, relation, phone))",
+    )
     .neq("status", "archived")
     .order("full_name");
 
   const q = params.q?.trim().toLowerCase();
+  const today = todayIso();
+  const all = (data ?? []) as unknown as StudentRow[];
+  const subjects = [...new Set(all.map((s) => s.group?.subject).filter((v): v is string => Boolean(v)))];
+  const teachers = [...new Set(all.map((s) => s.group?.teacher?.full_name).filter((v): v is string => Boolean(v)))];
 
   const rows = ((data ?? []) as unknown as StudentRow[])
     .map((s) => {
@@ -64,6 +75,17 @@ export async function ParentsByStudent({
     .filter((s) => {
       if (params.link === "with" && !(s.father || s.mother || s.other)) return false;
       if (params.link === "without" && (s.father || s.mother || s.other)) return false;
+      const balance = Number(s.balance);
+      if (params.balance === "debt" && balance >= 0) return false;
+      if (params.balance === "positive" && balance <= 0) return false;
+      if (params.balance === "zero" && balance !== 0) return false;
+      if (params.subject && s.group?.subject !== params.subject) return false;
+      if (params.teacher && s.group?.teacher?.full_name !== params.teacher) return false;
+      if (params.status && s.status !== params.status) return false;
+      if (params.date && s.created_at.slice(0, 10) !== params.date) return false;
+      if (params.birthday && !s.birth_date) return false;
+      if (params.birthday === "today" && s.birth_date?.slice(5) !== today.slice(5)) return false;
+      if (params.birthday === "month" && s.birth_date?.slice(5, 7) !== today.slice(5, 7)) return false;
       if (!q) return true;
       const text = [s.full_name, s.father?.full_name, s.mother?.full_name, s.other?.full_name]
         .filter(Boolean)
@@ -95,6 +117,37 @@ export async function ParentsByStudent({
               { value: "without", label: "Kiritilmagan" },
             ],
           },
+          { name: "date", label: "Sana", type: "date", width: "w-40" },
+          {
+            name: "balance",
+            label: "Balans",
+            type: "select",
+            options: [
+              { value: "debt", label: "Qarzdor" },
+              { value: "positive", label: "Balansi bor" },
+              { value: "zero", label: "Balans nol" },
+            ],
+          },
+          { name: "subject", label: "Kurs", type: "select", options: subjects.map((v) => ({ value: v, label: v })) },
+          { name: "teacher", label: "O'qituvchi", type: "select", options: teachers.map((v) => ({ value: v, label: v })) },
+          {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: [
+              { value: "active", label: "Aktiv" },
+              { value: "frozen", label: "Muzlatilgan" },
+            ],
+          },
+          {
+            name: "birthday",
+            label: "Tug'ilgan kun",
+            type: "select",
+            options: [
+              { value: "today", label: "Bugun" },
+              { value: "month", label: "Shu oyda" },
+            ],
+          },
         ]}
       />
 
@@ -109,6 +162,7 @@ export async function ParentsByStudent({
             <thead className="border-b border-line bg-canvas">
               <tr>
                 <th className={`${TH} w-12`}>№</th>
+                <th className={TH}>ID</th>
                 <th className={TH}>{studentLabel} ismi</th>
                 <th className={TH}>Otasining ismi</th>
                 <th className={TH}>Telefon raqam</th>
@@ -121,7 +175,7 @@ export async function ParentsByStudent({
             <tbody className="divide-y divide-line">
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <Inbox size={22} className="mx-auto mb-2 text-ink-faint" aria-hidden="true" />
                     <div className="text-sm font-medium text-ink-muted">Ma&apos;lumotlar topilmadi</div>
                     <div className="mt-0.5 text-xs text-ink-faint">
@@ -133,6 +187,7 @@ export async function ParentsByStudent({
                 visible.map((s, i) => (
                   <tr key={s.id} className="hover:bg-canvas">
                     <td className="px-4 py-3 text-ink-faint">{offset + i + 1}</td>
+                    <td className="px-4 py-3 text-ink-muted">{s.id.slice(0, 6).toUpperCase()}</td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/education/students/${s.id}`}
