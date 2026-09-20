@@ -95,6 +95,7 @@ export function GroupAttendanceGrid({
   initialMarks,
   today,
   canMark,
+  anyDate,
   showBalance,
 }: {
   groupId: string;
@@ -104,8 +105,11 @@ export function GroupAttendanceGrid({
   initialMarks: Record<string, GridMark>;
   today: string;
   canMark: boolean;
+  /** Istalgan kunga belgilash ruxsati (direktor/o'quv bo'limi); yo'q bo'lsa faqat bugun. */
+  anyDate: boolean;
   showBalance: boolean;
 }) {
+  const editable = (iso: string) => canMark && (anyDate ? true : iso === today);
   const [marks, setMarks] = useState(initialMarks);
   const [picker, setPicker] = useState<Picker | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -183,7 +187,7 @@ export function GroupAttendanceGrid({
                 <th key={l.iso} className="px-2 py-2 text-center font-medium">
                   <div className="text-[10px] text-brand-600">{i + 1}-dars</div>
                   <div className="text-ink">{l.label}</div>
-                  {canMark && l.iso <= today ? (
+                  {editable(l.iso) ? (
                     <button
                       type="button"
                       onClick={(e) => open(e, null, l.iso)}
@@ -220,7 +224,7 @@ export function GroupAttendanceGrid({
                 )}
                 {lessons.map((l) => {
                   const value = choiceOf(marks[`${s.id}|${l.iso}`]);
-                  const locked = !canMark || l.iso > today;
+                  const locked = !editable(l.iso);
                   return (
                     <td key={l.iso} className="px-2 py-2">
                       <button
@@ -270,6 +274,7 @@ export function GroupAttendanceGrid({
       <p className="text-xs text-ink-faint">
         Doirani bosing va holatni tanlang: Keldi (yashil), Sababli (sariq), Sababsiz (qizil). Sarlavhadagi doira shu kun
         hammasi uchun belgilaydi.
+        {canMark && !anyDate && " Davomatni faqat bugungi kunga belgilash mumkin, boshqa kunlarni faqat administrator o'zgartiradi."}
       </p>
     </div>
   );

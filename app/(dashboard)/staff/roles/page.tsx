@@ -22,7 +22,7 @@ const BUILT_IN_COMMENTS: Record<Role, string> = {
 
 /** Rollar (Edu tizimdagi "Rollar"): tayyor rollar va markaz o'zi yaratgan rollar. */
 export default async function StaffRolesPage() {
-  const { supabase, org } = await requirePermission("staff.manage");
+  const { supabase, org } = await requirePermission("roles.manage");
 
   const [members, rolesRes] = await Promise.all([
     getOrgMembers(supabase, org.id),

@@ -14,10 +14,13 @@ export function AttendanceFilters({
   groups,
   groupId,
   date,
+  dateLocked = false,
 }: {
   groups: GroupOption[];
   groupId: string;
   date: string;
+  /** Faqat bugungi kunga belgilash mumkin bo'lganda sana o'zgartirilmaydi. */
+  dateLocked?: boolean;
 }) {
   const router = useRouter();
 
@@ -51,8 +54,10 @@ export function AttendanceFilters({
           id="attendance-date"
           type="date"
           value={date}
+          disabled={dateLocked}
           onChange={(e) => updateParams({ date: e.target.value })}
         />
+        {dateLocked && <p className="mt-1 text-xs text-ink-faint">Faqat bugungi kunga belgilash mumkin</p>}
       </div>
     </div>
   );

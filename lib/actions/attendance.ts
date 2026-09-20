@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { notifyParent } from "@/lib/telegram/notify";
 import { telegramTemplates } from "@/lib/telegram/templates";
-import { formatDate } from "@/lib/utils/date";
+import { formatDate, todayIso } from "@/lib/utils/date";
 import type { AttendanceStatus } from "@/types/database";
 
 export interface AttendanceStudent {
@@ -75,7 +75,11 @@ export async function markAttendance(
   reason?: string | null,
 ) {
   return runAction(async () => {
-    const { supabase, org } = await assertPermission("attendance.mark");
+    const { supabase, org, permissions } = await assertPermission("attendance.mark");
+    // O'qituvchi faqat bugungi darsga belgilaydi; boshqa kunlar — alohida ruxsat bilan (direktor/o'quv bo'limi).
+    if (lessonDate !== todayIso() && !permissions.includes("attendance.any_date")) {
+      throw new ActionError("Davomatni faqat bugungi kunga belgilash mumkin. Boshqa kun uchun administratorga murojaat qiling.");
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser();

@@ -180,7 +180,7 @@ export function buildNavSections(terms: SegmentTerms): NavSection[] {
       permission: "staff.accounts",
       items: [
         { label: "Xodimlar", href: "/staff", permission: "staff.manage" },
-        { label: "Rollar", href: "/staff/roles", permission: "staff.manage" },
+        { label: "Rollar", href: "/staff/roles", permission: "roles.manage" },
         { label: "Login va parollar", href: "/staff/accounts" },
         { label: "Filiallar", href: referencePath("branches"), permission: "settings.manage" },
         { label: "Ish jadvali", href: referencePath("work-schedules"), permission: "settings.manage" },

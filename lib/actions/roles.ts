@@ -39,7 +39,7 @@ function toRow(input: RoleInput) {
 
 export async function createRole(input: RoleInput) {
   return runAction(async () => {
-    const { supabase, org } = await assertPermission("staff.manage");
+    const { supabase, org } = await assertPermission("roles.manage");
     const { error } = await supabase.from("org_roles").insert({ org_id: org.id, ...toRow(input) });
     if (error) throw new ActionError("Rolni saqlab bo'lmadi: " + error.message);
     revalidateRoles();
@@ -48,7 +48,7 @@ export async function createRole(input: RoleInput) {
 
 export async function updateRole(roleId: string, input: RoleInput) {
   return runAction(async () => {
-    const { supabase } = await assertPermission("staff.manage");
+    const { supabase } = await assertPermission("roles.manage");
     const row = toRow(input);
     const { error } = await supabase.from("org_roles").update(row).eq("id", roleId);
     if (error) throw new ActionError("Rolni yangilab bo'lmadi: " + error.message);
@@ -60,7 +60,7 @@ export async function updateRole(roleId: string, input: RoleInput) {
 
 export async function deleteRole(roleId: string) {
   return runAction(async () => {
-    const { supabase } = await assertPermission("staff.manage");
+    const { supabase } = await assertPermission("roles.manage");
     const { count } = await supabase
       .from("org_members")
       .select("user_id", { count: "exact", head: true })
@@ -75,7 +75,7 @@ export async function deleteRole(roleId: string) {
 /** Xodimga maxsus rol biriktiradi: bazadagi daraja asosiy rolga, ruxsatlar maxsus rolga moslanadi. */
 export async function assignCustomRole(userId: string, roleId: string) {
   return runAction(async () => {
-    const { supabase } = await assertPermission("staff.manage");
+    const { supabase } = await assertPermission("roles.manage");
 
     const { data: role } = await supabase.from("org_roles").select("base_role").eq("id", roleId).maybeSingle();
     if (!role) throw new ActionError("Rol topilmadi");

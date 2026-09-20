@@ -38,15 +38,17 @@ const weekdayOf = (iso: string) => (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6
  */
 export default async function AttendancePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const { supabase } = await requirePermission("attendance.mark");
+  const { supabase, permissions } = await requirePermission("attendance.mark");
 
-  if (params.group || params.mark === "1") return <MarkMode params={params} supabase={supabase} />;
+  if (params.group || params.mark === "1") {
+    return <MarkMode params={params} supabase={supabase} anyDate={permissions.includes("attendance.any_date")} />;
+  }
   return <ViewMode params={params} supabase={supabase} />;
 }
 
 type Supa = Awaited<ReturnType<typeof requirePermission>>["supabase"];
 
-async function MarkMode({ params, supabase }: { params: SearchParams; supabase: Supa }) {
+async function MarkMode({ params, supabase, anyDate }: { params: SearchParams; supabase: Supa; anyDate: boolean }) {
   const { data: groups } = await supabase.from("groups").select("id, name").order("name");
 
   const back = (
@@ -66,7 +68,8 @@ async function MarkMode({ params, supabase }: { params: SearchParams; supabase: 
   }
 
   const groupId = params.group && groups.some((g) => g.id === params.group) ? params.group : groups[0].id;
-  const date = params.date || todayIso();
+  // Ruxsati bo'lmasa (odatda o'qituvchi) faqat bugungi kunga belgilaydi.
+  const date = anyDate ? params.date || todayIso() : todayIso();
   const students = await getAttendanceForGroup(groupId, date);
 
   return (
@@ -75,7 +78,7 @@ async function MarkMode({ params, supabase }: { params: SearchParams; supabase: 
         <h1 className="text-xl font-semibold text-ink">Davomat belgilash</h1>
         {back}
       </div>
-      <AttendanceFilters groups={groups} groupId={groupId} date={date} />
+      <AttendanceFilters groups={groups} groupId={groupId} date={date} dateLocked={!anyDate} />
       <AttendanceTable key={`${groupId}-${date}`} initialStudents={students} groupId={groupId} date={date} />
     </div>
   );

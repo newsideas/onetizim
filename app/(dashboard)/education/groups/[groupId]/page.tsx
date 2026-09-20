@@ -268,6 +268,7 @@ export default async function GroupDetailPage({
                 initialMarks={marks}
                 today={todayIso()}
                 canMark={canAttendance}
+                anyDate={permissions.includes("attendance.any_date")}
                 showBalance={showBalance}
               />
             </div>
