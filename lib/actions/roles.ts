@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { ActionError, runAction } from "@/lib/actions/result";
-import { ROLE_PERMISSIONS, type Role } from "@/lib/auth/permissions";
-import { BOSS_ONLY_KEY, CATALOG_ACTIONS, coarseFromActions } from "@/lib/permission-catalog";
+import { ROLE_LABELS, ROLE_PERMISSIONS, type Role } from "@/lib/auth/permissions";
+import { BOSS_ONLY_KEY, CATALOG_ACTIONS, builtinMarker, coarseFromActions } from "@/lib/permission-catalog";
 
 export interface RoleInput {
   name: string;
@@ -59,6 +59,43 @@ function toRow(input: RoleInput) {
     // Asosiy ruxsatlar (tekshiruv shular bo'yicha) + rol oynasidagi belgilar (qayta ochganda ko'rsatish uchun).
     permissions: [...coarse, ...actions, ...(input.bossOnly ? [BOSS_ONLY_KEY] : [])],
   };
+}
+
+const EDITABLE_BUILT_IN = ["manager", "teacher", "accountant"] as const;
+
+/**
+ * Tayyor rolni (Administrator, O'qituvchi, Buxgalter) shu markaz uchun o'zgartiradi: org_roles'da
+ * "__builtin:<rol>" belgili qator saqlanadi va shu rolli xodimlarning ruxsatlari undan olinadi.
+ */
+export async function saveBuiltInRole(role: string, input: RoleInput) {
+  return runAction(async () => {
+    if (!(EDITABLE_BUILT_IN as readonly string[]).includes(role)) throw new ActionError("Bu rolni o'zgartirib bo'lmaydi");
+    const builtIn = role as (typeof EDITABLE_BUILT_IN)[number];
+    const { supabase, org } = await assertPermission("roles.manage");
+
+    const actions = [...new Set(input.actions)].filter((key) => CATALOG_ACTIONS.has(key));
+    const allowed = new Set<string>(ROLE_PERMISSIONS[builtIn]);
+    const coarse = coarseFromActions(actions).filter((p) => allowed.has(p));
+    const row = {
+      name: ROLE_LABELS[builtIn],
+      comment: input.comment.trim() || null,
+      base_role: builtIn,
+      permissions: [...coarse, ...actions, builtinMarker(builtIn), ...(input.bossOnly ? [BOSS_ONLY_KEY] : [])],
+    };
+
+    const { data: existing } = await supabase
+      .from("org_roles")
+      .select("id")
+      .eq("org_id", org.id)
+      .contains("permissions", [builtinMarker(builtIn)])
+      .limit(1)
+      .maybeSingle();
+    const { error } = existing
+      ? await supabase.from("org_roles").update(row).eq("id", existing.id)
+      : await supabase.from("org_roles").insert({ org_id: org.id, ...row });
+    if (error) throw new ActionError("Rolni saqlab bo'lmadi: " + error.message);
+    revalidateRoles();
+  });
 }
 
 export async function createRole(input: RoleInput) {

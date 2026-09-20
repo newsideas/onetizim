@@ -10,6 +10,7 @@ import { isRole, permissionsFor, type Permission, type Role } from "@/lib/auth/p
 import { ActionError } from "@/lib/actions/result";
 import { resolveHost } from "@/lib/tenant";
 import { effectiveStatus, type OrgPlan } from "@/lib/platform";
+import { builtinMarker } from "@/lib/permission-catalog";
 
 export interface CurrentOrg {
   id: string;
@@ -138,6 +139,19 @@ export const getSession = cache(async (): Promise<Session> => {
 
   const meta = (user.user_metadata ?? {}) as SignupMetadata;
 
+  // Tayyor rol markazda o'zgartirilgan bo'lsa (org_roles'dagi "__builtin:<rol>" qatori), ruxsatlar shundan olinadi.
+  let custom = member.custom;
+  if (!custom && member.role !== "owner") {
+    const { data: override } = await supabase
+      .from("org_roles")
+      .select("permissions")
+      .eq("org_id", member.org.id)
+      .contains("permissions", [builtinMarker(member.role)])
+      .limit(1)
+      .maybeSingle();
+    if (override) custom = { permissions: (override.permissions as string[] | null) ?? [] };
+  }
+
   return {
     supabase,
     user,
@@ -145,7 +159,7 @@ export const getSession = cache(async (): Promise<Session> => {
     // qolgan bo'lsa ham (0043 qo'llanmaguncha) interfeys markaz sifatida ishlaydi.
     org: { ...member.org, type: "markaz" },
     role: member.role,
-    permissions: resolvePermissions(member.role, member.custom),
+    permissions: resolvePermissions(member.role, custom),
     employeeId: member.employee_id,
     displayName: member.full_name || meta.full_name || user.email || "Foydalanuvchi",
     expired:

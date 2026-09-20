@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { createRole, updateRole } from "@/lib/actions/roles";
+import { createRole, saveBuiltInRole, updateRole } from "@/lib/actions/roles";
 import { CATALOG_ACTIONS, PERMISSION_CATALOG, type CatalogResource } from "@/lib/permission-catalog";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
@@ -87,7 +87,14 @@ function ResourceCard({
 }
 
 /** Edu tizimdagi "Rol qo'shish / tahrirlash" sahifasi: nom, izoh va bo'limlar bo'yicha ruxsatlar. */
-export function RoleEditor({ initial }: { initial: RoleEditorInitial | null }) {
+export function RoleEditor({
+  initial,
+  builtIn,
+}: {
+  initial: RoleEditorInitial | null;
+  /** Tayyor rol (manager/teacher/accountant) tahrirlanayotgan bo'lsa — uning kaliti; nomi o'zgarmaydi. */
+  builtIn?: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState(initial?.name ?? "");
@@ -115,7 +122,11 @@ export function RoleEditor({ initial }: { initial: RoleEditorInitial | null }) {
     setError(undefined);
     const input = { name, comment, bossOnly, actions: [...granted] };
     startTransition(async () => {
-      const result = initial ? await updateRole(initial.id, input) : await createRole(input);
+      const result = builtIn
+        ? await saveBuiltInRole(builtIn, input)
+        : initial
+          ? await updateRole(initial.id, input)
+          : await createRole(input);
       if (!result.ok) return setError(result.error);
       router.push("/staff/roles");
       router.refresh();
@@ -128,7 +139,13 @@ export function RoleEditor({ initial }: { initial: RoleEditorInitial | null }) {
         <Label htmlFor="role-name">
           Ism<span className="ml-0.5 text-red-500">*</span>
         </Label>
-        <Input id="role-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
+        <Input
+          id="role-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={60}
+          disabled={Boolean(builtIn)}
+        />
       </div>
       <div>
         <Label htmlFor="role-comment">Izoh</Label>

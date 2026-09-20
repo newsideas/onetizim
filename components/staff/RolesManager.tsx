@@ -92,7 +92,19 @@ export function RolesManager({
                   <td className="px-4 py-3 font-medium text-ink">{ROLE_LABELS[role]}</td>
                   <td className="px-4 py-3 text-ink-muted">{row?.comment ?? "—"}</td>
                   <td className="px-4 py-3 text-ink-muted">{row?.memberCount ?? 0}</td>
-                  <td className="px-4 py-3 text-xs text-ink-faint">Tayyor rol</td>
+                  <td className="px-4 py-3">
+                    {role === "owner" ? (
+                      <span className="text-xs text-ink-faint">Tayyor rol</span>
+                    ) : (
+                      <Link
+                        href={`/staff/roles/builtin-${role}`}
+                        aria-label="Tahrirlash"
+                        className="inline-flex rounded-lg p-1.5 text-brand-600 hover:bg-canvas"
+                      >
+                        <Pencil size={16} />
+                      </Link>
+                    )}
+                  </td>
                 </tr>
               );
             })}

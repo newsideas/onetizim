@@ -3,6 +3,7 @@ import { getOrgMembers } from "@/lib/staff";
 import { ListPageShell } from "@/components/ui/ListPage";
 import { StaffTabs } from "@/components/staff/StaffTabs";
 import { MembersTable } from "@/components/staff/MembersTable";
+import { isBuiltinOverride } from "@/lib/permission-catalog";
 
 /** Tizimga kira oladigan xodimlar: rollarni biriktirish va kirish huquqini bekor qilish. */
 export default async function StaffAccessPage() {
@@ -11,7 +12,7 @@ export default async function StaffAccessPage() {
   const [members, { data: rolesData }] = await Promise.all([
     getOrgMembers(supabase, org.id),
     // Maxsus rollar (0063); jadval bo'lmasa bo'sh ro'yxat qaytadi.
-    supabase.from("org_roles").select("id, name").order("created_at"),
+    supabase.from("org_roles").select("id, name, permissions").order("created_at"),
   ]);
 
   return (
@@ -23,7 +24,9 @@ export default async function StaffAccessPage() {
       <MembersTable
         members={members}
         currentUserId={user.id}
-        customRoles={(rolesData ?? []) as { id: string; name: string }[]}
+        customRoles={((rolesData ?? []) as { id: string; name: string; permissions: string[] | null }[])
+          .filter((r) => !isBuiltinOverride(r.permissions))
+          .map(({ id, name }) => ({ id, name }))}
       />
     </ListPageShell>
   );

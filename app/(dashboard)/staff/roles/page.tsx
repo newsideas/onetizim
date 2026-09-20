@@ -4,6 +4,7 @@ import { ListPageShell } from "@/components/ui/ListPage";
 import { StaffTabs } from "@/components/staff/StaffTabs";
 import { RolesManager, type BuiltInRoleRow, type CustomRole } from "@/components/staff/RolesManager";
 import { isRole, type Role } from "@/lib/auth/permissions";
+import { builtinMarker, isBuiltinOverride } from "@/lib/permission-catalog";
 
 interface RoleRow {
   id: string;
@@ -30,13 +31,16 @@ export default async function StaffRolesPage() {
   ]);
 
   // Maxsus rollarga biriktirilmagan xodimlar tayyor rol bo'yicha sanaladi.
+  const allRoles = (rolesRes.data ?? []) as RoleRow[];
   const builtIn: BuiltInRoleRow[] = (["owner", "manager", "teacher", "accountant"] as Role[]).map((role) => ({
     role,
-    comment: BUILT_IN_COMMENTS[role],
+    // Markaz tayyor rol izohini o'zgartirgan bo'lsa — o'sha ko'rsatiladi.
+    comment:
+      allRoles.find((r) => (r.permissions ?? []).includes(builtinMarker(role)))?.comment || BUILT_IN_COMMENTS[role],
     memberCount: members.filter((m) => m.role === role && !m.customRoleId).length,
   }));
 
-  const custom: CustomRole[] = ((rolesRes.data ?? []) as RoleRow[]).flatMap((r) =>
+  const custom: CustomRole[] = allRoles.filter((r) => !isBuiltinOverride(r.permissions)).flatMap((r) =>
     isRole(r.base_role)
       ? [
           {

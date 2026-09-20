@@ -508,6 +508,13 @@ export const CATALOG_ACTIONS: Map<string, CatalogAction> = new Map(
 /** Rol saqlanganda "Faqat boss ko'ra oladi" belgisi shu kalit bilan yoziladi. */
 export const BOSS_ONLY_KEY = "__boss_only";
 
+/** Tayyor rol (Administrator, O'qituvchi, Buxgalter) markazda o'zgartirilganda, shu belgili qator saqlanadi. */
+export const builtinMarker = (role: string) => `__builtin:${role}`;
+
+/** Ro'yxatlarda maxsus rol sifatida ko'rinmasligi kerak bo'lgan (tayyor rolning o'zgartirilgan nusxasi) qatorlar. */
+export const isBuiltinOverride = (permissions: readonly string[] | null | undefined) =>
+  (permissions ?? []).some((p) => p.startsWith("__builtin:"));
+
 /** Tanlangan amallar → tizimning asosiy ruxsatlari (takrorsiz, faqat ma'lum ruxsatlar). */
 export function coarseFromActions(keys: Iterable<string>): Permission[] {
   const known = new Set<string>(ALL_PERMISSIONS);

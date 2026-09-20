@@ -4,6 +4,7 @@ import { TeachersProvider, NewTeacherButton, type TeacherRow } from "@/component
 import { TeachersTable, type TeacherListRow } from "@/components/staff/TeachersTable";
 import { ROLE_LABELS, isRole } from "@/lib/auth/permissions";
 import { readPaging } from "@/lib/paging";
+import { isBuiltinOverride } from "@/lib/permission-catalog";
 import { STAFF_LEAVE_REASONS, TEACHER_KIND_LABELS, TEACHER_KINDS } from "@/lib/validations/staff";
 
 /** Xodimlar (Edu tizimdagi "Xodimlar"): filtrlar, o'quvchi va guruh soni, filiallar. */
@@ -20,7 +21,7 @@ export default async function StaffPage({
     supabase.from("groups").select("id, name, teacher_id, course:courses(id, name)"),
     supabase.from("students").select("group_id").eq("status", "active"),
     supabase.from("org_members").select("employee_id, role, custom_role_id"),
-    supabase.from("org_roles").select("id, name"),
+    supabase.from("org_roles").select("id, name, permissions"),
     supabase.from("branches").select("id, name").order("name"),
   ]);
 
@@ -32,7 +33,9 @@ export default async function StaffPage({
   }[];
   const branches = branchesRes.data ?? [];
   const branchName = new Map(branches.map((b) => [b.id as string, b.name as string]));
-  const customRoles = (rolesRes.data ?? []) as { id: string; name: string }[];
+  const customRoles = ((rolesRes.data ?? []) as { id: string; name: string; permissions: string[] | null }[]).filter(
+    (r) => !isBuiltinOverride(r.permissions),
+  );
 
   const studentsByGroup = new Map<string, number>();
   for (const s of studentsRes.data ?? []) {
