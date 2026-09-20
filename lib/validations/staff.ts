@@ -40,7 +40,12 @@ export const teacherSchema = z.object({
   workScheduleId: optionalText(36),
   comment: optionalText(500),
   email: z.union([z.string().trim().email("Elektron pochta noto'g'ri"), z.literal("")]).optional(),
+  /** Xodim ishlaydigan filiallar (0072). */
+  branchIds: z.array(z.string().uuid()).optional(),
 });
+
+/** Xodim ketganda tanlanadigan tayyor sabablar. */
+export const STAFF_LEAVE_REASONS = ["Shaxsiy sabab", "Boshqa ishga o'tdi", "Ish haqi mos kelmadi", "Ishdan bo'shatildi", "Boshqa"] as const;
 
 export type TeacherInput = z.input<typeof teacherSchema>;
 

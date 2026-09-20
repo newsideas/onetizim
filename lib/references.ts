@@ -87,6 +87,8 @@ export interface ReferenceConfig {
   fields: RefField[];
   /** Berilsa, "Qo'shish" va tahrirlash yon oyna o'rniga shu yo'ldagi alohida sahifaga olib boradi (`/new`, `/<id>`). */
   formPage?: string;
+  /** "Qo'shish" tugmasi yozuvi (masalan "Filial qo'shish"); berilmasa "Qo'shish". */
+  addLabel?: string;
   /** Yon panel sarlavhasi ("<nom> qo'shish"); berilmasa ma'lumotnoma nomi ishlatiladi. */
   itemTitle?: string;
   /** Tahrirlash paneli sarlavhasi; berilmasa `<itemTitle>ni tahrirlash`. */
@@ -529,6 +531,9 @@ export const REFERENCES = {
     subtitle: "Markaz filiallari",
     labelField: "name",
     orderBy: { column: "name", ascending: true },
+    // Xaritali alohida sahifa (Edu tizimdagidek).
+    formPage: "/settings/branches",
+    addLabel: "Filial qo'shish",
     fields: [
       { name: "name", label: "Nomi", type: "text", required: true },
       { name: "address", label: "Manzil", type: "text" },

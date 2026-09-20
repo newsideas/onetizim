@@ -65,6 +65,8 @@ export function TeacherFormModal({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
   const [schedules, setSchedules] = useState<{ id: string; name: string }[]>([]);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+  const [branchIds, setBranchIds] = useState<string[]>(teacher?.branch_ids ?? []);
 
   const initialName = splitName(teacher?.full_name);
   const [lastName, setLastName] = useState(initialName.lastName);
@@ -82,7 +84,13 @@ export function TeacherFormModal({
 
   useEffect(() => {
     getTeacherFormOptions()
-      .then((result) => setSchedules(unwrap(result)))
+      .then((result) => {
+        const options = unwrap(result);
+        setSchedules(options.schedules);
+        setBranches(options.branches);
+        // Yangi xodim: bitta filial bo'lsa avtomatik tanlanadi.
+        if (!teacher && options.branches.length === 1) setBranchIds([options.branches[0].id]);
+      })
       .catch(() => setSchedules([]));
   }, []);
 
@@ -111,6 +119,7 @@ export function TeacherFormModal({
         workScheduleId,
         comment,
         email,
+        branchIds: branches.length > 0 ? branchIds : undefined,
       };
       const result = teacher ? await updateTeacher(teacher.id, values) : await createTeacher(values);
       if (!result.ok) return setError(result.error);
@@ -220,6 +229,28 @@ export function TeacherFormModal({
             Ish haqi chiqarish
           </label>
         </div>
+
+        {branches.length > 0 && (
+          <fieldset className="border-t border-line pt-4">
+            <legend className="mb-1.5 text-sm font-medium text-ink-muted">Filiallar</legend>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {branches.map((b) => (
+                <label key={b.id} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                  <input
+                    type="checkbox"
+                    checked={branchIds.includes(b.id)}
+                    onChange={(e) =>
+                      setBranchIds((prev) => (e.target.checked ? [...prev, b.id] : prev.filter((id) => id !== b.id)))
+                    }
+                    disabled={isPending}
+                    className="h-4 w-4 rounded border-line accent-brand-600"
+                  />
+                  {b.name}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
 
         <div className="grid gap-4 border-t border-line pt-4 sm:grid-cols-3">
           <Field label="Ish jadvali" htmlFor="staff-schedule">

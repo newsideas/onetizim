@@ -22,6 +22,11 @@ export interface TeacherRow {
   work_schedule_id?: string | null;
   comment?: string | null;
   email?: string | null;
+  // Ro'yxat uchun (0072 va hisoblangan ustunlar)
+  created_at?: string;
+  branch_ids?: string[] | null;
+  left_on?: string | null;
+  leave_reason?: string | null;
 }
 
 interface TeachersContextValue {

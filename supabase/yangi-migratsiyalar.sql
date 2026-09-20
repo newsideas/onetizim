@@ -1,4 +1,4 @@
--- YANGI MIGRATSIYALAR: 0044 - 0071.
+-- YANGI MIGRATSIYALAR: 0044 - 0072.
 -- Supabase Dashboard -> SQL Editor -> New query: shu faylni to'liq joylab Run bosing (bir marta).
 -- Hammasi qayta ishga tushirilsa ham zarar qilmaydi (if not exists / drop policy if exists).
 
@@ -1155,3 +1155,10 @@ drop policy if exists site_news_admin on site_news;
 create policy site_news_admin on site_news for all
   using (coalesce(public.is_platform_admin(), false))
   with check (coalesce(public.is_platform_admin(), false));
+
+-- ================= 0072_staff_edu_columns.sql =================
+
+alter table teachers
+  add column if not exists branch_ids uuid[] not null default '{}',
+  add column if not exists left_on date,
+  add column if not exists leave_reason text;

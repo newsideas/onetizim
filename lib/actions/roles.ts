@@ -3,13 +3,35 @@
 import { revalidatePath } from "next/cache";
 import { assertPermission } from "@/lib/auth/session";
 import { ActionError, runAction } from "@/lib/actions/result";
-import { ALL_PERMISSIONS, isRole, ROLE_PERMISSIONS, type Role } from "@/lib/auth/permissions";
+import { ROLE_PERMISSIONS, type Role } from "@/lib/auth/permissions";
+import { BOSS_ONLY_KEY, CATALOG_ACTIONS, coarseFromActions } from "@/lib/permission-catalog";
 
 export interface RoleInput {
   name: string;
   comment: string;
-  baseRole: Role;
-  permissions: string[];
+  /** "Faqat boss ko'ra oladi": rol faqat direktorga ko'rinadi. */
+  bossOnly?: boolean;
+  /** Rol oynasida belgilangan amallar (permission-catalog kalitlari). */
+  actions: string[];
+}
+
+/**
+ * Bazadagi ma'lumot darajasi (RLS) belgilangan ruxsatlarni eng ko'p qoplaydigan tayyor roldan olinadi;
+ * teng bo'lsa — kichigi (o'qituvchi, buxgalter, administrator).
+ */
+function deriveBaseRole(coarse: string[]): Exclude<Role, "owner"> {
+  const order = ["teacher", "accountant", "manager"] as const;
+  let best: (typeof order)[number] = "teacher";
+  let bestScore = -1;
+  for (const role of order) {
+    const allowed = new Set<string>(ROLE_PERMISSIONS[role]);
+    const score = coarse.filter((p) => allowed.has(p)).length;
+    if (score > bestScore) {
+      best = role;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 function revalidateRoles() {
@@ -18,22 +40,24 @@ function revalidateRoles() {
   revalidatePath("/staff/roles");
 }
 
-/** Maxsus rol ruxsatlari asosiy rol doirasidan chiqmaydi (haqiqiy himoya RLS'da, asosiy rol bo'yicha). */
+/** Rol oynasidagi belgilardan asosiy ruxsatlar hisoblanadi; ular bazadagi daraja (RLS) doirasidan chiqmaydi. */
 function toRow(input: RoleInput) {
   const name = input.name.trim();
   if (name.length < 2) throw new ActionError("Rol nomini kiriting");
   if (name.length > 60) throw new ActionError("Rol nomi juda uzun");
-  if (!isRole(input.baseRole) || input.baseRole === "owner") throw new ActionError("Asosiy rolni tanlang");
 
-  const allowed = new Set<string>(ROLE_PERMISSIONS[input.baseRole]);
-  const known = new Set<string>(ALL_PERMISSIONS);
-  const permissions = input.permissions.filter((p) => known.has(p) && allowed.has(p));
+  const actions = [...new Set(input.actions)].filter((key) => CATALOG_ACTIONS.has(key));
+  const wanted = coarseFromActions(actions);
+  const baseRole = deriveBaseRole(wanted);
+  const allowed = new Set<string>(ROLE_PERMISSIONS[baseRole]);
+  const coarse = wanted.filter((p) => allowed.has(p));
 
   return {
     name,
     comment: input.comment.trim() || null,
-    base_role: input.baseRole,
-    permissions,
+    base_role: baseRole,
+    // Asosiy ruxsatlar (tekshiruv shular bo'yicha) + rol oynasidagi belgilar (qayta ochganda ko'rsatish uchun).
+    permissions: [...coarse, ...actions, ...(input.bossOnly ? [BOSS_ONLY_KEY] : [])],
   };
 }
 

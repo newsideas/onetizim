@@ -33,19 +33,36 @@ function toTeacherRow(input: TeacherInput) {
   };
 }
 
-/** "Xodim qo'shish" oynasidagi ish jadvallari ro'yxati. */
+/** Filiallar (0072) ustuni bo'lmagan bazada saqlash buzilmasligi uchun alohida qo'shiladi. */
+function branchColumns(input: TeacherInput) {
+  return input.branchIds ? { branch_ids: input.branchIds } : {};
+}
+
+function missingBranchColumn(message: string) {
+  return /branch_ids/.test(message);
+}
+
+/** "Xodim qo'shish" oynasidagi ish jadvallari va filiallar ro'yxati. */
 export async function getTeacherFormOptions() {
   return runAction(async () => {
     const { supabase } = await assertPermission("staff.manage");
-    const { data } = await supabase.from("work_schedules").select("id, name").order("name");
-    return (data ?? []) as { id: string; name: string }[];
+    const [schedules, branches] = await Promise.all([
+      supabase.from("work_schedules").select("id, name").order("name"),
+      supabase.from("branches").select("id, name").order("name"),
+    ]);
+    return {
+      schedules: (schedules.data ?? []) as { id: string; name: string }[],
+      branches: (branches.data ?? []) as { id: string; name: string }[],
+    };
   });
 }
 
 export async function createTeacher(input: TeacherInput) {
   return runAction(async () => {
     const { supabase, org } = await assertPermission("staff.manage");
-    const { error } = await supabase.from("teachers").insert({ org_id: org.id, ...toTeacherRow(input) });
+    const row = { org_id: org.id, ...toTeacherRow(input) };
+    let { error } = await supabase.from("teachers").insert({ ...row, ...branchColumns(input) });
+    if (error && missingBranchColumn(error.message)) ({ error } = await supabase.from("teachers").insert(row));
     if (error) throw new ActionError("Xodimni saqlab bo'lmadi: " + error.message);
     revalidateStaff();
   });
@@ -54,19 +71,33 @@ export async function createTeacher(input: TeacherInput) {
 export async function updateTeacher(teacherId: string, input: TeacherInput) {
   return runAction(async () => {
     const { supabase } = await assertPermission("staff.manage");
-    const { error } = await supabase.from("teachers").update(toTeacherRow(input)).eq("id", teacherId);
+    const row = toTeacherRow(input);
+    let { error } = await supabase.from("teachers").update({ ...row, ...branchColumns(input) }).eq("id", teacherId);
+    if (error && missingBranchColumn(error.message)) ({ error } = await supabase.from("teachers").update(row).eq("id", teacherId));
     if (error) throw new ActionError("Xodimni yangilab bo'lmadi: " + error.message);
     revalidateStaff();
   });
 }
 
-export async function setTeacherActive(teacherId: string, isActive: boolean) {
+/** Xodimni faol/nofaol qiladi; nofaol qilinganda ketish sanasi va sababi yoziladi (0072). */
+export async function setTeacherActive(
+  teacherId: string,
+  isActive: boolean,
+  leave?: { date: string; reason: string },
+) {
   return runAction(async () => {
     const { supabase } = await assertPermission("staff.manage");
-    const { error } = await supabase
+    const leaveColumns = isActive
+      ? { left_on: null, leave_reason: null }
+      : { left_on: leave?.date || null, leave_reason: leave?.reason?.slice(0, 120) || null };
+    let { error } = await supabase
       .from("teachers")
-      .update({ is_active: isActive })
+      .update({ is_active: isActive, ...leaveColumns })
       .eq("id", teacherId);
+    // 0072 qo'llanmagan bo'lsa faqat holatning o'zi o'zgaradi.
+    if (error && /left_on|leave_reason/.test(error.message)) {
+      ({ error } = await supabase.from("teachers").update({ is_active: isActive }).eq("id", teacherId));
+    }
     if (error) throw new ActionError("Holatni o'zgartirib bo'lmadi: " + error.message);
     revalidateStaff();
   });
