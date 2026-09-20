@@ -32,11 +32,30 @@ export type HostInfo =
   | { kind: "tenant"; slug: string };
 
 /**
+ * Domen ulanmaguncha (masalan, faqat xxx.vercel.app bor paytda) subdomenlar ishlamaydi.
+ * `NEXT_PUBLIC_FORCE_HOST=admin` — shu manzil Super Admin bo'lib ochiladi;
+ * `NEXT_PUBLIC_FORCE_HOST=tenant:<slug>` — shu manzil bitta markaz ilovasi bo'lib ochiladi.
+ * O'zgaruvchi bo'sh bo'lsa (asosiy holat) hech narsa o'zgarmaydi. Domen ulangach o'chiriladi.
+ */
+function forcedHost(): HostInfo | null {
+  const value = (process.env.NEXT_PUBLIC_FORCE_HOST ?? "").trim().toLowerCase();
+  if (value === "admin") return { kind: "admin" };
+  if (value.startsWith("tenant:")) {
+    const slug = value.slice("tenant:".length);
+    if (isValidSlug(slug)) return { kind: "tenant", slug };
+  }
+  return null;
+}
+
+/**
  * Host sarlavhasidan (port bilan yoki portsiz) manzil turini aniqlaydi.
  * Noma'lum hostlar (127.0.0.1, hosting'ning preview manzillari) asosiy sayt
  * hisoblanadi — hech qachon tasodifan maktab ma'lumotini ochmaydi.
  */
 export function resolveHost(hostHeader: string | null | undefined): HostInfo {
+  const forced = forcedHost();
+  if (forced) return forced;
+
   const host = (hostHeader ?? "").toLowerCase().split(":")[0];
 
   if (host === ROOT_DOMAIN || host === `www.${ROOT_DOMAIN}`) return { kind: "root" };
