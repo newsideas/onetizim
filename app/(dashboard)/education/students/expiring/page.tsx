@@ -109,9 +109,8 @@ export default async function ExpiringStudentsPage({
             <thead className="border-b border-line bg-canvas">
               <tr>
                 <th className={`${TH} w-12`}>№</th>
-                <th className={TH}>{terms.student} ismi</th>
+                <th className={TH}>{terms.student}ni ismi</th>
                 <th className={TH}>Telefon raqam</th>
-                <th className={TH}>{terms.group}</th>
                 <th className={TH}>Jami darslar narxi</th>
                 <th className={TH}>Joriy balans</th>
                 <th className={TH}>Kutilayotgan balans</th>
@@ -120,7 +119,7 @@ export default async function ExpiringStudentsPage({
             <tbody className="divide-y divide-line">
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center">
+                  <td colSpan={6} className="px-4 py-16 text-center">
                     <Inbox size={22} className="mx-auto mb-2 text-ink-faint" aria-hidden="true" />
                     <div className="text-sm font-medium text-ink-muted">Ma&apos;lumotlar topilmadi</div>
                     <div className="mt-0.5 text-xs text-ink-faint">
@@ -141,7 +140,6 @@ export default async function ExpiringStudentsPage({
                       </Link>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{s.phone || "—"}</td>
-                    <td className="px-4 py-3 text-ink-muted">{s.group?.name ?? "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{formatSom(s.price)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <BalanceBadge balance={Number(s.balance)} />

@@ -32,6 +32,9 @@ export interface LeadRow {
 
 export interface LeadOptions {
   members: { id: string; name: string }[];
+  /** Ro'yxatdagi "O'qituvchi" va "Kurs darajasi" ustunlari uchun (ixtiyoriy). */
+  teachers?: { id: string; name: string }[];
+  groupLevels?: Record<string, string>;
   sources: string[];
   interests: string[];
 }

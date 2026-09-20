@@ -34,6 +34,7 @@ export function LeadsList({
 }) {
   const { options, openEdit } = useLeads();
   const memberName = new Map(options.members.map((m) => [m.id, m.name]));
+  const teacherName = new Map((options.teachers ?? []).map((t) => [t.id, t.name]));
   const columnCount = mode === "trial" ? 8 : 9;
 
   return (
@@ -43,17 +44,23 @@ export function LeadsList({
           <tr>
             <th className={`${TH} w-12`}>№</th>
             <th className={TH}>ID</th>
-            <th className={TH}>O&apos;quvchi ismi</th>
+            <th className={TH}>O&apos;quvchini ismi</th>
             <th className={TH}>Telefon raqam</th>
-            <th className={TH}>Yaratilgan sana</th>
+            <th className={TH}>Yaratilgan sanasi</th>
             {mode === "trial" ? (
-              <th className={TH}>Birinchi dars sanasi</th>
+              <>
+                <th className={TH}>Birinchi dars sanasi</th>
+                <th className={TH}>Mas&apos;ul</th>
+                <th className={TH}>Kurs</th>
+              </>
             ) : (
-              <th className={TH}>Bosqich</th>
+              <>
+                <th className={TH}>O&apos;qituvchi</th>
+                <th className={TH}>Kurs</th>
+                <th className={TH}>Kurs darajasi</th>
+                <th className={TH}>Moderator</th>
+              </>
             )}
-            <th className={TH}>Mas&apos;ul</th>
-            <th className={TH}>Kurs</th>
-            {mode === "all" && <th className={TH}>Manba</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -83,29 +90,40 @@ export function LeadsList({
                   {lead.parent_name && (
                     <div className="text-xs text-ink-faint">{lead.parent_name}</div>
                   )}
+                  {mode === "all" && (
+                    <span
+                      className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${STAGE_BADGE[lead.stage]}`}
+                    >
+                      {LEAD_STAGE_LABELS[lead.stage]}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{lead.phone || "—"}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
                   {formatDate(lead.created_at)}
                 </td>
                 {mode === "trial" ? (
-                  <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
-                    {lead.trial_date ? formatDate(lead.trial_date) : "—"}
-                  </td>
+                  <>
+                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
+                      {lead.trial_date ? formatDate(lead.trial_date) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-ink-muted">
+                      {lead.assigned_to ? (memberName.get(lead.assigned_to) ?? "—") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-ink-muted">{lead.interest || "—"}</td>
+                  </>
                 ) : (
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${STAGE_BADGE[lead.stage]}`}
-                    >
-                      {LEAD_STAGE_LABELS[lead.stage]}
-                    </span>
-                  </td>
+                  <>
+                    <td className="px-4 py-3 text-ink-muted">{lead.teacher_id ? (teacherName.get(lead.teacher_id) ?? "—") : "—"}</td>
+                    <td className="px-4 py-3 text-ink-muted">{lead.interest || "—"}</td>
+                    <td className="px-4 py-3 text-ink-muted">
+                      {lead.group_id ? (options.groupLevels?.[lead.group_id] ?? "—") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-ink-muted">
+                      {lead.assigned_to ? (memberName.get(lead.assigned_to) ?? "—") : "—"}
+                    </td>
+                  </>
                 )}
-                <td className="px-4 py-3 text-ink-muted">
-                  {lead.assigned_to ? (memberName.get(lead.assigned_to) ?? "—") : "—"}
-                </td>
-                <td className="px-4 py-3 text-ink-muted">{lead.interest || "—"}</td>
-                {mode === "all" && <td className="px-4 py-3 text-ink-muted">{lead.source || "—"}</td>}
               </tr>
             ))
           )}

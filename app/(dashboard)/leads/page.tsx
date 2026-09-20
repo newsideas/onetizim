@@ -3,12 +3,21 @@ import { Columns3, List } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { getOrgMembers } from "@/lib/staff";
 import { toIsoDay } from "@/lib/utils/date";
-import { LEAD_SOURCES, LEAD_STAGES, LEAD_STAGE_LABELS, isLeadStage } from "@/lib/validations/lead";
+import { LEAD_SOURCES, type LeadStage } from "@/lib/validations/lead";
 import { InlineFilters, TablePager, type InlineField } from "@/components/ui/ListToolbar";
 import { readPaging } from "@/lib/paging";
 import { LeadsProvider, NewLeadButton, type LeadRow } from "@/components/leads/LeadsProvider";
 import { LeadsBoard } from "@/components/leads/LeadsBoard";
 import { LeadsList } from "@/components/leads/LeadsList";
+
+/** Edu tizimdagi 5 ta holat chipi va ularga kiradigan bosqichlar. */
+const STATUS_CHIPS: { key: string; label: string; stages: LeadStage[] }[] = [
+  { key: "new", label: "Yangi", stages: ["new", "contacted"] },
+  { key: "exam", label: "Imtihonga yozilgan", stages: ["visit"] },
+  { key: "tested", label: "Test yechgan", stages: ["test", "accepted"] },
+  { key: "contract", label: "Shartnoma qilingan", stages: ["contract", "paid", "enrolled"] },
+  { key: "cancelled", label: "Bekor qilingan", stages: ["lost"] },
+];
 
 /** Joriy filtrlarni saqlagan holda bitta parametrni almashtiradigan havola. */
 function hrefWith(params: Record<string, string | undefined>, change: Record<string, string | null>) {
@@ -31,7 +40,7 @@ export default async function LeadsPage({
   const params = await searchParams;
   const { supabase, org } = await requirePermission("leads.manage");
   const board = params.view === "board";
-  const stage = params.stage && isLeadStage(params.stage) ? params.stage : null;
+  const chip = STATUS_CHIPS.find((c) => c.key === params.stage) ?? null;
 
   let query = supabase
     .from("leads")
@@ -44,18 +53,25 @@ export default async function LeadsPage({
   if (q) query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%`);
   if (params.assigned) query = query.eq("assigned_to", params.assigned);
   if (params.source) query = query.eq("source", params.source);
+  if (params.group) query = query.eq("group_id", params.group);
+  if (params.teacher) query = query.eq("teacher_id", params.teacher);
   if (params.interest) query = query.eq("interest", params.interest);
 
-  const [leadsResult, members, { data: classes }] = await Promise.all([
+  const [leadsResult, members, { data: classes }, { data: teacherRows }] = await Promise.all([
     query,
     getOrgMembers(supabase, org.id),
-    supabase.from("groups").select("name").order("name"),
+    supabase.from("groups").select("id, name, level").order("name"),
+    supabase.from("teachers").select("id, full_name").order("full_name"),
   ]);
 
   const managers = members
     .filter((m) => m.role !== "teacher")
     .map((m) => ({ id: m.userId, name: m.name }));
   const interests = (classes ?? []).map((c) => c.name as string);
+  const teachers = (teacherRows ?? []).map((t) => ({ id: t.id as string, name: t.full_name as string }));
+  const groupLevels = Object.fromEntries(
+    (classes ?? []).flatMap((c) => (c.level ? [[c.id as string, c.level as string]] : [])),
+  ) as Record<string, string>;
 
   // Sana oralig'i (yaratilgan sana) — bosqichdan tashqari filtrlar; chip sonlari shularga tayanadi.
   const inRange = ((leadsResult.data ?? []) as LeadRow[]).filter((l) => {
@@ -64,15 +80,14 @@ export default async function LeadsPage({
     if (params.to && created > params.to) return false;
     return true;
   });
-  const leads = stage ? inRange.filter((l) => l.stage === stage) : inRange;
+  const leads = chip ? inRange.filter((l) => chip.stages.includes(l.stage)) : inRange;
 
   const { page, size } = readPaging(params);
   const current = Math.min(page, Math.max(1, Math.ceil(leads.length / size)));
   const offset = (current - 1) * size;
   const visible = leads.slice(offset, offset + size);
 
-  const counts = new Map<string, number>();
-  for (const l of inRange) counts.set(l.stage, (counts.get(l.stage) ?? 0) + 1);
+
 
   const fields: InlineField[] = [
     { name: "q", label: "Qidiruv", type: "text" },
@@ -91,6 +106,18 @@ export default async function LeadsPage({
       options: interests.map((i) => ({ value: i, label: i })),
     },
     {
+      name: "group",
+      label: "Guruh",
+      type: "select",
+      options: (classes ?? []).map((g) => ({ value: g.id as string, label: g.name as string })),
+    },
+    {
+      name: "teacher",
+      label: "O'qituvchi",
+      type: "select",
+      options: teachers.map((t) => ({ value: t.id, label: t.name })),
+    },
+    {
       name: "source",
       label: "Manba",
       type: "select",
@@ -102,7 +129,7 @@ export default async function LeadsPage({
     "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors";
 
   return (
-    <LeadsProvider options={{ members: managers, sources: LEAD_SOURCES, interests }}>
+    <LeadsProvider options={{ members: managers, sources: LEAD_SOURCES, interests, teachers, groupLevels }}>
       <div className="space-y-3">
         {leadsResult.error && (
           <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
@@ -136,27 +163,17 @@ export default async function LeadsPage({
               </Link>
             </div>
 
-            <Link
-              href={hrefWith(params, { stage: null })}
-              className={`${chipBase} ${
-                !stage
-                  ? "border-brand-600 bg-brand-600 text-white"
-                  : "border-line bg-surface text-ink-muted hover:bg-canvas"
-              }`}
-            >
-              Barchasi: {inRange.length}
-            </Link>
-            {LEAD_STAGES.map((s) => (
+            {STATUS_CHIPS.map((c) => (
               <Link
-                key={s}
-                href={hrefWith(params, { stage: stage === s ? null : s })}
+                key={c.key}
+                href={hrefWith(params, { stage: chip?.key === c.key ? null : c.key })}
                 className={`${chipBase} ${
-                  stage === s
+                  chip?.key === c.key
                     ? "border-brand-600 bg-brand-600 text-white"
                     : "border-line bg-surface text-ink-muted hover:bg-canvas"
                 }`}
               >
-                {LEAD_STAGE_LABELS[s]}: {counts.get(s) ?? 0}
+                {c.label}: {inRange.filter((l) => c.stages.includes(l.stage)).length}
               </Link>
             ))}
           </div>

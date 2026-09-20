@@ -163,19 +163,20 @@ export async function ParentsByStudent({
               <tr>
                 <th className={`${TH} w-12`}>№</th>
                 <th className={TH}>ID</th>
-                <th className={TH}>{studentLabel} ismi</th>
+                <th className={TH}>{studentLabel}ni ismi</th>
                 <th className={TH}>Otasining ismi</th>
                 <th className={TH}>Telefon raqam</th>
                 <th className={TH}>Onasining ismi</th>
                 <th className={TH}>Telefon raqam</th>
-                <th className={TH}>Vasiy</th>
                 <th className={TH}>Balans</th>
+                <th className={TH}>Otasi ilovani yuklab olish sanasi</th>
+                <th className={TH}>Onasi ilovani yuklab olish sanasi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center">
+                  <td colSpan={10} className="px-4 py-16 text-center">
                     <Inbox size={22} className="mx-auto mb-2 text-ink-faint" aria-hidden="true" />
                     <div className="text-sm font-medium text-ink-muted">Ma&apos;lumotlar topilmadi</div>
                     <div className="mt-0.5 text-xs text-ink-faint">
@@ -200,12 +201,11 @@ export async function ParentsByStudent({
                     <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{s.father?.phone ?? "—"}</td>
                     <td className="px-4 py-3 text-ink-muted">{s.mother?.full_name ?? "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-ink-muted">{s.mother?.phone ?? "—"}</td>
-                    <td className="px-4 py-3 text-ink-muted">
-                      {s.other ? `${s.other.full_name}${s.other.phone ? ` · ${s.other.phone}` : ""}` : "—"}
-                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <BalanceBadge balance={Number(s.balance)} />
                     </td>
+                    <td className="px-4 py-3 text-ink-muted">—</td>
+                    <td className="px-4 py-3 text-ink-muted">—</td>
                   </tr>
                 ))
               )}
