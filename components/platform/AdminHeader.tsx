@@ -7,6 +7,7 @@ import { useSignOut } from "@/components/auth/useSignOut";
 
 const LINKS = [
   { href: "/admin", label: "Umumiy ko'rsatkichlar" },
+  { href: "/admin/requests", label: "Arizalar" },
   { href: "/admin/organizations", label: "Markazlar" },
   { href: "/admin/payments", label: "To'lovlar" },
   { href: "/admin/profile", label: "Profil" },

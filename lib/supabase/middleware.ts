@@ -19,8 +19,9 @@ type Gate = { action: "allow"; rewrite?: string } | { action: "notfound" };
 function gateByHost(host: HostInfo, pathname: string): Gate {
   const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
 
-  // Asosiy manzilda hozircha sahifa yo'q (tanishtiruv sayti keyin quriladi): faqat tashqi xizmatlar uchun API.
+  // Asosiy manzil: faqat rasmiy sayt (`/`) va tashqi xizmatlar (Telegram) uchun API.
   if (host.kind === "root") {
+    if (pathname === "/") return { action: "allow", rewrite: "/site" };
     if (pathname.startsWith("/api/telegram/webhook")) {
       return { action: "allow" };
     }
@@ -40,7 +41,7 @@ function gateByHost(host: HostInfo, pathname: string): Gate {
     return { action: "notfound" };
   }
 
-  if (under("/admin")) return { action: "notfound" };
+  if (under("/admin") || under("/site")) return { action: "notfound" };
   return { action: "allow" };
 }
 

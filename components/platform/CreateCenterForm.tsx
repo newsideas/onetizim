@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CheckCircle2, Copy } from "lucide-react";
 import { createCenter } from "@/lib/actions/centers";
+import { setDemoRequestStatus } from "@/lib/actions/demo-requests";
 import { formatPhone } from "@/lib/auth/identity";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
@@ -18,10 +19,15 @@ interface Created {
 }
 
 /** Super admin uchun: yangi o'quv markaz — faqat nom, rahbar, telefon va joylashuv; parol avtomatik. */
-export function CreateCenterForm() {
-  const [orgName, setOrgName] = useState("");
-  const [directorName, setDirectorName] = useState("");
-  const [phone, setPhone] = useState("+998");
+export function CreateCenterForm({
+  initial,
+}: {
+  /** "Arizalar" bo'limidan kelganda: ariza ma'lumotlari va ariza id'si (markaz ochilgach "Markaz ochildi" belgilanadi). */
+  initial?: { requestId?: string; orgName?: string; directorName?: string; phone?: string };
+}) {
+  const [orgName, setOrgName] = useState(initial?.orgName ?? "");
+  const [directorName, setDirectorName] = useState(initial?.directorName ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "+998");
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -36,6 +42,8 @@ export function CreateCenterForm() {
     setPending(false);
     if (!result.ok) return setError(result.error);
     setCreated(result.data);
+    // Ariza asosida ochilgan bo'lsa, arizani "Markaz ochildi" deb belgilaymiz (xato bo'lsa e'tiborsiz).
+    if (initial?.requestId) void setDemoRequestStatus(initial.requestId, "opened");
   }
 
   async function copyCredentials(c: Created) {
