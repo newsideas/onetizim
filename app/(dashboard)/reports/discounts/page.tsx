@@ -38,6 +38,7 @@ export default async function DiscountsReportPage() {
     <div className="space-y-4">
       <ReportCards
         items={[
+          { label: "Umumiy bonuslar", value: formatSom(0) },
           { label: "Umumiy chegirmalar", value: formatSom(total), tone: "bad" },
           { label: "Chegirmali o'quvchilar", value: rows.length },
           { label: "Chegirmali shartnomalar", value: contracts.length },
@@ -51,6 +52,7 @@ export default async function DiscountsReportPage() {
           { header: "Kurs", cell: (r) => r.course },
           { header: "Guruh", cell: (r) => r.group },
           { header: "Umumiy olgan chegirmasi", align: "right", cell: (r) => formatSom(r.sum) },
+          { header: "Bonus", align: "right", cell: () => formatSom(0) },
         ]}
       />
     </div>

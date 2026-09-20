@@ -8,7 +8,7 @@ interface Row {
   full_name: string;
   phone: string | null;
   balance: number;
-  group: { name: string; monthly_price: number } | null;
+  group: { name: string; monthly_price: number; schedule_days: string[] | null } | null;
 }
 
 /** O'quvchining umumiy to'lanmagan summasi: balansi manfiy (qarzdor) aktiv o'quvchilar. */
@@ -17,7 +17,7 @@ export default async function UnpaidReportPage() {
 
   const { data } = await supabase
     .from("students")
-    .select("id, full_name, phone, balance, group:groups(name, monthly_price)")
+    .select("id, full_name, phone, balance, group:groups(name, monthly_price, schedule_days)")
     .eq("status", "active")
     .lt("balance", 0)
     .order("balance");
@@ -39,18 +39,26 @@ export default async function UnpaidReportPage() {
         rowKey={(r) => r.id}
         columns={[
           {
-            header: "O'quvchi",
+            header: "Ism",
             cell: (r) => (
               <Link href={`/education/students/${r.id}`} className="font-medium text-ink hover:text-brand-600">
                 {r.full_name}
               </Link>
             ),
           },
-          { header: "Telefon raqam", cell: (r) => r.phone || "—" },
-          { header: "Guruh", cell: (r) => r.group?.name ?? "—" },
-          { header: "Oylik narx", align: "right", cell: (r) => formatSom(Number(r.group?.monthly_price ?? 0)) },
+          { header: "Guruhlar", cell: (r) => r.group?.name ?? "—" },
           {
-            header: "To'lanmagan summa",
+            header: "To'lanmagan darslar",
+            align: "right",
+            cell: (r) => {
+              // Bir darsning narxi = oylik narx / oydagi darslar soni (haftada n kun x 4).
+              const perMonth = (r.group?.schedule_days?.length ?? 0) * 4;
+              const price = Number(r.group?.monthly_price ?? 0);
+              return perMonth > 0 && price > 0 ? Math.ceil(-Number(r.balance) / (price / perMonth)) : "—";
+            },
+          },
+          {
+            header: "Jami to'lanmagan",
             align: "right",
             cell: (r) => <span className="font-medium text-red-600">{formatSom(-Number(r.balance))}</span>,
           },

@@ -62,7 +62,6 @@ export default async function PriceMismatchPage({
         rows={rows}
         rowKey={(r) => r.id}
         columns={[
-          { header: "Sana", cell: (r) => formatDate(r.paid_at) },
           {
             header: "O'quvchi",
             cell: (r) =>
@@ -74,19 +73,11 @@ export default async function PriceMismatchPage({
                 "—"
               ),
           },
+          { header: "Turi", cell: () => "Kirim" },
           { header: "Guruh", cell: (r) => r.student?.group?.name ?? "—" },
-          { header: "Guruh narxi", align: "right", cell: (r) => formatSom(r.price) },
-          { header: "To'langan", align: "right", cell: (r) => formatSom(Number(r.amount)) },
-          {
-            header: "Farq",
-            align: "right",
-            cell: (r) => (
-              <span className={r.diff < 0 ? "font-medium text-red-600" : "font-medium text-green-600"}>
-                {r.diff > 0 ? "+" : ""}
-                {formatSom(r.diff)}
-              </span>
-            ),
-          },
+          { header: "O'quvchi narxi", align: "right", cell: (r) => formatSom(Number(r.amount)) },
+          { header: "Kurs narxi", align: "right", cell: (r) => formatSom(r.price) },
+          { header: "Yaratildi", cell: (r) => formatDate(r.paid_at) },
         ]}
       />
     </div>

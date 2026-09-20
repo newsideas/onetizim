@@ -468,6 +468,7 @@ export const REFERENCES = {
     group: "marketing",
     title: "Savdo plani",
     subtitle: "Oylik savdo rejalari",
+    addLabel: "Planni sozlash",
     labelField: "plan_month",
     orderBy: { column: "plan_month", ascending: false },
     fields: [
@@ -484,6 +485,9 @@ export const REFERENCES = {
     group: "marketing",
     title: "Yangiliklar",
     subtitle: "Markaz yangiliklari",
+    addLabel: "Yangilik qo'shish",
+    listFields: ["image", "title", "body", "views", "created_at"],
+    listLabels: { image: "Rasm", body: "Kontent", views: "Ko'rilganlar", created_at: "Sana" },
     labelField: "title",
     orderBy: { column: "created_at", ascending: false },
     fields: [
@@ -500,6 +504,9 @@ export const REFERENCES = {
     group: "marketing",
     title: "Hikoya",
     subtitle: "Ilovadagi hikoyalar (stories)",
+    addLabel: "Hikoya qo'shish",
+    listFields: ["image_url", "title", "created_at", "file"],
+    listLabels: { image_url: "Rasm", created_at: "Sana", file: "Fayl" },
     labelField: "title",
     orderBy: { column: "created_at", ascending: false },
     fields: [
@@ -518,6 +525,9 @@ export const REFERENCES = {
     labelField: "title",
     orderBy: { column: "created_at", ascending: false },
     itemTitle: "SMS shablon",
+    addLabel: "SMS shablon qo'shish",
+    listFields: ["title", "kind", "body"],
+    listLabels: { body: "SMS" },
     fields: [
       {
         name: "kind",
@@ -536,6 +546,9 @@ export const REFERENCES = {
     group: "marketing",
     title: "Marketing",
     subtitle: "Marketing so'rovnomalari",
+    addLabel: "So'rovnoma qo'shish",
+    listFields: ["name", "image", "web_link", "bot_link", "tilda_link"],
+    listLabels: { image: "Rasm", web_link: "Veb havolasi", bot_link: "Bot havolasi", tilda_link: "Tilda havolasi" },
     labelField: "name",
     orderBy: { column: "created_at", ascending: false },
     itemTitle: "So'rovnoma",

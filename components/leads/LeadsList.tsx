@@ -35,7 +35,7 @@ export function LeadsList({
   const { options, openEdit } = useLeads();
   const memberName = new Map(options.members.map((m) => [m.id, m.name]));
   const teacherName = new Map((options.teachers ?? []).map((t) => [t.id, t.name]));
-  const columnCount = mode === "trial" ? 8 : 9;
+  const columnCount = mode === "trial" ? 10 : 9;
 
   return (
     <div className="overflow-x-auto">
@@ -47,20 +47,11 @@ export function LeadsList({
             <th className={TH}>O&apos;quvchini ismi</th>
             <th className={TH}>Telefon raqam</th>
             <th className={TH}>Yaratilgan sanasi</th>
-            {mode === "trial" ? (
-              <>
-                <th className={TH}>Birinchi dars sanasi</th>
-                <th className={TH}>Mas&apos;ul</th>
-                <th className={TH}>Kurs</th>
-              </>
-            ) : (
-              <>
-                <th className={TH}>O&apos;qituvchi</th>
-                <th className={TH}>Kurs</th>
-                <th className={TH}>Kurs darajasi</th>
-                <th className={TH}>Moderator</th>
-              </>
-            )}
+            {mode === "trial" && <th className={TH}>Birinchi darsga kelish sanasi</th>}
+            <th className={TH}>O&apos;qituvchi</th>
+            <th className={TH}>Kurs</th>
+            <th className={TH}>Kurs darajasi</th>
+            <th className={TH}>Moderator</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -102,28 +93,19 @@ export function LeadsList({
                 <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
                   {formatDate(lead.created_at)}
                 </td>
-                {mode === "trial" ? (
-                  <>
-                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
-                      {lead.trial_date ? formatDate(lead.trial_date) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted">
-                      {lead.assigned_to ? (memberName.get(lead.assigned_to) ?? "—") : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted">{lead.interest || "—"}</td>
-                  </>
-                ) : (
-                  <>
-                    <td className="px-4 py-3 text-ink-muted">{lead.teacher_id ? (teacherName.get(lead.teacher_id) ?? "—") : "—"}</td>
-                    <td className="px-4 py-3 text-ink-muted">{lead.interest || "—"}</td>
-                    <td className="px-4 py-3 text-ink-muted">
-                      {lead.group_id ? (options.groupLevels?.[lead.group_id] ?? "—") : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted">
-                      {lead.assigned_to ? (memberName.get(lead.assigned_to) ?? "—") : "—"}
-                    </td>
-                  </>
+                {mode === "trial" && (
+                  <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
+                    {lead.trial_date ? formatDate(lead.trial_date) : "—"}
+                  </td>
                 )}
+                <td className="px-4 py-3 text-ink-muted">{lead.teacher_id ? (teacherName.get(lead.teacher_id) ?? "—") : "—"}</td>
+                <td className="px-4 py-3 text-ink-muted">{lead.interest || "—"}</td>
+                <td className="px-4 py-3 text-ink-muted">
+                  {lead.group_id ? (options.groupLevels?.[lead.group_id] ?? "—") : "—"}
+                </td>
+                <td className="px-4 py-3 text-ink-muted">
+                  {lead.assigned_to ? (memberName.get(lead.assigned_to) ?? "—") : "—"}
+                </td>
               </tr>
             ))
           )}

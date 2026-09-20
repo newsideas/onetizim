@@ -30,11 +30,16 @@ export default async function TrialLeadsPage({
   if (params.from) query = query.gte("trial_date", params.from);
   if (params.to) query = query.lte("trial_date", params.to);
 
-  const [leadsResult, members, { data: classes }] = await Promise.all([
+  const [leadsResult, members, { data: classes }, { data: teacherRows }] = await Promise.all([
     query,
     getOrgMembers(supabase, org.id),
-    supabase.from("groups").select("name").order("name"),
+    supabase.from("groups").select("id, name, level").order("name"),
+    supabase.from("teachers").select("id, full_name").order("full_name"),
   ]);
+  const teachers = (teacherRows ?? []).map((t) => ({ id: t.id as string, name: t.full_name as string }));
+  const groupLevels = Object.fromEntries(
+    (classes ?? []).flatMap((c) => (c.level ? [[c.id as string, c.level as string]] : [])),
+  ) as Record<string, string>;
 
   const leads = (leadsResult.data ?? []) as LeadRow[];
   const managers = members
@@ -66,7 +71,7 @@ export default async function TrialLeadsPage({
   ];
 
   return (
-    <LeadsProvider options={{ members: managers, sources: LEAD_SOURCES, interests }}>
+    <LeadsProvider options={{ members: managers, sources: LEAD_SOURCES, interests, teachers, groupLevels }}>
       <div className="space-y-3">
         <InlineFilters
           storageKey="leads-trial"
