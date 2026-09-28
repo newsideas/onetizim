@@ -3,22 +3,11 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { setCenterSubdomain } from "@/lib/actions/centers";
-import { PUBLIC_DOMAIN } from "@/lib/tenant";
+import { PUBLIC_DOMAIN, suggestSlug } from "@/lib/tenant";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-
-/** "Renessans Markazi" -> "renessans-markazi" (taklif sifatida). */
-function suggestSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[ʻ'`’‘]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 30);
-}
 
 /** Markaz subdomenini belgilash yoki o'zgartirish (renessans.edugram.uz). */
 export function SubdomainForm({ orgId, orgName, currentSlug }: { orgId: string; orgName: string; currentSlug: string | null }) {

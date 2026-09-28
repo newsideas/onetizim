@@ -15,7 +15,8 @@ const TRIAL_DAYS = 7;
 /**
  * Super admin yangi o'quv markazni ochadi: nom, rahbar F.I.Sh, telefon va joylashuv kiritiladi.
  * Direktor hisobi (telefon + avtomatik parol), markaz va direktor a'zoligi bitta amalda yaratiladi.
- * Subdomen bu yerda berilmaydi — markaz sahifasida alohida belgilanadi (`setCenterSubdomain`).
+ * Subdomen formada berilsa markaz darhol shu manzil bilan ochiladi; berilmasa keyin markaz sahifasida
+ * belgilanadi (`setCenterSubdomain`).
  * Markaz yaratilmasa, hisob ham o'chiriladi (yetim hisob qolmasin).
  * Parol faqat shu javobda qaytadi: super admin uni direktorga o'zi yetkazadi.
  */
@@ -29,17 +30,24 @@ export async function createCenter(input: CreateCenterInput) {
     }
     const v = parsed.data;
 
+    const admin = createAdminClient();
+    const slug = v.slug || null;
+
+    // Subdomen formada berilgan bo'lsa, band emasligi hisob yaratilishidan oldin tekshiriladi.
+    if (slug) {
+      const { data: available } = await admin.rpc("slug_available", { p_slug: slug });
+      if (available !== true) throw new ActionError("Bu subdomen band — boshqasini tanlang");
+    }
+
     const phone = normalizePhone(v.phone);
-    // Subdomen berilmaguncha hisob vaqtinchalik ichki nom ostida turadi; subdomen belgilanganda ko'chiriladi.
-    const email = phone ? identityToEmail(phone, `pending-${crypto.randomUUID().slice(0, 8)}`) : null;
+    // Subdomen berilmasa hisob vaqtinchalik ichki nom ostida turadi; subdomen belgilanganda ko'chiriladi.
+    const email = phone ? identityToEmail(phone, slug ?? `pending-${crypto.randomUUID().slice(0, 8)}`) : null;
     if (!phone || !email) throw new ActionError("Telefon raqamni to'g'ri kiriting");
 
     const [lastName, ...rest] = v.directorName.split(/\s+/).filter(Boolean);
     const firstName = rest.join(" ");
     const fullName = `${lastName} ${firstName}`.trim();
     const password = generatePassword(8);
-
-    const admin = createAdminClient();
 
     const { data: created, error: userError } = await admin.auth.admin.createUser({
       email,
@@ -57,6 +65,7 @@ export async function createCenter(input: CreateCenterInput) {
       .insert({
         owner_id: userId,
         name: v.orgName,
+        slug,
         type: "markaz",
         address: v.location || null,
         director_last_name: lastName,
@@ -81,7 +90,7 @@ export async function createCenter(input: CreateCenterInput) {
     await admin.from("org_members").update({ login: phone, full_name: fullName }).eq("user_id", userId);
 
     revalidatePath("/admin", "layout");
-    return { orgId: org.id as string, name: v.orgName, phone, password };
+    return { orgId: org.id as string, name: v.orgName, phone, password, slug };
   });
 }
 

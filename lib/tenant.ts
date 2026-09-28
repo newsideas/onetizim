@@ -32,6 +32,19 @@ export function isValidSlug(value: string): boolean {
   return SLUG_PATTERN.test(value) && !value.includes("--") && !RESERVED_SLUGS.has(value);
 }
 
+/** Markaz nomidan subdomen taklifi: "Renessans O'quv Markazi" -> "renessans-oquv-markazi". */
+export function suggestSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[ʻ'`’‘]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32)
+    .replace(/-+$/g, "");
+}
+
 export type HostInfo =
   | { kind: "root" }
   | { kind: "admin" }
