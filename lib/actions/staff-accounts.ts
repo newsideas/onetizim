@@ -53,6 +53,17 @@ export async function createStaffAccount(input: StaffAccountInput) {
 
     const admin = createAdminClient();
 
+    // Service kalit RLS'ni chetlab o'tadi: tanlangan xodim kartasi aynan shu markazniki ekani qo'lda tekshiriladi.
+    if (v.employeeId) {
+      const { data: card } = await admin
+        .from("teachers")
+        .select("id")
+        .eq("id", v.employeeId)
+        .eq("org_id", org.id)
+        .maybeSingle();
+      if (!card) throw new ActionError("Xodim kartasi topilmadi");
+    }
+
     const { data: created, error: userError } = await admin.auth.admin.createUser({
       email,
       password: v.password,
