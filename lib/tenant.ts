@@ -69,7 +69,8 @@ export function isAdminPanelEnabled(): boolean {
 function forcedHost(): HostInfo | null {
   const value = (process.env.NEXT_PUBLIC_FORCE_HOST ?? "").trim().toLowerCase();
   if (value === "root") return { kind: "root" };
-  if (value === "admin") return { kind: "admin" };
+  // Admin panel o'chiq muhitda (internet) "admin" majburlash butun saytni 404 qilardi — e'tiborsiz qoldiriladi.
+  if (value === "admin") return isAdminPanelEnabled() ? { kind: "admin" } : null;
   if (value.startsWith("tenant:")) {
     const slug = value.slice("tenant:".length);
     if (isValidSlug(slug)) return { kind: "tenant", slug };
