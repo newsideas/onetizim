@@ -5,6 +5,9 @@ import { isAdminPanelEnabled, resolveHost, type HostInfo } from "@/lib/tenant";
 
 const AUTH_ROUTES = new Set(["/login"]);
 
+/** Qidiruv tizimlari uchun fayllar: har qanday manzilda kirishsiz ochiladi (markaz va admin'da hammasi yopiq deydi). */
+const CRAWLER_FILES = new Set(["/robots.txt", "/sitemap.xml"]);
+
 /** Mavjud bo'lmagan yo'l: Next.js 404 sahifasini ko'rsatadi. */
 const NOT_FOUND_PATH = "/404-not-found";
 
@@ -18,6 +21,7 @@ type Gate = { action: "allow"; rewrite?: string } | { action: "notfound" };
  */
 function gateByHost(host: HostInfo, pathname: string): Gate {
   const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
+  if (CRAWLER_FILES.has(pathname)) return { action: "allow" };
 
   // Asosiy manzil: faqat rasmiy sayt (`/`) va tashqi xizmatlar (Telegram) uchun API.
   if (host.kind === "root") {
@@ -55,6 +59,7 @@ function rewriteTo(request: NextRequest, pathname: string, cookiesFrom?: NextRes
 
 /** Kirmasdan ochiladigan yo'llar. */
 function isPublicPath(pathname: string, host: HostInfo) {
+  if (CRAWLER_FILES.has(pathname)) return true;
   if (host.kind === "admin") return pathname === "/login" || pathname.startsWith("/api/telegram/webhook");
   return (
     AUTH_ROUTES.has(pathname) ||

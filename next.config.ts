@@ -59,7 +59,24 @@ const ARCHIVED: [string, string][] = [
   ["/finance", "/finance/payments"],
 ];
 
+/**
+ * Xavfsizlik sarlavhalari: tizim boshqa saytga iframe ichida qo'yilmaydi (clickjacking),
+ * brauzer fayl turini taxmin qilmaydi, havola manzili tashqi saytlarga to'liq yuborilmaydi.
+ */
+const SECURITY_HEADERS = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+  },
+
   // Tuzilma hali o'zgarishi mumkin — brauzer keshlab qolmasligi uchun 307.
   async redirects() {
     return [...MOVED, ...ARCHIVED].map(([source, destination]) => ({
