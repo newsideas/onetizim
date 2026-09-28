@@ -5,7 +5,7 @@ import { ForceLightTheme } from "@/components/platform/ForceLightTheme";
 import { loginFromEmail } from "@/lib/auth/identity";
 
 export const metadata: Metadata = {
-  title: "Super Admin · EduGram",
+  title: "Super Admin · onetizim",
   robots: { index: false, follow: false },
 };
 

@@ -34,7 +34,7 @@ export default async function SubscriptionExpiredPage() {
         </p>
         <p>
           {role === "owner"
-            ? "Obunani davom ettirish uchun EduGram administratori bilan bog'laning."
+            ? "Obunani davom ettirish uchun onetizim administratori bilan bog'laning."
             : "Iltimos, muassasa direktoriga murojaat qiling."}
         </p>
       </div>

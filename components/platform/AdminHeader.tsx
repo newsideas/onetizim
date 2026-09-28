@@ -24,7 +24,7 @@ export function AdminHeader({ login }: { login?: string | null }) {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:px-6">
         <div className="flex items-center gap-2 text-ink">
           <ShieldCheck size={20} className="text-brand-600" aria-hidden="true" />
-          <span className="text-sm font-semibold">EduGram · Super Admin</span>
+          <span className="text-sm font-semibold">onetizim · Super Admin</span>
         </div>
 
         <nav aria-label="Super Admin menyusi" className="flex gap-1">

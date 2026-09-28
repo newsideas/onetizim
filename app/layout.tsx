@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduGram System",
+  title: "onetizim",
   description: "O'quv markazlari uchun boshqaruv tizimi",
 };
 
