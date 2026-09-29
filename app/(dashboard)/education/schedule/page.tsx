@@ -8,6 +8,7 @@ import {
 import { NewLessonButton } from "@/components/schedule/NewLessonButton";
 import type { LessonOptions } from "@/components/schedule/LessonFormModal";
 import { bugungiKun } from "@/lib/utils/date";
+import { SchoolTimetable } from "@/components/schedule/SchoolTimetable";
 
 const SCHEDULE_SELECT =
   "id, name, schedule_days, start_time, end_time, end_date, lesson_duration_minutes, " +
@@ -18,15 +19,20 @@ const LESSON_SELECT =
   "group:groups(name, end_date), teacher:teachers(full_name), room:rooms(id, name)";
 
 export default async function SchedulePage() {
-  const { supabase, permissions } = await requirePermission("schedule.view");
+  const { supabase, permissions, org } = await requirePermission("schedule.view");
   const canManage = permissions.includes("groups.manage");
+  const isSchool = org.type === "maktab";
 
-  const [groupsRes, lessonsRes, teachersRes, roomsRes, coursesRes] = await Promise.all([
+  const [groupsRes, lessonsRes, teachersRes, roomsRes, coursesRes, slotsRes] = await Promise.all([
     supabase.from("groups").select(SCHEDULE_SELECT).order("start_time", { nullsFirst: false }),
     supabase.from("lessons").select(LESSON_SELECT).order("start_time"),
-    supabase.from("teachers").select("id, full_name").order("full_name"),
+    supabase.from("teachers").select("id, full_name").eq("is_active", true).order("full_name"),
     supabase.from("rooms").select("id, name").order("name"),
     supabase.from("courses").select("name").order("name"),
+    // Maktab jadvali satrlari — "Dars vaqtlari" ma'lumotnomasi (1-soat, 2-soat…).
+    isSchool
+      ? supabase.from("lesson_times").select("position, start_time, end_time").order("position")
+      : Promise.resolve({ data: [] as { position: number; start_time: string; end_time: string }[] }),
   ]);
 
   // Supabase'ning TS inferi many-to-one join'ni massiv deb hisoblaydi, lekin
@@ -55,6 +61,33 @@ export default async function SchedulePage() {
         subjects: courses,
       }
     : null;
+
+  if (isSchool) {
+    const slots = ((slotsRes.data ?? []) as { position: number; start_time: string; end_time: string }[]).map(
+      (s) => ({ position: s.position, start: s.start_time, end: s.end_time }),
+    );
+    const classes = groups
+      .map((g) => ({ id: g.id, name: g.name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "uz", { numeric: true }));
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold text-ink">Dars jadvali</h1>
+            <p className="text-sm text-ink-faint">Sinflar va o&apos;qituvchilarning haftalik jadvali</p>
+          </div>
+          {lessonOptions && <NewLessonButton options={lessonOptions} />}
+        </div>
+        <SchoolTimetable
+          classes={classes}
+          teachers={teachers.map((t) => ({ id: t.id as string, full_name: t.full_name as string }))}
+          lessons={lessons}
+          slots={slots}
+          options={lessonOptions}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

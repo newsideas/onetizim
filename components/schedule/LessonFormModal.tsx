@@ -24,10 +24,13 @@ const labelClass = "mb-1.5 block text-xs font-medium text-ink-muted";
 export function LessonFormModal({
   options,
   lesson,
+  preset,
   onClose,
 }: {
   options: LessonOptions;
   lesson?: EditableLesson;
+  /** Yangi dars uchun boshlang'ich qiymatlar (maktab jadvalidagi bo'sh katakdan: sinf, kun, soat). */
+  preset?: { groupId?: string; weekday?: number; startTime?: string; endTime?: string };
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -35,13 +38,15 @@ export function LessonFormModal({
   const [error, setError] = useState<string>();
   const isEdit = Boolean(lesson);
 
-  const [groupId, setGroupId] = useState(lesson?.groupId ?? "");
+  const [groupId, setGroupId] = useState(lesson?.groupId ?? preset?.groupId ?? "");
   const [subject, setSubject] = useState(lesson?.subject ?? "");
   const [teacherId, setTeacherId] = useState(lesson?.teacherId ?? "");
   const [roomId, setRoomId] = useState(lesson?.roomId ?? "");
-  const [weekdays, setWeekdays] = useState<number[]>(lesson ? [lesson.weekday] : []);
-  const [startTime, setStartTime] = useState(lesson ? formatTime(lesson.startTime) : "");
-  const [endTime, setEndTime] = useState(lesson ? formatTime(lesson.endTime) : "");
+  const [weekdays, setWeekdays] = useState<number[]>(
+    lesson ? [lesson.weekday] : preset?.weekday ? [preset.weekday] : [],
+  );
+  const [startTime, setStartTime] = useState(lesson ? formatTime(lesson.startTime) : (preset?.startTime ?? ""));
+  const [endTime, setEndTime] = useState(lesson ? formatTime(lesson.endTime) : (preset?.endTime ?? ""));
 
   function toggleDay(day: number) {
     if (isEdit) return setWeekdays([day]);
