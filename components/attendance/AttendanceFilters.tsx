@@ -15,12 +15,15 @@ export function AttendanceFilters({
   groupId,
   date,
   dateLocked = false,
+  groupLabel = "Guruh",
 }: {
   groups: GroupOption[];
   groupId: string;
   date: string;
   /** Faqat bugungi kunga belgilash mumkin bo'lganda sana o'zgartirilmaydi. */
   dateLocked?: boolean;
+  /** Maktabda "Sinf". */
+  groupLabel?: string;
 }) {
   const router = useRouter();
 
@@ -35,7 +38,7 @@ export function AttendanceFilters({
   return (
     <div className="flex flex-wrap gap-4">
       <div className="w-56">
-        <Label htmlFor="attendance-group">Guruh</Label>
+        <Label htmlFor="attendance-group">{groupLabel}</Label>
         <Select
           id="attendance-group"
           value={groupId}

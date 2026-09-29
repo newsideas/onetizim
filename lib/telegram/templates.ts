@@ -14,6 +14,10 @@ export const telegramTemplates = {
   absent: (studentName: string, date: string) =>
     `⚠️ <b>${studentName}</b> bugun (${date}) darsga kelmadi.`,
 
+  /** Maktab: fan darsiga kelmagan (kuniga birinchi qoldirilgan dars uchun yuboriladi). */
+  absentLesson: (studentName: string, date: string, subject: string) =>
+    `⚠️ <b>${studentName}</b> ${date} kuni "${subject}" darsiga kelmadi.`,
+
   qarzdorlik: (studentName: string, balance: number) =>
     `💳 <b>${studentName}</b> uchun qarzdorlik: ${formatSom(Math.abs(balance))}.`,
 

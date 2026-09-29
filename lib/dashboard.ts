@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  APP_TIME_ZONE,
   HAFTA_KUNLARI,
   MONTH_NAMES,
   bugungiKun,
@@ -50,6 +51,16 @@ export interface FrequentAbsentee {
   count: number;
 }
 
+/** Maktab: boshlangan, lekin davomati olinmagan bugungi dars. */
+export interface UnmarkedLesson {
+  id: string;
+  subject: string;
+  group_id: string;
+  group_name: string;
+  start_time: string;
+  teacher_name: string | null;
+}
+
 /** Shu davrda (kun) necha marta dars qoldirilsa ogohlantirish chiqadi. */
 export const ABSENCE_ALERT_THRESHOLD = 3;
 const ABSENCE_WINDOW_DAYS = 30;
@@ -75,7 +86,18 @@ export interface DashboardData {
   newLeadsMonth: number;
   callsDue: number;
   frequentAbsentees: FrequentAbsentee[];
+  /** Maktab: davomati olinmagan bugungi darslar (boshlanganlari). */
+  unmarkedLessons: UnmarkedLesson[];
+  /** Maktab: fan bo'yicha davomat jadvali (0075) bazada yo'q. */
+  lessonAttendanceMissing: boolean;
 }
+
+const hhmmFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
 
 /** Joriy o'quv yili boshi (1-sentabr), YYYY-MM-DD. */
 function academicYearStart(today: string): string {
@@ -85,6 +107,8 @@ function academicYearStart(today: string): string {
 
 export async function getDashboardData(
   supabase: SupabaseClient,
+  /** Maktab: davomat fan (dars) bo'yicha — lesson_attendance jadvalidan. */
+  { school = false }: { school?: boolean } = {},
 ): Promise<DashboardData> {
   const today = todayIso();
   const yearStart = academicYearStart(today);
@@ -114,19 +138,24 @@ export async function getDashboardData(
       .gte("paid_at", yearStart)
       .order("paid_at", { ascending: false }),
     supabase.from("charges").select("period, amount").gte("period", yearStart),
-    supabase.from("attendance").select("status").eq("lesson_date", today),
+    school
+      ? supabase.from("lesson_attendance").select("status, lesson_id").eq("lesson_date", today)
+      : supabase.from("attendance").select("status").eq("lesson_date", today),
     supabase
       .from("groups")
       .select("id, name, schedule_days, students(id)")
       .order("name"),
-    supabase.from("lessons").select("group_id, weekday"),
+    supabase
+      .from("lessons")
+      .select("id, group_id, weekday, subject, start_time, group:groups(name), teacher:teachers(full_name)"),
     supabase.from("leads").select("stage, created_at, next_contact_on"),
     supabase
-      .from("attendance")
-      .select("student_id, student:students(full_name)")
+      .from(school ? "lesson_attendance" : "attendance")
+      .select("student_id, lesson_date, student:students(full_name)")
       .eq("status", "absent")
       .gte("lesson_date", absenceFrom),
   ]);
+  const lessonAttendanceMissing = school && Boolean(attendanceRes.error);
 
   const students = studentsRes.data ?? [];
   const activeStudents = students.filter((s) => s.status === "active").length;
@@ -202,7 +231,7 @@ export async function getDashboardData(
     });
 
   // Bugungi davomat
-  const attendance = (attendanceRes.data ?? []) as { status: string }[];
+  const attendance = (attendanceRes.data ?? []) as { status: string; lesson_id?: string }[];
   const present = attendance.filter((a) => a.status === "present").length;
   const late = attendance.filter((a) => a.status === "late").length;
   const absent = attendance.filter((a) => a.status === "absent").length;
@@ -222,7 +251,15 @@ export async function getDashboardData(
   // Bugungi darslar: dars jadvali (lessons) + jadvali kiritilmagan sinflarning eski kun/vaqti.
   const kun = bugungiKun();
   const weekday = (HAFTA_KUNLARI as readonly string[]).indexOf(kun) + 1;
-  const lessonRows = (lessonsRes.data ?? []) as { group_id: string; weekday: number }[];
+  const lessonRows = (lessonsRes.data ?? []) as unknown as {
+    id: string;
+    group_id: string;
+    weekday: number;
+    subject: string;
+    start_time: string;
+    group: { name: string } | null;
+    teacher: { full_name: string } | null;
+  }[];
   const groupsWithLessons = new Set(lessonRows.map((l) => l.group_id));
   const todayGroups =
     lessonRows.filter((l) => l.weekday === weekday).length +
@@ -242,10 +279,16 @@ export async function getDashboardData(
   // So'nggi 30 kunda 3+ marta dars qoldirganlar
   const absenceRows = (absencesRes.data ?? []) as unknown as {
     student_id: string;
+    lesson_date: string;
     student: { full_name: string } | null;
   }[];
   const absenceCounts = new Map<string, FrequentAbsentee>();
+  // Maktabda bir kunda bir necha dars qoldirilsa ham bitta kun deb sanaladi.
+  const seenDays = new Set<string>();
   for (const a of absenceRows) {
+    const dayKey = `${a.student_id}|${a.lesson_date}`;
+    if (seenDays.has(dayKey)) continue;
+    seenDays.add(dayKey);
     const row = absenceCounts.get(a.student_id) ?? {
       id: a.student_id,
       full_name: a.student?.full_name ?? "—",
@@ -257,6 +300,24 @@ export async function getDashboardData(
   const frequentAbsentees = [...absenceCounts.values()]
     .filter((r) => r.count >= ABSENCE_ALERT_THRESHOLD)
     .sort((a, b) => b.count - a.count);
+
+  // Maktab: boshlangan, lekin birorta ham belgi qo'yilmagan bugungi darslar.
+  const markedLessonIds = new Set(attendance.map((a) => a.lesson_id).filter(Boolean));
+  const nowHm = hhmmFormatter.format(new Date());
+  const unmarkedLessons: UnmarkedLesson[] =
+    school && !lessonAttendanceMissing
+      ? lessonRows
+          .filter((l) => l.weekday === weekday && l.start_time.slice(0, 5) <= nowHm && !markedLessonIds.has(l.id))
+          .sort((a, b) => a.start_time.localeCompare(b.start_time))
+          .map((l) => ({
+            id: l.id,
+            subject: l.subject,
+            group_id: l.group_id,
+            group_name: l.group?.name ?? "—",
+            start_time: l.start_time,
+            teacher_name: l.teacher?.full_name ?? null,
+          }))
+      : [];
 
   return {
     activeStudents,
@@ -279,5 +340,7 @@ export async function getDashboardData(
     newLeadsMonth,
     callsDue,
     frequentAbsentees,
+    unmarkedLessons,
+    lessonAttendanceMissing,
   };
 }

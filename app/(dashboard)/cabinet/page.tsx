@@ -103,7 +103,7 @@ export default async function CabinetPage({
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
-                    href={`/education/attendance?group=${l.groupId}&date=${today}`}
+                    href={`/education/attendance?group=${l.groupId}&date=${today}${l.lessonId ? `&lesson=${l.lessonId}` : ""}`}
                     className={ACTION_CLASS}
                   >
                     <CalendarCheck size={13} aria-hidden="true" />

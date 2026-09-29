@@ -11,6 +11,8 @@ export interface TeacherLessonRow {
   roomName: string | null;
   /** 1 = Dushanba ... 7 = Yakshanba */
   weekday: number;
+  /** Dars jadvalidagi dars (maktabda fan bo'yicha davomat shu dars uchun olinadi). */
+  lessonId?: string;
 }
 
 export interface TeacherGroupRow {
@@ -128,13 +130,17 @@ export async function getCabinetData(
       endTime: l.end_time,
       roomName: l.room?.name ?? null,
       weekday: l.weekday,
+      lessonId: l.id,
     })),
     ...legacy,
   ].sort((a, b) => a.weekday - b.weekday || (a.startTime ?? "99").localeCompare(b.startTime ?? "99"));
 
   const todayGroupIds = [...new Set(weekLessons.filter((l) => l.weekday === weekday).map((l) => l.groupId))];
+  const todayLessonIds = weekLessons
+    .filter((l) => l.weekday === weekday && l.lessonId)
+    .map((l) => l.lessonId as string);
 
-  const [{ data: attendanceRows }, { data: homeworkRows }] = await Promise.all([
+  const [{ data: attendanceRows }, { data: homeworkRows }, { data: lessonAttendanceRows }] = await Promise.all([
     todayGroupIds.length
       ? supabase.from("attendance").select("group_id").eq("lesson_date", today).in("group_id", todayGroupIds)
       : Promise.resolve({ data: [] as { group_id: string }[] }),
@@ -147,9 +153,14 @@ export async function getCabinetData(
           .order("due_on")
           .limit(6)
       : Promise.resolve({ data: [] }),
+    // Maktab: fan bo'yicha davomat (0075). Jadval bo'lmasa xato — bo'sh deb olinadi.
+    todayLessonIds.length
+      ? supabase.from("lesson_attendance").select("lesson_id").eq("lesson_date", today).in("lesson_id", todayLessonIds)
+      : Promise.resolve({ data: [] as { lesson_id: string }[] }),
   ]);
 
   const markedGroups = new Set((attendanceRows ?? []).map((r) => r.group_id as string));
+  const markedLessons = new Set((lessonAttendanceRows ?? []).map((r) => r.lesson_id as string));
   const homework = (
     (homeworkRows ?? []) as unknown as {
       id: string;
@@ -170,7 +181,10 @@ export async function getCabinetData(
     teacher: teacher as CabinetData["teacher"],
     todayLessons: weekLessons
       .filter((l) => l.weekday === weekday)
-      .map((l) => ({ ...l, attendanceMarked: markedGroups.has(l.groupId) })),
+      .map((l) => ({
+        ...l,
+        attendanceMarked: markedGroups.has(l.groupId) || (!!l.lessonId && markedLessons.has(l.lessonId)),
+      })),
     weekLessons,
     groups: groups.map((g) => ({ id: g.id, name: g.name, studentCount: g.students?.length ?? 0 })),
     homework,

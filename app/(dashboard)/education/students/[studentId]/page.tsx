@@ -5,6 +5,8 @@ import { requirePermission } from "@/lib/auth/session";
 import { BalanceBadge } from "@/components/payments/BalanceBadge";
 import { StudentStatusActions } from "@/components/students/StudentStatusActions";
 import { EditStudentButton } from "@/components/students/NewStudentButton";
+import { StudentDiscountCard } from "@/components/students/StudentDiscountCard";
+import { termsFor } from "@/lib/segment";
 import { formatDate } from "@/lib/utils/date";
 import { formatSom } from "@/lib/utils/currency";
 import { averageScore } from "@/lib/validations/grade";
@@ -25,13 +27,15 @@ export default async function StudentDetailPage({
   params: Promise<{ studentId: string }>;
 }) {
   const { studentId } = await params;
-  const { supabase, permissions } = await requirePermission("students.view");
+  const { supabase, permissions, org } = await requirePermission("students.view");
+  const isSchool = org.type === "maktab";
+  const terms = termsFor(org.type);
 
   const [{ data: student }, { data: payments }, { data: attendance }, { data: grades }] =
     await Promise.all([
     supabase
       .from("students")
-      .select("*, group:groups(name)")
+      .select("*, group:groups(name, monthly_price)")
       .eq("id", studentId)
       .maybeSingle(),
     supabase
@@ -39,11 +43,25 @@ export default async function StudentDetailPage({
       .select("id, amount, method, paid_at, note")
       .eq("student_id", studentId)
       .order("paid_at", { ascending: false }),
-    supabase.from("attendance").select("status").eq("student_id", studentId),
+    // Maktabda davomat fan (dars) bo'yicha olinadi.
+    supabase.from(isSchool ? "lesson_attendance" : "attendance").select("status").eq("student_id", studentId),
     supabase.from("grades").select("subject, score").eq("student_id", studentId),
   ]);
 
   if (!student) notFound();
+
+  // Aka-uka: ota-ona telefoni bir xil bo'lgan boshqa (arxivlanmagan) o'quvchilar.
+  const parentPhone = (student.parent_phone as string | null)?.trim();
+  const { data: siblingRows } = parentPhone
+    ? await supabase
+        .from("students")
+        .select("id, full_name")
+        .eq("parent_phone", parentPhone)
+        .neq("id", studentId)
+        .neq("status", "archived")
+        .limit(10)
+    : { data: [] };
+  const siblings = (siblingRows ?? []) as { id: string; full_name: string }[];
 
   const paymentRows = (payments ?? []) as PaymentRow[];
 
@@ -98,7 +116,7 @@ export default async function StudentDetailPage({
         <div className="space-y-4 lg:col-span-1">
           <div className="space-y-3 rounded-xl border border-line p-4 text-sm">
             <div className="flex justify-between">
-              <span className="text-ink-faint">Guruh</span>
+              <span className="text-ink-faint">{terms.group}</span>
               <span className="text-ink">{student.group?.name || "—"}</span>
             </div>
             <div className="flex justify-between">
@@ -120,6 +138,15 @@ export default async function StudentDetailPage({
               </span>
             </div>
           </div>
+
+          <StudentDiscountCard
+            studentId={studentId}
+            percent={Number(student.discount_percent ?? 0)}
+            reason={(student.discount_reason as string | null) ?? null}
+            monthlyPrice={Number(student.group?.monthly_price ?? 0)}
+            siblings={siblings}
+            canManage={permissions.includes("payments.manage")}
+          />
 
           <div className="space-y-3 rounded-xl border border-line p-4 text-sm">
             <h2 className="text-xs font-semibold tracking-wide text-ink-faint uppercase">

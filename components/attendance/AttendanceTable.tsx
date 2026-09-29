@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { markAttendance, type AttendanceStudent } from "@/lib/actions/attendance";
+import { markLessonAllPresent, markLessonAttendance } from "@/lib/actions/lesson-attendance";
 import type { AttendanceStatus } from "@/types/database";
 import { ABSENCE_REASONS } from "@/lib/attendance-reasons";
 
@@ -23,10 +24,13 @@ export function AttendanceTable({
   initialStudents,
   groupId,
   date,
+  lessonId,
 }: {
   initialStudents: AttendanceStudent[];
   groupId: string;
   date: string;
+  /** Maktab: berilsa davomat shu dars (fan soati) uchun belgilanadi. */
+  lessonId?: string;
 }) {
   const [students, setStudents] = useState(initialStudents);
   const [isPending, startTransition] = useTransition();
@@ -41,7 +45,9 @@ export function AttendanceTable({
       prev.map((s) => (s.id === studentId ? { ...s, status, reason: status === "absent" ? reason : null } : s)),
     );
     startTransition(async () => {
-      const result = await markAttendance(studentId, groupId, date, status, reason);
+      const result = lessonId
+        ? await markLessonAttendance(lessonId, studentId, date, status, reason)
+        : await markAttendance(studentId, groupId, date, status, reason);
       if (!result.ok) {
         setStudents((prev) =>
           prev.map((s) => (s.id === studentId ? { ...s, status: previous, reason: previousReason } : s)),
@@ -50,6 +56,22 @@ export function AttendanceTable({
       }
     });
   }
+
+  function markAllPresent() {
+    if (!lessonId) return;
+    const snapshot = students;
+    setError(null);
+    setStudents((prev) => prev.map((s) => (s.status ? s : { ...s, status: "present", reason: null })));
+    startTransition(async () => {
+      const result = await markLessonAllPresent(lessonId, date);
+      if (!result.ok) {
+        setStudents(snapshot);
+        setError(result.error);
+      }
+    });
+  }
+
+  const unmarked = students.filter((s) => !s.status).length;
 
   if (students.length === 0) {
     return (
@@ -65,6 +87,21 @@ export function AttendanceTable({
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
+      )}
+      {lessonId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-muted">
+          <span>
+            Belgilanmagan: <b className="text-ink">{unmarked}</b> / {students.length}
+          </span>
+          <button
+            type="button"
+            onClick={markAllPresent}
+            disabled={isPending || unmarked === 0}
+            className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Qolganlarni &quot;Keldi&quot; deb belgilash
+          </button>
+        </div>
       )}
       <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-left text-sm">

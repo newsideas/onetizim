@@ -17,6 +17,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { getHomeStats } from "@/lib/home";
 import { termsFor } from "@/lib/segment";
 import { StatCard } from "@/components/ui/StatCard";
+import { SchoolDashboard } from "@/components/dashboard/SchoolDashboard";
 import { HomeDashboard, type HomeOptions } from "@/components/home/HomeDashboard";
 import {
   buildEntries,
@@ -42,6 +43,8 @@ export default async function DashboardPage() {
   if (role === "teacher") redirect("/cabinet");
 
   const terms = termsFor(org.type);
+  // Xususiy maktab — direktor paneli (fan bo'yicha davomat, tushum, qarzdorlik, ogohlantirishlar).
+  if (org.type === "maktab") return <SchoolDashboard supabase={supabase} terms={terms} />;
   const student = terms.student.toLowerCase();
 
   const [stats, groupsRes, lessonsRes, teachersRes, roomsRes, coursesRes] = await Promise.all([
