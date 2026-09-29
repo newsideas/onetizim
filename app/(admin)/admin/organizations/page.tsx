@@ -10,6 +10,7 @@ import {
 } from "@/lib/platform";
 import { formatPhone } from "@/lib/auth/identity";
 import { PUBLIC_DOMAIN } from "@/lib/tenant";
+import { termsFor } from "@/lib/segment";
 import { daysUntil, formatDate } from "@/lib/utils/date";
 
 const STATUS_CLASS: Record<EffectiveStatus, string> = {
@@ -24,8 +25,8 @@ export default async function PlatformOrganizationsPage() {
 
   return (
     <ListPageShell
-      title="O'quv markazlar"
-      subtitle={`Platformadagi barcha markazlar — ${orgs.length} ta`}
+      title="Markazlar va maktablar"
+      subtitle={`Platformadagi barcha muassasalar — ${orgs.length} ta`}
       actions={
         <Link
           href="/admin/organizations/new"
@@ -64,6 +65,15 @@ export default async function PlatformOrganizationsPage() {
                       <Link href={`/admin/organizations/${org.id}`} className="font-medium text-ink hover:text-brand-600">
                         {org.name}
                       </Link>
+                      <span
+                        className={`ml-2 rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                          org.type === "maktab"
+                            ? "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300"
+                            : "bg-canvas text-ink-muted"
+                        }`}
+                      >
+                        {termsFor(org.type).label}
+                      </span>
                       <div className={`text-xs ${org.slug ? "text-ink-faint" : "text-amber-600"}`}>
                         {org.slug ? `${org.slug}.${PUBLIC_DOMAIN}` : "Subdomen belgilanmagan"}
                       </div>

@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import type { Segment } from "@/lib/segment";
+import { isSegment, type Segment } from "@/lib/segment";
 import { isRole, permissionsFor, type Permission, type Role } from "@/lib/auth/permissions";
 import { ActionError } from "@/lib/actions/result";
 import { resolveHost } from "@/lib/tenant";
@@ -155,9 +155,8 @@ export const getSession = cache(async (): Promise<Session> => {
   return {
     supabase,
     user,
-    // Tizim faqat o'quv markazlarga xizmat qiladi: bazada eski tur ("maktab"/"bogcha")
-    // qolgan bo'lsa ham (0043 qo'llanmaguncha) interfeys markaz sifatida ishlaydi.
-    org: { ...member.org, type: "markaz" },
+    // Tur: o'quv markaz yoki xususiy maktab (0074); noma'lum eski qiymat ("bogcha") markaz sifatida ishlaydi.
+    org: { ...member.org, type: isSegment(member.org.type) ? member.org.type : "markaz" },
     role: member.role,
     permissions: resolvePermissions(member.role, custom),
     employeeId: member.employee_id,

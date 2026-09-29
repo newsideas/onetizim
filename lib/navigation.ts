@@ -13,7 +13,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import type { SegmentTerms } from "@/lib/segment";
+import type { Segment, SegmentTerms } from "@/lib/segment";
 import type { Permission } from "@/lib/auth/permissions";
 import { referencePath } from "@/lib/references";
 
@@ -43,7 +43,48 @@ export interface NavSection {
  * bilan tekshiradi. Sahifasi bor bandlar mavjud modullarga ulangan; qolganlari
  * modul qurilganda `href` oladi.
  */
-export function buildNavSections(terms: SegmentTerms): NavSection[] {
+export function buildNavSections(terms: SegmentTerms, segment: Segment = "markaz"): NavSection[] {
+  const sections = buildCenterSections(terms);
+  return segment === "maktab" ? adaptForSchool(sections) : sections;
+}
+
+/**
+ * Xususiy maktab menyusi markaz menyusidan olinadi: qabul bo'limi nomi va O'quv bo'limi bandlari
+ * maktabga mos (kurslar o'rniga fanlar, elektron jurnal, o'quv yili, dars vaqtlari, sinf narxlari).
+ */
+function adaptForSchool(sections: NavSection[]): NavSection[] {
+  return sections.map((section) => {
+    if (section.label === "Lidlar") {
+      return {
+        ...section,
+        label: "Qabul",
+        items: [
+          { label: "Arizalar ro'yxati", href: "/leads" },
+          { label: "Suhbat va testga yozilganlar", href: "/leads/trial" },
+        ],
+      };
+    }
+    if (section.label === "O'quv bo'limi") {
+      return {
+        ...section,
+        items: [
+          { label: "Fanlar", href: referencePath("subjects"), permission: "settings.manage" },
+          { label: "Elektron jurnal", href: "/education/grades", permission: "grades.manage" },
+          { label: "Mavsumiy baholash", href: referencePath("assessments"), permission: "settings.manage" },
+          { label: "O'quv yillari", href: referencePath("academic-years"), permission: "settings.manage" },
+          { label: "Choraklar", href: referencePath("academic-periods"), permission: "settings.manage" },
+          { label: "Dars vaqtlari", href: referencePath("lesson-times"), permission: "settings.manage" },
+          { label: "Sinf narxlari", href: referencePath("contract-amounts"), permission: "settings.manage" },
+          { label: "Shartnoma", href: referencePath("contract-templates"), permission: "settings.manage" },
+          { label: "Qabul test bazasi", href: referencePath("admission-tests"), permission: "settings.manage" },
+        ],
+      };
+    }
+    return section;
+  });
+}
+
+function buildCenterSections(terms: SegmentTerms): NavSection[] {
   const students = terms.studentPlural.toLowerCase();
 
   return [

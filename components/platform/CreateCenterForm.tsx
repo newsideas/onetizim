@@ -7,6 +7,7 @@ import { createCenter } from "@/lib/actions/centers";
 import { setDemoRequestStatus } from "@/lib/actions/demo-requests";
 import { formatPhone } from "@/lib/auth/identity";
 import { PUBLIC_DOMAIN, suggestSlug, tenantUrl } from "@/lib/tenant";
+import { SEGMENTS, SEGMENT_TERMS, type Segment } from "@/lib/segment";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
@@ -34,6 +35,7 @@ export function CreateCenterForm({
   const [directorName, setDirectorName] = useState(initial?.directorName ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "+998");
   const [location, setLocation] = useState("");
+  const [type, setType] = useState<Segment>("markaz");
   const [slug, setSlug] = useState(suggestSlug(initial?.orgName ?? ""));
   // Foydalanuvchi subdomenni o'zi yozmaguncha u markaz nomidan avtomatik taklif qilinadi.
   const [slugTouched, setSlugTouched] = useState(false);
@@ -52,7 +54,7 @@ export function CreateCenterForm({
     setError(undefined);
     if (!slug.trim()) return setError("Subdomenni kiriting (lotin harflarida, masalan: renessans)");
     setPending(true);
-    const result = await createCenter({ orgName, directorName, phone, location, slug });
+    const result = await createCenter({ orgName, directorName, phone, location, slug, type });
     setPending(false);
     if (!result.ok) return setError(result.error);
     setCreated(result.data);
@@ -136,6 +138,40 @@ export function CreateCenterForm({
 
   return (
     <form onSubmit={submit} className="max-w-xl space-y-4 rounded-xl border border-line bg-surface p-6" noValidate>
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-ink">
+          Turi<span className="ml-0.5 text-red-500">*</span>
+        </legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {SEGMENTS.map((s) => {
+            const t = SEGMENT_TERMS[s];
+            const Icon = t.icon;
+            const active = type === s;
+            return (
+              <label
+                key={s}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  active ? "border-brand-600 bg-brand-50" : "border-line hover:bg-canvas"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="center-type"
+                  value={s}
+                  checked={active}
+                  onChange={() => setType(s)}
+                  className="sr-only"
+                />
+                <Icon size={20} className={active ? "text-brand-600" : "text-ink-muted"} aria-hidden="true" />
+                <span>
+                  <span className="block text-sm font-medium text-ink">{t.label}</span>
+                  <span className="block text-xs text-ink-muted">{t.description}</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
       <div>
         <Label htmlFor="center-name">
           Markaz nomi<span className="ml-0.5 text-red-500">*</span>

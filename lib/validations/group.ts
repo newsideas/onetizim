@@ -30,6 +30,8 @@ export const groupSchema = z.object({
     .int()
     .positive("Davomiylik musbat bo'lishi kerak")
     .optional(),
+  /** Maktab: sinf darajasi (0 — tayyorlov, 1–11). O'quv markazda ishlatilmaydi. */
+  gradeLevel: z.number().int().min(0).max(11).optional(),
 });
 
 export type GroupInput = z.infer<typeof groupSchema>;

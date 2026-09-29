@@ -66,7 +66,7 @@ export async function createCenter(input: CreateCenterInput) {
         owner_id: userId,
         name: v.orgName,
         slug,
-        type: "markaz",
+        type: v.type,
         address: v.location || null,
         director_last_name: lastName,
         director_first_name: firstName,
@@ -78,6 +78,11 @@ export async function createCenter(input: CreateCenterInput) {
       .single();
     if (orgError || !org) {
       await admin.auth.admin.deleteUser(userId);
+      if (orgError?.message.includes("organizations_type_check")) {
+        throw new ActionError(
+          "Xususiy maktab turi bazada hali yoqilmagan — 0074 migratsiyasini Supabase SQL Editor'da ishga tushiring",
+        );
+      }
       throw new ActionError("Markazni yaratib bo'lmadi: " + (orgError?.message ?? "noma'lum xato"));
     }
 

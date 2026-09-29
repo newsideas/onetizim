@@ -109,12 +109,12 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { terms } = useSegment();
+  const { terms, segment } = useSegment();
   const { permissions, displayName, roleLabel } = usePermissions();
 
   const sections = useMemo(
-    () => filterNavSections(buildNavSections(terms), permissions),
-    [terms, permissions],
+    () => filterNavSections(buildNavSections(terms, segment), permissions),
+    [terms, segment, permissions],
   );
 
   const activeKey = findActiveKey(pathname, searchParams, sections);

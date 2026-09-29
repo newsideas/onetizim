@@ -11,7 +11,11 @@ import {
   GROUP_STATUS_LABELS,
   type GroupInput,
 } from "@/lib/validations/group";
-import { createGroup, updateGroup, type GroupFormOptions } from "@/lib/actions/groups";
+import {
+  createGroup,
+  updateGroup,
+  type GroupFormOptions,
+} from "@/lib/actions/groups";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -25,7 +29,11 @@ const TOQ_KUNLAR = ["Seshanba", "Payshanba", "Shanba"];
 
 type DayMode = "" | "juft" | "toq" | "boshqa";
 
-const EMPTY_OPTIONS: GroupFormOptions = { courses: [], teachers: [], rooms: [] };
+const EMPTY_OPTIONS: GroupFormOptions = {
+  courses: [],
+  teachers: [],
+  rooms: [],
+};
 
 function sameDays(a: string[], b: string[]) {
   return a.length === b.length && b.every((d) => a.includes(d));
@@ -61,18 +69,22 @@ export function GroupForm({
   options?: GroupFormOptions;
 }) {
   const router = useRouter();
-  const { terms } = useSegment();
+  const { terms, segment } = useSegment();
+  // Maktabda sinfga kurs, dars kunlari va vaqti berilmaydi — ular dars jadvalida fanlar bo'yicha tuziladi.
+  const isSchool = segment === "maktab";
   const [serverError, setServerError] = useState<string | null>(null);
   const isEdit = Boolean(groupId);
 
   const hasExtras = Boolean(
     defaultValues?.room ||
-      defaultValues?.level ||
-      defaultValues?.lessonDurationMinutes ||
-      (defaultValues?.monthlyPrice ?? 0) > 0,
+    defaultValues?.level ||
+    defaultValues?.lessonDurationMinutes ||
+    (defaultValues?.monthlyPrice ?? 0) > 0,
   );
   const [showExtras, setShowExtras] = useState(hasExtras);
-  const [dayMode, setDayMode] = useState<DayMode>(modeFor(defaultValues?.scheduleDays));
+  const [dayMode, setDayMode] = useState<DayMode>(
+    modeFor(defaultValues?.scheduleDays),
+  );
 
   const {
     register,
@@ -86,7 +98,8 @@ export function GroupForm({
       scheduleDays: [],
       monthlyPrice: 0,
       // Yangi guruhda Edu tizimdagidek "Tanlang" bilan boshlanadi (majburiy tanlov).
-      educationType: isEdit ? "offline" : ("" as GroupInput["educationType"]),
+      educationType:
+        isEdit || isSchool ? "offline" : ("" as GroupInput["educationType"]),
       status: isEdit ? "active" : ("" as GroupInput["status"]),
       ...defaultValues,
     },
@@ -97,21 +110,33 @@ export function GroupForm({
 
   function chooseMode(mode: DayMode) {
     setDayMode(mode);
-    if (mode === "juft") setValue("scheduleDays", JUFT_KUNLAR, { shouldValidate: true });
-    else if (mode === "toq") setValue("scheduleDays", TOQ_KUNLAR, { shouldValidate: true });
-    else if (mode === "") setValue("scheduleDays", [], { shouldValidate: true });
+    if (mode === "juft")
+      setValue("scheduleDays", JUFT_KUNLAR, { shouldValidate: true });
+    else if (mode === "toq")
+      setValue("scheduleDays", TOQ_KUNLAR, { shouldValidate: true });
+    else if (mode === "")
+      setValue("scheduleDays", [], { shouldValidate: true });
   }
 
   function toggleDay(day: string) {
-    const next = selectedDays.includes(day) ? selectedDays.filter((d) => d !== day) : [...selectedDays, day];
+    const next = selectedDays.includes(day)
+      ? selectedDays.filter((d) => d !== day)
+      : [...selectedDays, day];
     setValue("scheduleDays", next, { shouldValidate: true });
   }
 
   async function onSubmit(values: GroupInput) {
     setServerError(null);
-    if (!values.subject?.trim()) return setServerError("Kursni tanlang");
-    if (dayMode === "" || values.scheduleDays.length === 0) return setServerError("Dars kunini tanlang");
-    if (!values.teacherName?.trim()) return setServerError(`${terms.teacher}ni tanlang`);
+    if (isSchool) {
+      if (values.gradeLevel === undefined)
+        return setServerError("Sinf darajasini tanlang");
+    } else {
+      if (!values.subject?.trim()) return setServerError("Kursni tanlang");
+      if (dayMode === "" || values.scheduleDays.length === 0)
+        return setServerError("Dars kunini tanlang");
+      if (!values.teacherName?.trim())
+        return setServerError(`${terms.teacher}ni tanlang`);
+    }
     try {
       if (groupId) {
         unwrap(await updateGroup(groupId, values));
@@ -135,7 +160,12 @@ export function GroupForm({
         <Label htmlFor="name">
           {terms.group} nomi{req}
         </Label>
-        <Input id="name" error={errors.name?.message} {...register("name")} />
+        <Input
+          id="name"
+          placeholder={isSchool ? "5-A" : undefined}
+          error={errors.name?.message}
+          {...register("name")}
+        />
         <FormError message={errors.name?.message} />
       </div>
 
@@ -143,32 +173,107 @@ export function GroupForm({
         <Label htmlFor="status">
           {terms.group} holati{req}
         </Label>
-        <Select id="status" error={errors.status?.message} {...register("status")}>
+        <Select
+          id="status"
+          error={errors.status?.message}
+          {...register("status")}
+        >
           <option value="">Tanlang</option>
           <option value="active">{GROUP_STATUS_LABELS.active}</option>
           <option value="waiting">{GROUP_STATUS_LABELS.waiting}</option>
-          {defaultValues?.status === "archived" && <option value="archived">{GROUP_STATUS_LABELS.archived}</option>}
+          {defaultValues?.status === "archived" && (
+            <option value="archived">{GROUP_STATUS_LABELS.archived}</option>
+          )}
         </Select>
         <FormError message={errors.status?.message} />
       </div>
 
-      <div>
-        <Label htmlFor="subject">Kurs{req}</Label>
-        <Select id="subject" {...register("subject")}>
-          <option value="">Tanlang</option>
-          {withCurrent(options.courses, defaultValues?.subject).map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </Select>
-      </div>
+      {isSchool && (
+        <>
+          <div>
+            <Label htmlFor="gradeLevel">Sinf darajasi{req}</Label>
+            <Select
+              id="gradeLevel"
+              {...register("gradeLevel", {
+                setValueAs: (v) =>
+                  v === "" || v === undefined ? undefined : Number(v),
+              })}
+            >
+              <option value="">Tanlang</option>
+              <option value="0">Tayyorlov</option>
+              {Array.from({ length: 11 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}-sinf
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="teacherName">{terms.teacher}</Label>
+            <Select id="teacherName" {...register("teacherName")}>
+              <option value="">Tanlang</option>
+              {withCurrent(options.teachers, defaultValues?.teacherName).map(
+                (t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ),
+              )}
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="room">Xona</Label>
+            <Select id="room" {...register("room")}>
+              <option value="">Tanlang</option>
+              {withCurrent(options.rooms, defaultValues?.room).map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="monthlyPrice">Oylik to&apos;lov (so&apos;m)</Label>
+            <Input
+              id="monthlyPrice"
+              type="number"
+              min={0}
+              step={1000}
+              error={errors.monthlyPrice?.message}
+              {...register("monthlyPrice", { valueAsNumber: true })}
+            />
+            <FormError message={errors.monthlyPrice?.message} />
+            <p className="mt-1 text-xs text-ink-faint">
+              Shu sinf o&apos;quvchilariga har oy hisoblanadigan summa
+              (shartnomada alohida narx bo&apos;lsa, o&apos;sha ishlatiladi).
+            </p>
+          </div>
+        </>
+      )}
 
-      {subject && (
+      {!isSchool && (
+        <div>
+          <Label htmlFor="subject">Kurs{req}</Label>
+          <Select id="subject" {...register("subject")}>
+            <option value="">Tanlang</option>
+            {withCurrent(options.courses, defaultValues?.subject).map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
+
+      {!isSchool && subject && (
         <>
           <div>
             <Label htmlFor="dayMode">Dars kunini tanlang{req}</Label>
-            <Select id="dayMode" value={dayMode} onChange={(e) => chooseMode(e.target.value as DayMode)}>
+            <Select
+              id="dayMode"
+              value={dayMode}
+              onChange={(e) => chooseMode(e.target.value as DayMode)}
+            >
               <option value="">Tanlang</option>
               <option value="juft">Juft kunlar</option>
               <option value="toq">Toq kunlar</option>
@@ -182,7 +287,9 @@ export function GroupForm({
                     type="button"
                     onClick={() => toggleDay(day)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      selectedDays.includes(day) ? "bg-brand-600 text-white" : "bg-canvas text-ink-muted hover:bg-line"
+                      selectedDays.includes(day)
+                        ? "bg-brand-600 text-white"
+                        : "bg-canvas text-ink-muted hover:bg-line"
                     }`}
                   >
                     {day.slice(0, 3)}
@@ -208,29 +315,41 @@ export function GroupForm({
             </Label>
             <Select id="teacherName" {...register("teacherName")}>
               <option value="">Tanlang</option>
-              {withCurrent(options.teachers, defaultValues?.teacherName).map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
+              {withCurrent(options.teachers, defaultValues?.teacherName).map(
+                (t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ),
+              )}
             </Select>
           </div>
         </>
       )}
 
-      <div>
-        <Label htmlFor="educationType">Ta&apos;lim turi{req}</Label>
-        <Select id="educationType" error={errors.educationType?.message} {...register("educationType")}>
-          <option value="">Tanlang</option>
-          <option value="online">{EDUCATION_TYPE_LABELS.online}</option>
-          <option value="offline">{EDUCATION_TYPE_LABELS.offline}</option>
-        </Select>
-        <FormError message={errors.educationType?.message} />
-      </div>
+      {!isSchool && (
+        <div>
+          <Label htmlFor="educationType">Ta&apos;lim turi{req}</Label>
+          <Select
+            id="educationType"
+            error={errors.educationType?.message}
+            {...register("educationType")}
+          >
+            <option value="">Tanlang</option>
+            <option value="online">{EDUCATION_TYPE_LABELS.online}</option>
+            <option value="offline">{EDUCATION_TYPE_LABELS.offline}</option>
+          </Select>
+          <FormError message={errors.educationType?.message} />
+        </div>
+      )}
 
       <div>
         <Label htmlFor="telegramUrl">Telegram guruh havolasi</Label>
-        <Input id="telegramUrl" error={errors.telegramUrl?.message} {...register("telegramUrl")} />
+        <Input
+          id="telegramUrl"
+          error={errors.telegramUrl?.message}
+          {...register("telegramUrl")}
+        />
         <FormError message={errors.telegramUrl?.message} />
       </div>
 
@@ -243,17 +362,19 @@ export function GroupForm({
         <Input id="endDate" type="date" {...register("endDate")} />
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-ink-muted">
-        <input
-          type="checkbox"
-          checked={showExtras}
-          onChange={(e) => setShowExtras(e.target.checked)}
-          className="h-4 w-4 rounded border-line"
-        />
-        Qo&apos;shimcha sozlamalar
-      </label>
+      {!isSchool && (
+        <label className="flex items-center gap-2 text-sm text-ink-muted">
+          <input
+            type="checkbox"
+            checked={showExtras}
+            onChange={(e) => setShowExtras(e.target.checked)}
+            className="h-4 w-4 rounded border-line"
+          />
+          Qo&apos;shimcha sozlamalar
+        </label>
+      )}
 
-      {showExtras && (
+      {!isSchool && showExtras && (
         <div className="space-y-3 rounded-lg bg-canvas p-3">
           <div>
             <Label htmlFor="room">Xona</Label>

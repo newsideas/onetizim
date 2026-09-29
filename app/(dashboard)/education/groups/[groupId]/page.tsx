@@ -73,6 +73,13 @@ export default async function GroupDetailPage({
   const terms = termsFor(segment);
   const showBalance = permissions.includes("payments.manage");
 
+  // Sinf darajasi (0074) alohida so'raladi: ustun bo'lmasa sahifa baribir ochiladi.
+  let gradeLevel: number | undefined;
+  if (segment === "maktab") {
+    const { data: grade } = await supabase.from("groups").select("grade_level").eq("id", groupId).maybeSingle();
+    gradeLevel = (grade?.grade_level as number | null) ?? undefined;
+  }
+
   const tabHref = (t: Tab) => (t === "students" ? `/education/groups/${groupId}` : `/education/groups/${groupId}?tab=${t}`);
 
   // ---- Topshiriqlar (uy vazifalari)
@@ -165,6 +172,7 @@ export default async function GroupDetailPage({
               startDate: group.start_date ?? undefined,
               endDate: group.end_date ?? undefined,
               lessonDurationMinutes: group.lesson_duration_minutes ?? undefined,
+              gradeLevel,
             }}
           />
         )}

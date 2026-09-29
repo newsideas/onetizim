@@ -1,14 +1,14 @@
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, School } from "lucide-react";
 
 /**
- * Muassasa turi. Tizim faqat o'quv markazlarga xizmat qiladi; maktab va
- * bog'cha turlari olib tashlangan (0043 migratsiyasi bazadagi qiymatlarni ham
- * `markaz` ga o'tkazadi). Tur nomi atamalar (`SEGMENT_TERMS`) uchun saqlanadi.
+ * Muassasa turi: o'quv markaz yoki xususiy maktab (0074). Tur atamalarni (`SEGMENT_TERMS`),
+ * menyuni va ba'zi formalarni belgilaydi; ma'lumotlar tuzilmasi ikkalasida umumiy
+ * (maktabda "guruh" — sinf, guruh o'qituvchisi — sinf rahbari).
  */
-export type Segment = "markaz";
+export type Segment = "markaz" | "maktab";
 
-export const SEGMENTS: Segment[] = ["markaz"];
+export const SEGMENTS: Segment[] = ["markaz", "maktab"];
 
 export interface SegmentTerms {
   /** Muassasa turi nomi */
@@ -26,6 +26,7 @@ export interface SegmentTerms {
   newStudent: string;
   lesson: string;
   lessonPlural: string;
+  /** Guruhga biriktirilgan xodim: markazda o'qituvchi, maktabda sinf rahbari. */
   teacher: string;
   /** Jadval sahifasi nomi */
   schedule: string;
@@ -47,10 +48,28 @@ export const SEGMENT_TERMS: Record<Segment, SegmentTerms> = {
     teacher: "O'qituvchi",
     schedule: "Dars jadvali",
   },
+  maktab: {
+    label: "Xususiy maktab",
+    description: "Sinflar, fanlar bo'yicha dars jadvali, shartnoma asosida to'lov",
+    icon: School,
+    group: "Sinf",
+    groupPlural: "Sinflar",
+    newGroup: "Yangi sinf",
+    student: "O'quvchi",
+    studentPlural: "O'quvchilar",
+    newStudent: "Yangi o'quvchi",
+    lesson: "Dars",
+    lessonPlural: "Darslar",
+    teacher: "Sinf rahbari",
+    schedule: "Dars jadvali",
+  },
 };
 
-/** Bazada eski qiymat ("maktab", "bogcha", "togarak") qolgan bo'lsa ham ilova buzilmasligi uchun. */
+export function isSegment(value: unknown): value is Segment {
+  return value === "markaz" || value === "maktab";
+}
+
+/** Bazada eski yoki noma'lum qiymat ("bogcha", "togarak") bo'lsa — o'quv markaz atamalari. */
 export function termsFor(segment?: string | null): SegmentTerms {
-  void segment;
-  return SEGMENT_TERMS.markaz;
+  return SEGMENT_TERMS[isSegment(segment) ? segment : "markaz"];
 }

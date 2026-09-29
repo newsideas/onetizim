@@ -1,4 +1,4 @@
--- YANGI MIGRATSIYALAR: 0044 - 0073.
+-- YANGI MIGRATSIYALAR: 0044 - 0074.
 -- Supabase Dashboard -> SQL Editor -> New query: shu faylni to'liq joylab Run bosing (bir marta).
 -- Hammasi qayta ishga tushirilsa ham zarar qilmaydi (if not exists / drop policy if exists).
 
@@ -1167,3 +1167,14 @@ alter table teachers
 
 alter table homework
   add column if not exists kind text not null default 'Uy vazifasi';
+
+-- ================= 0074_school_segment.sql =================
+
+alter table organizations drop constraint if exists organizations_type_check;
+alter table organizations
+  add constraint organizations_type_check check (type in ('markaz', 'maktab'));
+
+alter table groups
+  add column if not exists grade_level smallint check (grade_level is null or grade_level between 0 and 11);
+
+create index if not exists groups_org_grade_idx on groups (org_id, grade_level);

@@ -79,6 +79,15 @@ function toGroupRow(
   };
 }
 
+/** Sinf darajasi faqat berilganda yoziladi (maktab); markaz guruhlarida ustunga tegilmaydi. */
+function gradeColumn(values: GroupInput) {
+  return values.gradeLevel === undefined ? {} : { grade_level: values.gradeLevel };
+}
+
+function missingGradeColumn(message: string) {
+  return /grade_level/.test(message);
+}
+
 export interface GroupFormOptions {
   courses: string[];
   teachers: string[];
@@ -114,9 +123,10 @@ export async function createGroup(input: GroupInput) {
     const orgId = org.id;
     const rel = await resolveRelations(supabase, orgId, values);
 
-    const { error } = await supabase
-      .from("groups")
-      .insert({ org_id: orgId, ...toGroupRow(values, rel) });
+    const row = { org_id: orgId, ...toGroupRow(values, rel) };
+    let { error } = await supabase.from("groups").insert({ ...row, ...gradeColumn(values) });
+    // Sinf darajasi ustuni (0074) qo'llanmagan bazada — darajasiz saqlanadi.
+    if (error && missingGradeColumn(error.message)) ({ error } = await supabase.from("groups").insert(row));
 
     if (error) throw new ActionError("Guruh yaratishda xatolik: " + error.message);
 
@@ -138,10 +148,11 @@ export async function updateGroup(groupId: string, input: GroupInput) {
     const rel = await resolveRelations(supabase, orgId, values);
 
     // RLS guruhni faqat o'z tashkilotida o'zgartirishga ruxsat beradi.
-    const { error } = await supabase
-      .from("groups")
-      .update(toGroupRow(values, rel))
-      .eq("id", groupId);
+    const row = toGroupRow(values, rel);
+    let { error } = await supabase.from("groups").update({ ...row, ...gradeColumn(values) }).eq("id", groupId);
+    if (error && missingGradeColumn(error.message)) {
+      ({ error } = await supabase.from("groups").update(row).eq("id", groupId));
+    }
 
     if (error) throw new ActionError("Guruhni yangilashda xatolik: " + error.message);
 

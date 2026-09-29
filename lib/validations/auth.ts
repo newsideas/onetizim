@@ -29,6 +29,8 @@ export const createCenterSchema = z.object({
     .trim()
     .refine((v) => normalizePhone(v) !== null, "Telefon raqamni to'g'ri kiriting (+998 90 123 45 67)"),
   location: optionalText,
+  /** Muassasa turi: o'quv markaz yoki xususiy maktab (0074). */
+  type: z.enum(["markaz", "maktab"]).default("markaz"),
   /** Berilsa markaz darhol shu subdomen bilan ochiladi (keyinroq markaz sahifasida ham o'zgartirsa bo'ladi). */
   slug: z
     .string()
